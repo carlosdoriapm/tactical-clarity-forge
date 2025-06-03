@@ -11,12 +11,12 @@ const HowItWorks = () => {
     {
       n: 2,
       title: "Choose intensity",
-      text: "Standard stoic guidance or *Ruthless Mode* for blunt orders."
+      text: "Standard stoic guidance or *Ruthless Mode*."
     },
     {
       n: 3,
       title: "Execute the plan",
-      text: "Get step-by-step actionables, log results, re-engage any time."
+      text: "Step-by-step actions + encrypted history. Re-ask anytime."
     }
   ];
 

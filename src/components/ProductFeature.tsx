@@ -19,28 +19,28 @@ const ProductFeature = () => {
               <div className="flex items-start space-x-3">
                 <div className="w-2 h-2 bg-warfare-red rounded-full mt-3 flex-shrink-0"></div>
                 <p className="text-lg">
-                  <span className="font-bold">24/7 AI Assistant</span>—trained on stoic, military, and recovery frameworks.
+                  <span className="font-bold">Fully Private</span>—no data sold, no judgment.
                 </p>
               </div>
               
               <div className="flex items-start space-x-3">
                 <div className="w-2 h-2 bg-warfare-red rounded-full mt-3 flex-shrink-0"></div>
                 <p className="text-lg">
-                  <span className="font-bold">Ruthless Mode</span>—zero emotional filter when you want raw tactical orders.
+                  <span className="font-bold">24/7 AI Assistant</span>—trained on stoic, military, recovery frameworks.
                 </p>
               </div>
               
               <div className="flex items-start space-x-3">
                 <div className="w-2 h-2 bg-warfare-red rounded-full mt-3 flex-shrink-0"></div>
                 <p className="text-lg">
-                  <span className="font-bold">Rapid Scenario Prompts</span>—ask, get clarity in &lt; 60 sec.
+                  <span className="font-bold">Ruthless Mode</span>—zero emotional filter for blunt orders.
                 </p>
               </div>
               
               <div className="flex items-start space-x-3">
                 <div className="w-2 h-2 bg-warfare-red rounded-full mt-3 flex-shrink-0"></div>
                 <p className="text-lg">
-                  <span className="font-bold">Fully Private</span>—no data sold, no judgment, no fluff.
+                  <span className="font-bold">Rapid Scenario Prompts</span>—clarity in &lt; 60 sec.
                 </p>
               </div>
             </div>

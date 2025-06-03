@@ -12,12 +12,12 @@ const PainPoints = () => {
     {
       icon: AlertTriangle,
       heading: "Relapse remorse",
-      body: "Shame screams. You need orders for hour 1, not platitudes."
+      body: "Shame screams. You need hour-one orders, not platitudes."
     },
     {
       icon: Target,
       heading: "Mission drift",
-      body: "Family, career, identity—slipping into chaos unless you course-correct now."
+      body: "Family, career, identity—slipping unless you course-correct now."
     }
   ];
 
@@ -25,7 +25,7 @@ const PainPoints = () => {
     <section className="py-20 animate-on-scroll">
       <div className="container mx-auto px-4">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">
-          Moments you can't afford weak advice:
+          The Fog in Your Skull
         </h2>
         
         <div className="grid md:grid-cols-3 gap-8">

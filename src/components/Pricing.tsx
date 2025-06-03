@@ -42,8 +42,8 @@ const Pricing = () => {
               START NOW
             </Button>
             
-            <p className="text-sm text-warfare-blue">
-              <strong>7-Day Iron-Oath Refund:</strong> cancel within a week and pay nothing.
+            <p className="text-sm">
+              <span className="guarantee">7-Day Iron-Oath Refund — cancel in a week and pay nothing.</span>
             </p>
           </div>
         </div>

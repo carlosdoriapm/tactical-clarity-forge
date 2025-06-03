@@ -6,15 +6,15 @@ const Testimonials = () => {
   
   const testimonials = [
     {
-      quote: "She cheated. I wanted to burn it all—Counselor stopped the spiral and gave me a battle plan.",
+      quote: "She cheated. Counselor stopped my spiral and gave me a battle plan.",
       author: "Anthony, 38"
     },
     {
-      quote: "Lost my job, kids depending on me. The AI laid out a 48-hour triage that worked.",
+      quote: "Job loss crisis. Got a 48-hour triage that worked.",
       author: "Derek, 45"
     },
     {
-      quote: "Facing relapse. Ruthless Mode hit me like a drill sergeant—and I stayed sober.",
+      quote: "Facing relapse. Ruthless Mode hit like a drill sergeant—stayed sober.",
       author: "Logan, 33"
     }
   ];

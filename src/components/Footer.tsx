@@ -32,7 +32,7 @@ const Footer = () => {
         </div>
         
         <div className="text-center text-warfare-blue text-sm">
-          © 2025 Legionary Diary. All rights reserved.
+          © 2025 Legionary Diary. All rights reserved. Not medical or legal advice.
         </div>
       </div>
     </footer>

@@ -20,14 +20,14 @@ const Hero = () => {
         </h1>
         
         <p className="text-xl md:text-2xl text-warfare-blue mb-8 max-w-2xl mx-auto">
-          AI-powered counsel for men facing brutal decisions.
+          AI counsel for men who refuse to drown in emotion.
         </p>
         
         <Button 
           onClick={scrollToCheckout}
           className="bg-warfare-red hover:bg-red-600 text-white px-8 py-6 text-lg font-bold rounded-lg transition-all duration-300 transform hover:scale-105"
         >
-          LAUNCH WARFARE COUNSELOR
+          🔒 LAUNCH WARFARE COUNSELOR
         </Button>
       </div>
     </section>

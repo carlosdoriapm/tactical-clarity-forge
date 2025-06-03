@@ -59,6 +59,11 @@
   h1, h2 {
     @apply font-bold tracking-wide uppercase;
   }
+  
+  .guarantee {
+    font-style: italic;
+    color: #fed150;
+  }
 }
 
 .marble-bg {
@@ -85,4 +90,22 @@
 .animate-on-scroll.visible {
   opacity: 1;
   transform: translateY(0);
+}
+
+.sticky-cta {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: #f1372b;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+@media (min-width: 1024px) {
+  .sticky-cta {
+    display: none;
+  }
 }
