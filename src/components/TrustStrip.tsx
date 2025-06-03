@@ -1,11 +1,11 @@
 
 import React from 'react';
-import { Bolt, ShieldLock, CheckCircle } from 'lucide-react';
+import { Bolt, Shield, CheckCircle } from 'lucide-react';
 
 const TrustStrip = () => {
   const trustItems = [
     { icon: Bolt, text: "Avg. response < 3 s" },
-    { icon: ShieldLock, text: "End-to-end encrypted" },
+    { icon: Shield, text: "End-to-end encrypted" },
     { icon: CheckCircle, text: "2,100+ dilemmas solved" }
   ];
 
