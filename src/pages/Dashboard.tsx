@@ -1,6 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Activity, Book, Code, TrendingUp } from "lucide-react"
+import { WelcomeSection } from "@/components/WelcomeSection"
 
 const Dashboard = () => {
   const stats = [
@@ -37,11 +38,10 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-warfare-dark p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Command Center</h1>
-          <p className="text-warfare-gray">Tactical overview and mission status</p>
-        </div>
+        {/* Welcome Section */}
+        <WelcomeSection />
 
+        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {stats.map((stat, index) => (
             <Card key={index} className="bg-warfare-card border-warfare-gray/20">
@@ -61,6 +61,7 @@ const Dashboard = () => {
           ))}
         </div>
 
+        {/* Bottom Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="bg-warfare-card border-warfare-gray/20">
             <CardHeader>
