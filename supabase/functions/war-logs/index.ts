@@ -40,24 +40,6 @@ serve(async (req) => {
       });
     }
 
-    if (req.method === "GET") {
-      // Get all war logs for the authenticated user
-      const { data: warLogs, error } = await supabase
-        .from("war_logs")
-        .select("*")
-        .eq("user_id", userId)
-        .order("date", { ascending: false });
-
-      if (error) {
-        throw error;
-      }
-
-      return new Response(JSON.stringify(warLogs), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
-    }
-
     if (req.method === "POST") {
       const { dilemma, decision_path, commands, intensity, result } = await req.json();
       
@@ -86,6 +68,23 @@ serve(async (req) => {
       return new Response(JSON.stringify(warLog), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 201,
+      });
+    }
+
+    if (req.method === "GET") {
+      const { data: warLogs, error } = await supabase
+        .from("war_logs")
+        .select("*")
+        .eq("user_id", userId)
+        .order("date", { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      return new Response(JSON.stringify(warLogs), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
       });
     }
 

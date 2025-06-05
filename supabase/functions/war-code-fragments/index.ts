@@ -70,7 +70,6 @@ serve(async (req) => {
     }
 
     if (req.method === "GET") {
-      // Get all war code fragments for the authenticated user
       const { data: fragments, error } = await supabase
         .from("war_code_fragments")
         .select("*")
