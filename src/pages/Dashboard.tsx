@@ -1,7 +1,9 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Activity, Book, Code, TrendingUp } from "lucide-react"
-import { WelcomeSection } from "@/components/WelcomeSection"
+import { MissionCard } from "@/components/MissionCard"
+import { RitualSummary } from "@/components/RitualSummary"
+import { WarCodePreview } from "@/components/WarCodePreview"
 
 const Dashboard = () => {
   const stats = [
@@ -35,11 +37,43 @@ const Dashboard = () => {
     }
   ]
 
+  // Sample data - could come from props or API calls
+  const lastMission = {
+    dilemma: "Resource allocation under pressure",
+    decisionPath: "Prioritized core objectives",
+    outcome: "Met primary targets",
+    date: "2024-01-14"
+  }
+
+  const rituals = {
+    current: 7,
+    best: 12,
+    lastCompleted: "Morning Focus Session"
+  }
+
+  const fragments = [
+    { symbol: "⚡", mantra: "Strike with precision" },
+    { symbol: "🔥", mantra: "Forge through resistance" },
+    { symbol: "⚔️", mantra: "Embrace the struggle" },
+    { symbol: "🎯", mantra: "Focus cuts through chaos" }
+  ]
+
   return (
     <div className="min-h-screen bg-warfare-dark p-6">
       <div className="max-w-7xl mx-auto">
         {/* Welcome Section */}
-        <WelcomeSection />
+        <div className="p-6">
+          <h1 className="text-4xl font-bold text-white mb-2">Welcome back, Operator</h1>
+          <p className="text-warfare-gray text-lg mb-8">
+            Command Center operational. Your tactical overview awaits.
+          </p>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <MissionCard mission={lastMission} />
+            <RitualSummary rituals={rituals} />
+            <WarCodePreview fragments={fragments} />
+          </div>
+        </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
