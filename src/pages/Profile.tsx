@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -12,8 +14,10 @@ const Profile = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [profile, setProfile] = useState({
     email: '',
+    age: '',
     intensity_mode: 'TACTICAL' as 'TACTICAL' | 'RUTHLESS' | 'LEGION',
     domain_focus: '' as 'corpo' | 'dinheiro' | 'influencia' | '',
     current_mission: '',
@@ -43,6 +47,7 @@ const Profile = () => {
       if (userProfile) {
         setProfile({
           email: userProfile.email,
+          age: userProfile.age || '',
           intensity_mode: (userProfile.intensity_mode as 'TACTICAL' | 'RUTHLESS' | 'LEGION') || 'TACTICAL',
           domain_focus: (userProfile.domain_focus as 'corpo' | 'dinheiro' | 'influencia' | '') || '',
           current_mission: userProfile.current_mission || '',
@@ -88,13 +93,19 @@ const Profile = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      const updateData: any = {
+        intensity_mode: profile.intensity_mode,
+        domain_focus: profile.domain_focus || null,
+        current_mission: profile.current_mission
+      };
+
+      if (profile.age) {
+        updateData.age = parseInt(profile.age);
+      }
+
       const { error } = await supabase
         .from('users')
-        .update({
-          intensity_mode: profile.intensity_mode,
-          domain_focus: profile.domain_focus || null,
-          current_mission: profile.current_mission
-        })
+        .update(updateData)
         .eq('email', user.email);
 
       if (error) throw error;
@@ -112,6 +123,44 @@ const Profile = () => {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const resetWarLogs = async () => {
+    try {
+      setResetting(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: userProfile } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', user.email)
+        .single();
+
+      if (userProfile) {
+        const { error } = await supabase
+          .from('war_logs')
+          .delete()
+          .eq('user_id', userProfile.id);
+
+        if (error) throw error;
+
+        setWarLogs([]);
+        toast({
+          title: "Success",
+          description: "War logs cleared successfully",
+        });
+      }
+    } catch (error) {
+      console.error('Error resetting war logs:', error);
+      toast({
+        title: "Error",
+        description: "Failed to reset war logs",
+        variant: "destructive",
+      });
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -143,7 +192,7 @@ const Profile = () => {
             <div className="glass-card p-6 rounded-xl">
               <h2 className="text-xl font-bold text-white mb-6">Profile Settings</h2>
               
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div>
                   <Label className="text-white">Email</Label>
                   <Input 
@@ -154,16 +203,45 @@ const Profile = () => {
                 </div>
 
                 <div>
-                  <Label className="text-white">Intensity Mode</Label>
-                  <select
+                  <Label className="text-white">Age</Label>
+                  <Input
+                    type="number"
+                    value={profile.age}
+                    onChange={(e) => setProfile(prev => ({ ...prev, age: e.target.value }))}
+                    placeholder="Enter your age"
+                    className="bg-warfare-dark text-white border-warfare-blue/30"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-white mb-3 block">Intensity Mode</Label>
+                  <RadioGroup
                     value={profile.intensity_mode}
-                    onChange={(e) => setProfile(prev => ({ ...prev, intensity_mode: e.target.value as any }))}
-                    className="w-full p-2 bg-warfare-dark text-white border border-warfare-blue/30 rounded-md"
+                    onValueChange={(value) => setProfile(prev => ({ ...prev, intensity_mode: value as any }))}
+                    className="space-y-3"
                   >
-                    <option value="TACTICAL">TACTICAL - Measured, direct</option>
-                    <option value="RUTHLESS">RUTHLESS - Blunt, no excuse</option>
-                    <option value="LEGION">LEGION - Extreme, field-command</option>
-                  </select>
+                    <div className="flex items-center space-x-3 p-3 rounded-lg border border-warfare-blue/30 hover:border-warfare-blue/50">
+                      <RadioGroupItem value="TACTICAL" id="tactical" className="border-warfare-blue text-warfare-blue" />
+                      <div>
+                        <Label htmlFor="tactical" className="text-white font-medium cursor-pointer">TACTICAL</Label>
+                        <p className="text-warfare-blue text-sm">Measured, direct guidance</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3 p-3 rounded-lg border border-warfare-blue/30 hover:border-warfare-blue/50">
+                      <RadioGroupItem value="RUTHLESS" id="ruthless" className="border-warfare-blue text-warfare-blue" />
+                      <div>
+                        <Label htmlFor="ruthless" className="text-white font-medium cursor-pointer">RUTHLESS</Label>
+                        <p className="text-warfare-blue text-sm">Blunt, no-excuse approach</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3 p-3 rounded-lg border border-warfare-blue/30 hover:border-warfare-blue/50">
+                      <RadioGroupItem value="LEGION" id="legion" className="border-warfare-blue text-warfare-blue" />
+                      <div>
+                        <Label htmlFor="legion" className="text-white font-medium cursor-pointer">LEGION</Label>
+                        <p className="text-warfare-blue text-sm">Extreme, field-command discipline</p>
+                      </div>
+                    </div>
+                  </RadioGroup>
                 </div>
 
                 <div>
@@ -202,7 +280,17 @@ const Profile = () => {
 
             {/* War Logs */}
             <div className="glass-card p-6 rounded-xl">
-              <h2 className="text-xl font-bold text-white mb-6">War Logs</h2>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-white">War Logs</h2>
+                <Button
+                  onClick={resetWarLogs}
+                  disabled={resetting || warLogs.length === 0}
+                  variant="destructive"
+                  size="sm"
+                >
+                  {resetting ? 'Clearing...' : 'Reset War Logs'}
+                </Button>
+              </div>
               
               <div className="space-y-4 max-h-96 overflow-y-auto">
                 {warLogs.length === 0 ? (
