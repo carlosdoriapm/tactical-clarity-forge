@@ -1,13 +1,8 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
+import CheckoutForm from './CheckoutForm';
 
 const Pricing = () => {
-  const handleStartNow = () => {
-    // In a real implementation, this would integrate with Stripe
-    window.open('https://stripe.com', '_blank');
-  };
-
   return (
     <section id="checkout" className="py-20 animate-on-scroll">
       <div className="container mx-auto px-4">
@@ -35,14 +30,9 @@ const Pricing = () => {
               </li>
             </ul>
             
-            <Button 
-              onClick={handleStartNow}
-              className="w-full bg-warfare-red hover:bg-red-600 text-white py-4 text-lg font-bold rounded-lg mb-6"
-            >
-              START NOW
-            </Button>
+            <CheckoutForm />
             
-            <p className="text-sm">
+            <p className="text-sm mt-6">
               <span className="guarantee">7-Day Iron-Oath Refund — cancel in a week and pay nothing.</span>
             </p>
           </div>
