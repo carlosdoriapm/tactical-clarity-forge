@@ -7,7 +7,7 @@ import {
   Code, 
   User, 
   Ghost,
-  Dashboard
+  LayoutDashboard
 } from "lucide-react"
 
 import {
@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/sidebar"
 
 const navigationItems = [
-  { title: "Dashboard", url: "/dashboard", icon: Dashboard },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "War Logs", url: "/war-logs", icon: Book },
   { title: "Rituals", url: "/rituals", icon: Activity },
   { title: "War Code", url: "/war-code", icon: Code },
