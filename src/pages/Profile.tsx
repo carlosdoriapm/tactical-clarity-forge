@@ -44,8 +44,8 @@ const Profile = () => {
       if (userProfile) {
         setProfile({
           email: userProfile.email,
-          intensity_mode: userProfile.intensity_mode || 'TACTICAL',
-          domain_focus: userProfile.domain_focus || '',
+          intensity_mode: (userProfile.intensity_mode as 'TACTICAL' | 'RUTHLESS' | 'LEGION') || 'TACTICAL',
+          domain_focus: (userProfile.domain_focus as 'corpo' | 'dinheiro' | 'influencia' | '') || '',
           current_mission: userProfile.current_mission || '',
           profile_complete: userProfile.profile_complete || false
         });
