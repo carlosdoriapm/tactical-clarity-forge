@@ -105,40 +105,43 @@ export type Database = {
         }
         Relationships: []
       }
-      war_log: {
+      war_logs: {
         Row: {
-          completed: boolean | null
-          created_at: string | null
+          commands: Json | null
           date: string | null
-          decision: string | null
-          dilemma: string
-          executed_commands: Json | null
+          decision_path: string | null
+          dilemma: string | null
           id: string
+          intensity: string | null
+          reflections: string | null
+          result: string | null
           user_id: string | null
         }
         Insert: {
-          completed?: boolean | null
-          created_at?: string | null
+          commands?: Json | null
           date?: string | null
-          decision?: string | null
-          dilemma: string
-          executed_commands?: Json | null
+          decision_path?: string | null
+          dilemma?: string | null
           id?: string
+          intensity?: string | null
+          reflections?: string | null
+          result?: string | null
           user_id?: string | null
         }
         Update: {
-          completed?: boolean | null
-          created_at?: string | null
+          commands?: Json | null
           date?: string | null
-          decision?: string | null
-          dilemma?: string
-          executed_commands?: Json | null
+          decision_path?: string | null
+          dilemma?: string | null
           id?: string
+          intensity?: string | null
+          reflections?: string | null
+          result?: string | null
           user_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "war_log_user_id_fkey"
+            foreignKeyName: "war_logs_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,11 +19,11 @@ const Profile = () => {
     current_mission: '',
     profile_complete: false
   });
-  const [warLog, setWarLog] = useState([]);
+  const [warLogs, setWarLogs] = useState([]);
 
   useEffect(() => {
     loadProfile();
-    loadWarLog();
+    loadWarLogs();
   }, []);
 
   const loadProfile = async () => {
@@ -57,7 +56,7 @@ const Profile = () => {
     }
   };
 
-  const loadWarLog = async () => {
+  const loadWarLogs = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -70,16 +69,16 @@ const Profile = () => {
 
       if (userProfile) {
         const { data: logs } = await supabase
-          .from('war_log')
+          .from('war_logs')
           .select('*')
           .eq('user_id', userProfile.id)
-          .order('created_at', { ascending: false })
+          .order('date', { ascending: false })
           .limit(10);
 
-        setWarLog(logs || []);
+        setWarLogs(logs || []);
       }
     } catch (error) {
-      console.error('Error loading war log:', error);
+      console.error('Error loading war logs:', error);
     }
   };
 
@@ -201,25 +200,55 @@ const Profile = () => {
               </div>
             </div>
 
-            {/* War Log */}
+            {/* War Logs */}
             <div className="glass-card p-6 rounded-xl">
-              <h2 className="text-xl font-bold text-white mb-6">War Log</h2>
+              <h2 className="text-xl font-bold text-white mb-6">War Logs</h2>
               
               <div className="space-y-4 max-h-96 overflow-y-auto">
-                {warLog.length === 0 ? (
-                  <p className="text-warfare-blue">No missions logged yet. Start chatting to build your war log.</p>
+                {warLogs.length === 0 ? (
+                  <p className="text-warfare-blue">No missions logged yet. Start chatting to build your war logs.</p>
                 ) : (
-                  warLog.map((log: any) => (
+                  warLogs.map((log: any) => (
                     <div key={log.id} className="bg-warfare-dark/50 p-4 rounded-lg border border-warfare-blue/30">
                       <div className="text-xs text-warfare-blue mb-2">
-                        {new Date(log.created_at).toLocaleDateString()}
+                        {new Date(log.date).toLocaleDateString()}
+                        {log.intensity && (
+                          <span className="ml-2 px-2 py-1 bg-warfare-red/20 text-warfare-red rounded text-xs">
+                            {log.intensity}
+                          </span>
+                        )}
+                        {log.result && (
+                          <span className={`ml-2 px-2 py-1 rounded text-xs ${
+                            log.result === 'success' ? 'bg-green-500/20 text-green-400' :
+                            log.result === 'fail' ? 'bg-red-500/20 text-red-400' :
+                            'bg-yellow-500/20 text-yellow-400'
+                          }`}>
+                            {log.result}
+                          </span>
+                        )}
                       </div>
-                      <div className="text-white text-sm mb-2">
-                        <strong>Dilemma:</strong> {log.dilemma.substring(0, 100)}...
-                      </div>
-                      {log.decision && (
-                        <div className="text-warfare-blue text-sm">
-                          <strong>Decision:</strong> {log.decision.substring(0, 100)}...
+                      
+                      {log.dilemma && (
+                        <div className="text-white text-sm mb-2">
+                          <strong>Dilemma:</strong> {log.dilemma.substring(0, 100)}...
+                        </div>
+                      )}
+                      
+                      {log.decision_path && (
+                        <div className="text-warfare-blue text-sm mb-2">
+                          <strong>Decision:</strong> {log.decision_path.substring(0, 100)}...
+                        </div>
+                      )}
+                      
+                      {log.commands && (
+                        <div className="text-xs text-gray-400 mt-2">
+                          <strong>Commands:</strong> {Object.keys(log.commands).join(', ')}
+                        </div>
+                      )}
+                      
+                      {log.reflections && (
+                        <div className="text-xs text-warfare-blue mt-2 italic">
+                          "{log.reflections.substring(0, 80)}..."
                         </div>
                       )}
                     </div>
