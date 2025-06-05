@@ -1,5 +1,7 @@
 
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,12 +20,68 @@ serve(async (req) => {
       throw new Error("Content is required");
     }
 
-    // Simulate AI response based on ruthless mode
-    let reply;
-    if (ruthless) {
-      reply = `[RUTHLESS MODE] Listen up, soldier! Here's the brutal truth about your situation: ${content}. Stop making excuses and take decisive action. The battlefield doesn't care about your feelings - only results matter. What's your next tactical move?`;
-    } else {
-      reply = `I understand you're dealing with: ${content}. Let me provide some strategic guidance to help you navigate this situation effectively. Consider these approaches and choose the one that aligns best with your objectives.`;
+    // Get environment variables
+    const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const counselorPrompt = Deno.env.get("COUNSELOR_PROMPT") || "You are a tactical warfare counselor. Provide strategic advice for any situation with military precision and tactical thinking.";
+
+    if (!openaiApiKey) {
+      throw new Error("OpenAI API key not configured");
+    }
+
+    // Create Supabase client with service role for database operations
+    const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
+
+    // Get user ID from auth header
+    const authHeader = req.headers.get("authorization");
+    const token = authHeader?.replace("Bearer ", "");
+    
+    let userId = null;
+    if (token) {
+      const { data: { user } } = await supabase.auth.getUser(token);
+      userId = user?.id;
+    }
+
+    // Prepare the prompt based on ruthless mode
+    const finalPrompt = ruthless ? `${content}\n\nruthless mode: on` : content;
+
+    // Call OpenAI API
+    const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${openaiApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: counselorPrompt },
+          { role: "user", content: finalPrompt }
+        ],
+      }),
+    });
+
+    if (!openaiResponse.ok) {
+      throw new Error(`OpenAI API error: ${openaiResponse.statusText}`);
+    }
+
+    const openaiData = await openaiResponse.json();
+    const reply = openaiData.choices[0].message.content;
+
+    // Store both user message and assistant reply in database
+    if (userId) {
+      const { error } = await supabase
+        .from("chats")
+        .insert([
+          { user_id: userId, role: "user", content },
+          { user_id: userId, role: "assistant", content: reply }
+        ]);
+
+      if (error) {
+        console.error("Error storing chat:", error);
+        // Don't throw error - still return the response even if storage fails
+      }
     }
 
     return new Response(JSON.stringify({ reply }), {
