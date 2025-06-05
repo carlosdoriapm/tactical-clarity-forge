@@ -33,6 +33,44 @@ export type Database = {
         }
         Relationships: []
       }
+      rituals: {
+        Row: {
+          duration_minutes: number | null
+          id: string
+          last_completed_at: string | null
+          name: string | null
+          stake_attached: boolean | null
+          streak_count: number | null
+          user_id: string | null
+        }
+        Insert: {
+          duration_minutes?: number | null
+          id?: string
+          last_completed_at?: string | null
+          name?: string | null
+          stake_attached?: boolean | null
+          streak_count?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          duration_minutes?: number | null
+          id?: string
+          last_completed_at?: string | null
+          name?: string | null
+          stake_attached?: boolean | null
+          streak_count?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rituals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscribers: {
         Row: {
           created_at: string
@@ -104,6 +142,41 @@ export type Database = {
           profile_complete?: boolean | null
         }
         Relationships: []
+      }
+      war_code_fragments: {
+        Row: {
+          date_logged: string | null
+          id: string
+          mapped_glyph: string | null
+          raw_phrase: string | null
+          symbol_keyword: string | null
+          user_id: string | null
+        }
+        Insert: {
+          date_logged?: string | null
+          id?: string
+          mapped_glyph?: string | null
+          raw_phrase?: string | null
+          symbol_keyword?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          date_logged?: string | null
+          id?: string
+          mapped_glyph?: string | null
+          raw_phrase?: string | null
+          symbol_keyword?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "war_code_fragments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       war_logs: {
         Row: {
