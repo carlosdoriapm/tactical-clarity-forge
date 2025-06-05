@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import ProfileSetup from './ProfileSetup';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -11,11 +12,19 @@ interface Message {
   timestamp: Date;
 }
 
+interface UserProfile {
+  profile_complete: boolean;
+  intensity_mode?: string;
+  domain_focus?: string;
+}
+
 const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [ruthlessMode, setRuthlessMode] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [showProfileSetup, setShowProfileSetup] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -27,6 +36,13 @@ const ChatInterface = () => {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    // Check if user needs profile setup on first load
+    if (messages.length === 0) {
+      sendMessage("Hello");
+    }
+  }, []);
+
   const appendToChat = (role: 'user' | 'assistant', content: string) => {
     const newMessage: Message = {
       role,
@@ -36,24 +52,58 @@ const ChatInterface = () => {
     setMessages(prev => [...prev, newMessage]);
   };
 
-  const sendMessage = async (content: string) => {
+  const handleProfileComplete = (profileData: any) => {
+    setShowProfileSetup(false);
+    setUserProfile({ 
+      profile_complete: true, 
+      intensity_mode: profileData.intensity_mode,
+      domain_focus: profileData.domain_focus 
+    });
+    
+    // Send a message to trigger AI response with new profile
+    sendMessage("Profile setup complete. Ready for mission briefing.", profileData);
+  };
+
+  const handleProfileSkip = () => {
+    setShowProfileSetup(false);
+    setUserProfile({ profile_complete: false });
+  };
+
+  const sendMessage = async (content: string, profileData?: any) => {
     if (!content.trim()) return;
 
     try {
       setIsLoading(true);
       
-      // Add user message to chat
-      appendToChat('user', content);
+      // Add user message to chat (only if not initial hello)
+      if (content !== "Hello") {
+        appendToChat('user', content);
+      }
       
       // Clear input
       setInput('');
       
       // Send to AI
       const { data, error } = await supabase.functions.invoke('ai-chat', {
-        body: { content, ruthless: ruthlessMode }
+        body: { 
+          content, 
+          ruthless: ruthlessMode,
+          profileData: profileData || null
+        }
       });
 
       if (error) throw error;
+
+      // Update user profile from response
+      if (data.userProfile) {
+        setUserProfile(data.userProfile);
+        
+        // Show profile setup if not complete
+        if (!data.userProfile.profile_complete && content === "Hello") {
+          setShowProfileSetup(true);
+          return; // Don't add the AI message to chat yet
+        }
+      }
 
       // Add AI response to chat
       appendToChat('assistant', data.reply);
@@ -84,6 +134,17 @@ const ChatInterface = () => {
     }
   };
 
+  if (showProfileSetup) {
+    return (
+      <div className="flex flex-col h-full max-h-[600px] justify-center">
+        <ProfileSetup 
+          onComplete={handleProfileComplete}
+          onSkip={handleProfileSkip}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full max-h-[600px]">
       {/* Messages */}
@@ -91,7 +152,7 @@ const ChatInterface = () => {
         {messages.length === 0 ? (
           <div className="text-center text-warfare-blue py-8">
             <h3 className="text-xl font-semibold mb-2">Welcome to Warfare Counselor™</h3>
-            <p>Ask me about any tactical situation you're facing.</p>
+            <p>Your tactical advisor is analyzing your profile...</p>
           </div>
         ) : (
           messages.map((message, index) => (
@@ -129,17 +190,27 @@ const ChatInterface = () => {
 
       {/* Controls */}
       <div className="p-4 bg-warfare-dark/50 rounded-b-lg border-t border-warfare-blue/30">
-        <div className="flex items-center mb-3">
-          <label className="flex items-center space-x-2 text-white">
-            <input
-              type="checkbox"
-              checked={ruthlessMode}
-              onChange={(e) => setRuthlessMode(e.target.checked)}
-              className="rounded"
-            />
-            <span className="text-sm">Ruthless Mode</span>
-          </label>
-        </div>
+        {userProfile && (
+          <div className="flex items-center justify-between mb-3 text-sm">
+            <div className="flex items-center space-x-4 text-warfare-blue">
+              {userProfile.intensity_mode && (
+                <span>Mode: {userProfile.intensity_mode}</span>
+              )}
+              {userProfile.domain_focus && (
+                <span>Focus: {userProfile.domain_focus}</span>
+              )}
+            </div>
+            <label className="flex items-center space-x-2 text-white">
+              <input
+                type="checkbox"
+                checked={ruthlessMode}
+                onChange={(e) => setRuthlessMode(e.target.checked)}
+                className="rounded"
+              />
+              <span className="text-sm">Ruthless Mode</span>
+            </label>
+          </div>
+        )}
         
         <form onSubmit={handleSubmit} className="flex space-x-2">
           <Textarea

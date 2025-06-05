@@ -14,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    const { content, ruthless } = await req.json();
+    const { content, ruthless, profileData } = await req.json();
     
     if (!content) {
       throw new Error("Content is required");
@@ -38,13 +38,80 @@ serve(async (req) => {
     const token = authHeader?.replace("Bearer ", "");
     
     let userId = null;
+    let userProfile = null;
+    
     if (token) {
       const { data: { user } } = await supabase.auth.getUser(token);
       userId = user?.id;
+      
+      if (userId) {
+        // Get or create user profile
+        const { data: existingProfile } = await supabase
+          .from("users")
+          .select("*")
+          .eq("email", user.email)
+          .single();
+          
+        if (!existingProfile) {
+          // Create new user profile
+          const { data: newProfile } = await supabase
+            .from("users")
+            .insert([{ 
+              email: user.email,
+              profile_complete: false,
+              last_active: new Date().toISOString()
+            }])
+            .select()
+            .single();
+          userProfile = newProfile;
+        } else {
+          userProfile = existingProfile;
+          // Update last active
+          await supabase
+            .from("users")
+            .update({ last_active: new Date().toISOString() })
+            .eq("id", existingProfile.id);
+        }
+      }
     }
 
-    // Prepare the prompt based on ruthless mode
-    const finalPrompt = ruthless ? `${content}\n\nruthless mode: on` : content;
+    // Handle profile completion if profileData is provided
+    if (profileData && userProfile) {
+      const { data: updatedProfile } = await supabase
+        .from("users")
+        .update({
+          intensity_mode: profileData.intensity_mode,
+          domain_focus: profileData.domain_focus,
+          current_mission: profileData.current_mission,
+          profile_complete: true,
+          onboarding_completed: true
+        })
+        .eq("id", userProfile.id)
+        .select()
+        .single();
+      userProfile = updatedProfile;
+    }
+
+    // Prepare the enhanced prompt
+    let enhancedPrompt = content;
+    
+    // Add user context if profile exists
+    if (userProfile) {
+      const contextInfo = [];
+      if (userProfile.intensity_mode) contextInfo.push(`intensity_mode: ${userProfile.intensity_mode}`);
+      if (userProfile.domain_focus) contextInfo.push(`domain_focus: ${userProfile.domain_focus}`);
+      if (userProfile.current_mission) contextInfo.push(`current_mission: ${userProfile.current_mission}`);
+      if (!userProfile.profile_complete) contextInfo.push(`profile_complete: false`);
+      
+      if (contextInfo.length > 0) {
+        enhancedPrompt = `${content}\n\nUser context: ${contextInfo.join(', ')}`;
+      }
+    }
+    
+    // Add ruthless mode indicator
+    if (ruthless) {
+      enhancedPrompt += `\n\nruthless mode: on`;
+    }
 
     // Call OpenAI API
     const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -57,7 +124,7 @@ serve(async (req) => {
         model: "gpt-4o-mini",
         messages: [
           { role: "system", content: counselorPrompt },
-          { role: "user", content: finalPrompt }
+          { role: "user", content: enhancedPrompt }
         ],
       }),
     });
@@ -69,7 +136,7 @@ serve(async (req) => {
     const openaiData = await openaiResponse.json();
     const reply = openaiData.choices[0].message.content;
 
-    // Store both user message and assistant reply in database
+    // Store chat messages
     if (userId) {
       const { error } = await supabase
         .from("chats")
@@ -80,11 +147,28 @@ serve(async (req) => {
 
       if (error) {
         console.error("Error storing chat:", error);
-        // Don't throw error - still return the response even if storage fails
+      }
+
+      // Create war log entry if this appears to be a mission/decision
+      if (content.length > 50 && userProfile) {
+        await supabase
+          .from("war_log")
+          .insert([{
+            user_id: userProfile.id,
+            dilemma: content,
+            decision: reply.substring(0, 500) // Store first 500 chars of response
+          }]);
       }
     }
 
-    return new Response(JSON.stringify({ reply }), {
+    return new Response(JSON.stringify({ 
+      reply,
+      userProfile: userProfile ? {
+        profile_complete: userProfile.profile_complete,
+        intensity_mode: userProfile.intensity_mode,
+        domain_focus: userProfile.domain_focus
+      } : null
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });

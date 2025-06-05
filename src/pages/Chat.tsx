@@ -13,13 +13,22 @@ const Chat = () => {
         <div className="max-w-4xl mx-auto">
           <header className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold text-white">Warfare Counselor™ Chat</h1>
-            <Button 
-              onClick={() => navigate('/')}
-              variant="outline"
-              className="text-warfare-blue border-warfare-blue hover:bg-warfare-blue hover:text-white"
-            >
-              Back to Home
-            </Button>
+            <div className="flex space-x-3">
+              <Button 
+                onClick={() => navigate('/profile')}
+                variant="outline"
+                className="text-warfare-blue border-warfare-blue hover:bg-warfare-blue hover:text-white"
+              >
+                Profile
+              </Button>
+              <Button 
+                onClick={() => navigate('/')}
+                variant="outline"
+                className="text-warfare-blue border-warfare-blue hover:bg-warfare-blue hover:text-white"
+              >
+                Back to Home
+              </Button>
+            </div>
           </header>
           
           <div className="glass-card p-6 rounded-xl">

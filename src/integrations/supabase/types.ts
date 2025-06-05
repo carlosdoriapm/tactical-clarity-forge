@@ -69,6 +69,83 @@ export type Database = {
         }
         Relationships: []
       }
+      users: {
+        Row: {
+          created_at: string | null
+          current_mission: string | null
+          domain_focus: string | null
+          email: string
+          id: string
+          intensity_mode: string | null
+          last_active: string | null
+          onboarding_completed: boolean | null
+          profile_complete: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_mission?: string | null
+          domain_focus?: string | null
+          email: string
+          id?: string
+          intensity_mode?: string | null
+          last_active?: string | null
+          onboarding_completed?: boolean | null
+          profile_complete?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          current_mission?: string | null
+          domain_focus?: string | null
+          email?: string
+          id?: string
+          intensity_mode?: string | null
+          last_active?: string | null
+          onboarding_completed?: boolean | null
+          profile_complete?: boolean | null
+        }
+        Relationships: []
+      }
+      war_log: {
+        Row: {
+          completed: boolean | null
+          created_at: string | null
+          date: string | null
+          decision: string | null
+          dilemma: string
+          executed_commands: Json | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string | null
+          date?: string | null
+          decision?: string | null
+          dilemma: string
+          executed_commands?: Json | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string | null
+          date?: string | null
+          decision?: string | null
+          dilemma?: string
+          executed_commands?: Json | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "war_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
