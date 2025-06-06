@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import ProfileSetup from './ProfileSetup';
+import ProChatWelcome from './ProChatWelcome';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -12,19 +12,11 @@ interface Message {
   timestamp: Date;
 }
 
-interface UserProfile {
-  profile_complete: boolean;
-  intensity_mode?: string;
-  domain_focus?: string;
-}
-
 const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [ruthlessMode, setRuthlessMode] = useState(false);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [showProfileSetup, setShowProfileSetup] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -36,13 +28,6 @@ const ChatInterface = () => {
     scrollToBottom();
   }, [messages]);
 
-  useEffect(() => {
-    // Check if user needs profile setup on first load
-    if (messages.length === 0) {
-      sendMessage("Hello");
-    }
-  }, []);
-
   const appendToChat = (role: 'user' | 'assistant', content: string) => {
     const newMessage: Message = {
       role,
@@ -52,60 +37,30 @@ const ChatInterface = () => {
     setMessages(prev => [...prev, newMessage]);
   };
 
-  const handleProfileComplete = (profileData: any) => {
-    setShowProfileSetup(false);
-    setUserProfile({ 
-      profile_complete: true, 
-      intensity_mode: profileData.intensity_mode,
-      domain_focus: profileData.domain_focus 
-    });
-    
-    // Send a message to trigger AI response with new profile
-    sendMessage("Profile setup complete. Ready for mission briefing.", profileData);
+  const handleWelcomeMessageSent = (userMessage: string, aiResponse: string) => {
+    appendToChat('user', userMessage);
+    appendToChat('assistant', aiResponse);
+    setShowWelcome(false);
   };
 
-  const handleProfileSkip = () => {
-    setShowProfileSetup(false);
-    setUserProfile({ profile_complete: false });
-  };
-
-  const sendMessage = async (content: string, profileData?: any) => {
+  const sendMessage = async (content: string) => {
     if (!content.trim()) return;
 
     try {
       setIsLoading(true);
       
-      // Add user message to chat (only if not initial hello)
-      if (content !== "Hello") {
-        appendToChat('user', content);
-      }
-      
-      // Clear input
+      appendToChat('user', content);
       setInput('');
       
-      // Send to AI
       const { data, error } = await supabase.functions.invoke('ai-chat', {
         body: { 
           content, 
-          ruthless: ruthlessMode,
-          profileData: profileData || null
+          ruthless: true
         }
       });
 
       if (error) throw error;
 
-      // Update user profile from response
-      if (data.userProfile) {
-        setUserProfile(data.userProfile);
-        
-        // Show profile setup if not complete
-        if (!data.userProfile.profile_complete && content === "Hello") {
-          setShowProfileSetup(true);
-          return; // Don't add the AI message to chat yet
-        }
-      }
-
-      // Add AI response to chat
       appendToChat('assistant', data.reply);
       
     } catch (error) {
@@ -134,52 +89,38 @@ const ChatInterface = () => {
     }
   };
 
-  if (showProfileSetup) {
-    return (
-      <div className="flex flex-col h-full max-h-[600px] justify-center">
-        <ProfileSetup 
-          onComplete={handleProfileComplete}
-          onSkip={handleProfileSkip}
-        />
-      </div>
-    );
+  if (showWelcome) {
+    return <ProChatWelcome onMessageSent={handleWelcomeMessageSent} />;
   }
 
   return (
-    <div className="flex flex-col h-full max-h-[600px]">
+    <div className="flex flex-col h-full max-h-[600px] bg-black text-white">
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-warfare-dark/30 rounded-t-lg">
-        {messages.length === 0 ? (
-          <div className="text-center text-warfare-blue py-8">
-            <h3 className="text-xl font-semibold mb-2">Welcome to Warfare Counselor™</h3>
-            <p>Your tactical advisor is analyzing your profile...</p>
-          </div>
-        ) : (
-          messages.map((message, index) => (
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-zinc-900/50 rounded-t-lg">
+        {messages.map((message, index) => (
+          <div
+            key={index}
+            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+          >
             <div
-              key={index}
-              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              className={`max-w-[80%] p-3 rounded-lg ${
+                message.role === 'user'
+                  ? 'bg-red-700 text-white'
+                  : 'bg-zinc-800 text-white border border-red-700/30'
+              }`}
             >
-              <div
-                className={`max-w-[80%] p-3 rounded-lg ${
-                  message.role === 'user'
-                    ? 'bg-warfare-red text-white'
-                    : 'bg-warfare-dark text-white border border-warfare-blue/30'
-                }`}
-              >
-                <p className="whitespace-pre-wrap">{message.content}</p>
-                <span className="text-xs opacity-70 block mt-1">
-                  {message.timestamp.toLocaleTimeString()}
-                </span>
-              </div>
+              <p className="whitespace-pre-wrap">{message.content}</p>
+              <span className="text-xs opacity-70 block mt-1">
+                {message.timestamp.toLocaleTimeString()}
+              </span>
             </div>
-          ))
-        )}
+          </div>
+        ))}
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-warfare-dark text-white border border-warfare-blue/30 p-3 rounded-lg">
+            <div className="bg-zinc-800 text-white border border-red-700/30 p-3 rounded-lg">
               <div className="flex items-center space-x-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-warfare-red"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
                 <span>Analyzing tactical situation...</span>
               </div>
             </div>
@@ -188,46 +129,24 @@ const ChatInterface = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Controls */}
-      <div className="p-4 bg-warfare-dark/50 rounded-b-lg border-t border-warfare-blue/30">
-        {userProfile && (
-          <div className="flex items-center justify-between mb-3 text-sm">
-            <div className="flex items-center space-x-4 text-warfare-blue">
-              {userProfile.intensity_mode && (
-                <span>Mode: {userProfile.intensity_mode}</span>
-              )}
-              {userProfile.domain_focus && (
-                <span>Focus: {userProfile.domain_focus}</span>
-              )}
-            </div>
-            <label className="flex items-center space-x-2 text-white">
-              <input
-                type="checkbox"
-                checked={ruthlessMode}
-                onChange={(e) => setRuthlessMode(e.target.checked)}
-                className="rounded"
-              />
-              <span className="text-sm">Ruthless Mode</span>
-            </label>
-          </div>
-        )}
-        
+      {/* Input */}
+      <div className="p-4 bg-zinc-900/80 rounded-b-lg border-t border-red-700/30">
         <form onSubmit={handleSubmit} className="flex space-x-2">
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Describe your tactical situation..."
-            className="flex-1 bg-warfare-dark text-white border-warfare-blue/30 resize-none"
+            placeholder="Submit your next tactical situation..."
+            className="flex-1 bg-zinc-800 text-white border-red-700/30 resize-none placeholder-gray-500"
             rows={2}
             disabled={isLoading}
           />
           <Button
             type="submit"
             disabled={isLoading || !input.trim()}
-            className="bg-warfare-red hover:bg-warfare-red/80 text-white self-end"
+            className="bg-red-700 hover:bg-red-800 text-white self-end font-bold uppercase tracking-wide"
           >
-            Send
+            Orders
           </Button>
         </form>
       </div>
