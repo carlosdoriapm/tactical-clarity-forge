@@ -44,7 +44,7 @@ serve(async (req) => {
     const token = authHeader?.replace("Bearer ", "");
     
     let userId = 'anonymous';
-    let userProfile = null;
+    let userProfileData = null;
     
     if (token) {
       const { data: { user } } = await supabase.auth.getUser(token);
@@ -61,7 +61,7 @@ serve(async (req) => {
           });
         }
 
-        userProfile = await getUserProfile(supabase, userId, user.email);
+        userProfileData = await getUserProfile(supabase, userId, user.email);
       }
     } else {
       // For anonymous users, use a stricter rate limit
@@ -76,30 +76,34 @@ serve(async (req) => {
     }
 
     // Handle profile completion if profileData is provided
-    if (profileData && userProfile) {
-      userProfile = await updateUserProfile(supabase, userProfile, profileData);
+    if (profileData && userProfileData) {
+      userProfileData = await updateUserProfile(supabase, userProfileData.userProfile, profileData);
     }
 
     // Prepare the enhanced prompt
-    const enhancedPrompt = buildEnhancedPrompt(content, userProfile, ruthless);
+    const enhancedPrompt = buildEnhancedPrompt(content, userProfileData?.userProfile, ruthless);
 
     // Call OpenAI API
     const reply = await callOpenAI(openaiApiKey, enhancedPrompt, counselorPrompt);
 
     console.log('OpenAI response received successfully');
 
-    // Store chat messages
-    if (userId !== 'anonymous') {
+    // Store chat messages and create war log entry
+    if (userId !== 'anonymous' && userProfileData) {
       await storeChatMessages(supabase, userId, content, reply);
-      await createWarLogEntry(supabase, userProfile, content, reply);
+      
+      // Only create war log entry if we have a valid reply
+      if (reply && typeof reply === 'string') {
+        await createWarLogEntry(supabase, userProfileData.userProfile, userProfileData.combatantProfile, content, reply);
+      }
     }
 
     return new Response(JSON.stringify({ 
       reply,
-      userProfile: userProfile ? {
-        profile_complete: userProfile.profile_complete,
-        intensity_mode: userProfile.intensity_mode,
-        domain_focus: userProfile.domain_focus
+      userProfile: userProfileData?.userProfile ? {
+        profile_complete: userProfileData.userProfile.profile_complete,
+        intensity_mode: userProfileData.userProfile.intensity_mode,
+        domain_focus: userProfileData.userProfile.domain_focus
       } : null
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

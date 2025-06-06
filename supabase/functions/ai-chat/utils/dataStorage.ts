@@ -13,6 +13,12 @@ export async function storeChatMessages(supabase: any, userId: string, userMessa
 }
 
 export async function createWarLogEntry(supabase: any, userProfile: any, combatantProfile: any, content: string, reply: string) {
+  // Ensure reply is defined and is a string
+  if (!reply || typeof reply !== 'string') {
+    console.error("Invalid reply parameter:", reply);
+    return;
+  }
+
   // Create enhanced war log entry if this appears to be a mission/decision
   if (content.length > 50 && userProfile) {
     // Extract potential commands from the AI response (basic parsing)
@@ -66,6 +72,9 @@ export async function createWarLogEntry(supabase: any, userProfile: any, combata
 }
 
 function extractRecognition(reply: string): string | null {
+  // Ensure reply is a string
+  if (!reply || typeof reply !== 'string') return null;
+  
   // Extract recognition/empathy phrases from the beginning of the response
   const lines = reply.split('\n');
   const firstLine = lines[0]?.trim();
@@ -76,11 +85,17 @@ function extractRecognition(reply: string): string | null {
 }
 
 function extractDilemma(content: string): string | null {
+  // Ensure content is a string
+  if (!content || typeof content !== 'string') return null;
+  
   // Extract the core dilemma from user input
   return content.length > 500 ? content.substring(0, 500) + "..." : content;
 }
 
 function extractDecisionMap(reply: string): any {
+  // Ensure reply is a string
+  if (!reply || typeof reply !== 'string') return null;
+  
   // Extract decision options from the response
   const options = [];
   const lines = reply.split('\n');
@@ -98,6 +113,9 @@ function extractDecisionMap(reply: string): any {
 }
 
 function extractWarning(reply: string): string | null {
+  // Ensure reply is a string
+  if (!reply || typeof reply !== 'string') return null;
+  
   // Extract warning/consequence phrases
   const warningPattern = /(warning|consequence|risk|danger|fail)/i;
   const lines = reply.split('\n');
@@ -111,6 +129,9 @@ function extractWarning(reply: string): string | null {
 }
 
 function extractCommit(reply: string): string | null {
+  // Ensure reply is a string
+  if (!reply || typeof reply !== 'string') return null;
+  
   // Extract binary instructions/commands
   const commitPattern = /(do this|action|execute|commit|now)/i;
   const lines = reply.split('\n');
