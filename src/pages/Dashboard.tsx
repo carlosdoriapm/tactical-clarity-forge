@@ -12,7 +12,7 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-warfare-dark flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-96">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-warfare-red"></div>
       </div>
     );
@@ -83,10 +83,10 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-warfare-dark p-6">
+    <div className="p-6">
       <div className="max-w-7xl mx-auto">
         {/* Welcome Section */}
-        <div className="p-6">
+        <div className="mb-6">
           <h1 className="text-4xl font-bold text-white mb-2">Welcome back, Operator</h1>
           <p className="text-warfare-gray text-lg mb-8">
             Command Center operational. Your tactical overview awaits.

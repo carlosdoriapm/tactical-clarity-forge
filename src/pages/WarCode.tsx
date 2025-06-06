@@ -67,7 +67,7 @@ const WarCode = () => {
   )
 
   return (
-    <div className="min-h-screen bg-warfare-dark p-6">
+    <div className="p-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
