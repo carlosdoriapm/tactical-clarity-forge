@@ -79,7 +79,17 @@ const ProChatWelcome: React.FC<ProChatWelcomeProps> = ({ onMessageSent }) => {
         </Button>
       </form>
 
-      <div className="mt-12 text-xs text-gray-600 italic">
+      <div className="text-sm text-gray-400 italic mb-4 mt-8 text-center max-w-2xl">
+        Not sure how to begin? Try one of these:
+        <div className="mt-2 space-y-1 text-gray-500">
+          <div>• Let's get started.</div>
+          <div>• I need help with...</div>
+          <div>• I keep messing up...</div>
+          <div>• Here's where I'm stuck.</div>
+        </div>
+      </div>
+
+      <div className="mt-4 text-xs text-gray-600 italic">
         Premium Chat Active — Tactical Intelligence Engaged
       </div>
     </div>
