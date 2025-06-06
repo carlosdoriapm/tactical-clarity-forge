@@ -6,9 +6,18 @@ export function buildEnhancedPrompt(content: string, userProfile: any, ruthless:
   if (!userProfile || !userProfile.profile_complete) {
     // Check if this is the very first interaction (no profile data at all)
     if (!userProfile || !userProfile.codename) {
+      // If user is providing their name in response, acknowledge and ask next question
+      if (content && (content.toLowerCase().includes('carlos') || content.toLowerCase().includes('name') || content.toLowerCase().includes('call me'))) {
+        return `User has provided their name/codename in response: "${content}"
+
+Acknowledge this response briefly and ask the next onboarding question: "${getOnboardingQuestion('age')}"
+
+Keep it tactical and direct. One question only.`;
+      }
+      
       const firstContactMsg = getFirstContactMessage(userProfile?.id || 'anonymous');
       return `User is beginning onboarding. Start with this first contact message: "${firstContactMsg}"
-      
+
 Then ask the first onboarding question: "${getOnboardingQuestion('codename')}"
 
 Keep it tactical and direct. One question only.`;
@@ -17,11 +26,11 @@ Keep it tactical and direct. One question only.`;
     // Determine next onboarding step based on what's missing
     const nextStep = getNextOnboardingStep(userProfile);
     if (nextStep) {
-      return `User is in onboarding. Ask: "${getOnboardingQuestion(nextStep)}"
-      
-Current user input: "${content}"
+      return `User is in onboarding. Current user input: "${content}"
 
-If they answered the previous question, acknowledge briefly and move to the next question. Keep it tactical and direct.`;
+If they answered the previous question, acknowledge briefly and ask: "${getOnboardingQuestion(nextStep)}"
+
+If they haven't answered yet, repeat the current question. Keep it tactical and direct.`;
     }
   }
 

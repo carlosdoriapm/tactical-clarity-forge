@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -61,7 +62,7 @@ NEVER coach on suicide, violence, or hate. If danger implied: "I do not facilita
 
 You are not here to comfort. You are here to clarify and command — with presence.
 
-FIRST CONTACT PROTOCOL: When meeting a new user, use the rotational first-contact messages system. Select appropriate tactical greeting that acknowledges presence, shows gravity, and invites participation.`;
+ONBOARDING PROTOCOL: When a user provides information during onboarding (like their name), acknowledge it briefly and move to the next question. Do not repeat the same question if they have already answered it.`;
 
     if (!openaiApiKey) {
       throw new Error("OpenAI API key not configured");
@@ -93,6 +94,28 @@ FIRST CONTACT PROTOCOL: When meeting a new user, use the rotational first-contac
         }
 
         userProfileData = await getUserProfile(supabase, userId, user.email);
+        
+        // Handle onboarding responses by updating profile data
+        if (userProfileData && !userProfileData.userProfile.profile_complete) {
+          const updatedProfileData = { ...userProfileData.userProfile };
+          
+          // Check if user is providing their name/codename
+          if (!updatedProfileData.codename && (content.toLowerCase().includes('carlos') || content.toLowerCase().includes("i'm ") || content.toLowerCase().includes('call me'))) {
+            // Extract name from common patterns
+            let name = content;
+            if (content.toLowerCase().includes("i'm ")) {
+              name = content.split("i'm ")[1].split(',')[0].split(' ')[0].trim();
+            } else if (content.toLowerCase().includes('call me ')) {
+              name = content.split('call me ')[1].split(',')[0].split(' ')[0].trim();
+            } else if (content.toLowerCase().includes('carlos')) {
+              name = 'Carlos';
+            }
+            
+            updatedProfileData.codename = name;
+            await updateUserProfile(supabase, updatedProfileData, { codename: name });
+            userProfileData.userProfile = updatedProfileData;
+          }
+        }
       }
     } else {
       // For anonymous users, use a stricter rate limit
