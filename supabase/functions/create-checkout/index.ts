@@ -13,30 +13,31 @@ serve(async (req) => {
   }
 
   try {
-    console.log("Starting checkout process...");
+    console.log("=== INICIO DO CHECKOUT PROCESS ===");
     
     const { email } = await req.json();
+    console.log("Email recebido:", email);
     
     if (!email) {
-      console.error("No email provided");
+      console.error("ERRO: Email não fornecido");
       throw new Error("Email is required");
     }
 
-    console.log("Email received:", email);
-
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) {
-      console.error("STRIPE_SECRET_KEY not found");
+      console.error("ERRO: STRIPE_SECRET_KEY não encontrada");
       throw new Error("Stripe configuration error");
     }
 
-    console.log("Stripe key found, initializing...");
+    console.log("Chave Stripe encontrada, iniciando Stripe...");
+    console.log("Tipo da chave:", stripeKey.startsWith("sk_test_") ? "TESTE" : "PRODUÇÃO");
+    
     const stripe = new Stripe(stripeKey, { 
       apiVersion: "2023-10-16" 
     });
 
     // Check for existing customer
-    console.log("Looking for existing customer...");
+    console.log("Procurando cliente existente...");
     const customers = await stripe.customers.list({ 
       email: email, 
       limit: 1 
@@ -45,16 +46,16 @@ serve(async (req) => {
     let customerId;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
-      console.log("Found existing customer:", customerId);
+      console.log("Cliente existente encontrado:", customerId);
     } else {
-      console.log("No existing customer found");
+      console.log("Nenhum cliente existente encontrado");
     }
 
-    console.log("Creating checkout session...");
-    const session = await stripe.checkout.sessions.create({
+    console.log("=== CRIANDO SESSÃO DE CHECKOUT ===");
+    const sessionConfig = {
       customer: customerId,
       customer_email: customerId ? undefined : email,
-      payment_method_types: ['card'], // Explicitly specify payment methods
+      payment_method_types: ['card'],
       line_items: [
         {
           price_data: {
@@ -71,25 +72,42 @@ serve(async (req) => {
       mode: "subscription",
       success_url: `${req.headers.get("origin")}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.get("origin")}/`,
-      allow_promotion_codes: true, // Allow discount codes
+      allow_promotion_codes: true,
       metadata: {
         email: email,
       },
-    });
+    };
 
-    console.log("Checkout session created:", session.id);
+    console.log("Configuração da sessão:", JSON.stringify(sessionConfig, null, 2));
 
-    return new Response(JSON.stringify({ url: session.url }), {
+    const session = await stripe.checkout.sessions.create(sessionConfig);
+
+    console.log("=== SESSÃO CRIADA COM SUCESSO ===");
+    console.log("Session ID:", session.id);
+    console.log("Session URL:", session.url);
+    console.log("Modo:", session.mode);
+    console.log("Status:", session.status);
+
+    return new Response(JSON.stringify({ 
+      url: session.url,
+      sessionId: session.id,
+      mode: session.mode 
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
-    console.error("Checkout error:", error);
+    console.error("=== ERRO NO CHECKOUT ===");
+    console.error("Tipo do erro:", error.constructor.name);
+    console.error("Mensagem do erro:", error.message);
+    console.error("Stack trace:", error.stack);
+    
     const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
     
     return new Response(JSON.stringify({ 
       error: errorMessage,
-      details: "Please check your Stripe configuration and try again"
+      details: "Please check your Stripe configuration and try again",
+      errorType: error.constructor.name
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
