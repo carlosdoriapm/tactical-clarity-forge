@@ -39,7 +39,7 @@ export const useWarLogs = () => {
         dilemma: log.dilemma || '',
         decision_path: log.decision_path || '',
         commands: log.commands || {},
-        intensity: (log.intensity as 'Low' | 'Medium' | 'High') || 'Medium',
+        intensity: (['Low', 'Medium', 'High'].includes(log.intensity) ? log.intensity : 'Medium') as 'Low' | 'Medium' | 'High',
         result: log.result || '',
         reflections: log.reflections || ''
       })) || [];
@@ -84,7 +84,7 @@ export const useWarLogs = () => {
         dilemma: data.dilemma,
         decision_path: data.decision_path,
         commands: data.commands,
-        intensity: data.intensity,
+        intensity: (['Low', 'Medium', 'High'].includes(data.intensity) ? data.intensity : 'Medium') as 'Low' | 'Medium' | 'High',
         result: data.result,
         reflections: data.reflections
       };
