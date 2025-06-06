@@ -64,7 +64,14 @@ const ProfileForm = ({ profile, onProfileUpdate }: ProfileFormProps) => {
         .maybeSingle();
 
       if (combatantProfile) {
-        setLocalProfile(combatantProfile);
+        // Type assertion to ensure compatibility with our interface
+        setLocalProfile({
+          ...combatantProfile,
+          physical_condition: combatantProfile.physical_condition as 'fit' | 'average' | 'overweight' | 'injured' | 'unknown',
+          relationship_status: combatantProfile.relationship_status as 'single' | 'partnered' | 'married' | 'divorced' | 'widowed',
+          school_experience: combatantProfile.school_experience as 'war_zone' | 'throne' | 'exile' | 'neutral',
+          intensity_mode: combatantProfile.intensity_mode as 'TACTICAL' | 'RUTHLESS' | 'LEGION'
+        });
       }
     } catch (error) {
       console.error('Error loading combatant profile:', error);
@@ -126,7 +133,13 @@ const ProfileForm = ({ profile, onProfileUpdate }: ProfileFormProps) => {
         
         error = insertError;
         if (data) {
-          setLocalProfile(data);
+          setLocalProfile({
+            ...data,
+            physical_condition: data.physical_condition as 'fit' | 'average' | 'overweight' | 'injured' | 'unknown',
+            relationship_status: data.relationship_status as 'single' | 'partnered' | 'married' | 'divorced' | 'widowed',
+            school_experience: data.school_experience as 'war_zone' | 'throne' | 'exile' | 'neutral',
+            intensity_mode: data.intensity_mode as 'TACTICAL' | 'RUTHLESS' | 'LEGION'
+          });
         }
       }
 
@@ -197,7 +210,7 @@ const ProfileForm = ({ profile, onProfileUpdate }: ProfileFormProps) => {
           <Label className="text-white">Physical Condition *</Label>
           <select
             value={localProfile.physical_condition}
-            onChange={(e) => setLocalProfile(prev => ({ ...prev, physical_condition: e.target.value as any }))}
+            onChange={(e) => setLocalProfile(prev => ({ ...prev, physical_condition: e.target.value as 'fit' | 'average' | 'overweight' | 'injured' | 'unknown' }))}
             className="w-full p-2 bg-warfare-dark text-white border border-warfare-blue/30 rounded-md"
           >
             <option value="fit">Fit - Regular training, good shape</option>
@@ -239,6 +252,36 @@ const ProfileForm = ({ profile, onProfileUpdate }: ProfileFormProps) => {
           </div>
         </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label className="text-white">Relationship Status *</Label>
+            <select
+              value={localProfile.relationship_status}
+              onChange={(e) => setLocalProfile(prev => ({ ...prev, relationship_status: e.target.value as 'single' | 'partnered' | 'married' | 'divorced' | 'widowed' }))}
+              className="w-full p-2 bg-warfare-dark text-white border border-warfare-blue/30 rounded-md"
+            >
+              <option value="single">Single</option>
+              <option value="partnered">Partnered</option>
+              <option value="married">Married</option>
+              <option value="divorced">Divorced</option>
+              <option value="widowed">Widowed</option>
+            </select>
+          </div>
+          <div>
+            <Label className="text-white">School Experience *</Label>
+            <select
+              value={localProfile.school_experience}
+              onChange={(e) => setLocalProfile(prev => ({ ...prev, school_experience: e.target.value as 'war_zone' | 'throne' | 'exile' | 'neutral' }))}
+              className="w-full p-2 bg-warfare-dark text-white border border-warfare-blue/30 rounded-md"
+            >
+              <option value="war_zone">War Zone - Bullied/hostile</option>
+              <option value="throne">Throne - Popular/dominant</option>
+              <option value="exile">Exile - Outcast/loner</option>
+              <option value="neutral">Neutral - Average experience</option>
+            </select>
+          </div>
+        </div>
+
         <div>
           <Label className="text-white">Primary Vice *</Label>
           <Textarea
@@ -273,7 +316,7 @@ const ProfileForm = ({ profile, onProfileUpdate }: ProfileFormProps) => {
           <Label className="text-white mb-3 block">Intensity Mode</Label>
           <RadioGroup
             value={localProfile.intensity_mode}
-            onValueChange={(value) => setLocalProfile(prev => ({ ...prev, intensity_mode: value as any }))}
+            onValueChange={(value) => setLocalProfile(prev => ({ ...prev, intensity_mode: value as 'TACTICAL' | 'RUTHLESS' | 'LEGION' }))}
             className="space-y-3"
           >
             <div className="flex items-center space-x-3 p-3 rounded-lg border border-warfare-blue/30 hover:border-warfare-blue/50">
