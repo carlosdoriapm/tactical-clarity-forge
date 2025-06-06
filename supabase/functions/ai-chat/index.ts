@@ -8,6 +8,29 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Simple rate limiting store
+const rateLimitStore = new Map();
+const RATE_LIMIT_WINDOW = 60000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 10;
+
+function checkRateLimit(userId: string): boolean {
+  const now = Date.now();
+  const userRequests = rateLimitStore.get(userId) || [];
+  
+  // Remove old requests outside the window
+  const validRequests = userRequests.filter((timestamp: number) => now - timestamp < RATE_LIMIT_WINDOW);
+  
+  if (validRequests.length >= MAX_REQUESTS_PER_WINDOW) {
+    return false;
+  }
+  
+  // Add current request
+  validRequests.push(now);
+  rateLimitStore.set(userId, validRequests);
+  
+  return true;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -45,6 +68,16 @@ serve(async (req) => {
       userId = user?.id;
       
       if (userId) {
+        // Check rate limit
+        if (!checkRateLimit(userId)) {
+          return new Response(JSON.stringify({ 
+            error: "Rate limit exceeded. Please wait a moment before sending another message." 
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 429,
+          });
+        }
+
         // Get or create user profile
         const { data: existingProfile } = await supabase
           .from("users")
@@ -113,28 +146,64 @@ serve(async (req) => {
       enhancedPrompt += `\n\nruthless mode: on`;
     }
 
-    // Call OpenAI API
-    const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${openaiApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: counselorPrompt },
-          { role: "user", content: enhancedPrompt }
-        ],
-      }),
-    });
+    console.log('Making OpenAI API request...');
 
-    if (!openaiResponse.ok) {
-      throw new Error(`OpenAI API error: ${openaiResponse.statusText}`);
+    // Call OpenAI API with retry logic for rate limiting
+    let openaiResponse;
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    while (retryCount < maxRetries) {
+      try {
+        openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${openaiApiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "gpt-4o-mini",
+            messages: [
+              { role: "system", content: counselorPrompt },
+              { role: "user", content: enhancedPrompt }
+            ],
+            max_tokens: 500,
+            temperature: 0.7,
+          }),
+        });
+
+        if (openaiResponse.status === 429) {
+          // Rate limited, wait and retry
+          retryCount++;
+          if (retryCount < maxRetries) {
+            console.log(`Rate limited, retrying in ${retryCount * 2} seconds...`);
+            await new Promise(resolve => setTimeout(resolve, retryCount * 2000));
+            continue;
+          } else {
+            throw new Error("OpenAI API rate limit exceeded. Please try again in a few minutes.");
+          }
+        }
+
+        if (!openaiResponse.ok) {
+          const errorData = await openaiResponse.json().catch(() => ({}));
+          throw new Error(`OpenAI API error: ${openaiResponse.status} ${openaiResponse.statusText} - ${errorData.error?.message || 'Unknown error'}`);
+        }
+
+        break; // Success, exit retry loop
+      } catch (error) {
+        retryCount++;
+        if (retryCount >= maxRetries) {
+          throw error;
+        }
+        console.log(`Request failed, retrying... (${retryCount}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
     }
 
     const openaiData = await openaiResponse.json();
     const reply = openaiData.choices[0].message.content;
+
+    console.log('OpenAI response received successfully');
 
     // Store chat messages
     if (userId) {
@@ -193,9 +262,22 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error('AI Chat error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    
+    // Provide more specific error messages
+    let errorMessage = error.message;
+    let statusCode = 500;
+    
+    if (error.message.includes('rate limit') || error.message.includes('Too Many Requests')) {
+      errorMessage = "The AI service is currently busy. Please wait a moment and try again.";
+      statusCode = 429;
+    } else if (error.message.includes('OpenAI API')) {
+      errorMessage = "AI service temporarily unavailable. Please try again in a moment.";
+      statusCode = 503;
+    }
+    
+    return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+      status: statusCode,
     });
   }
 });

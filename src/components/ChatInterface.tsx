@@ -59,15 +59,31 @@ const ChatInterface = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(error.message || 'Failed to communicate with AI service');
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
 
       appendToChat('assistant', data.reply);
       
     } catch (error) {
       console.error('Chat error:', error);
+      
+      let errorMessage = "Failed to send message. Please try again.";
+      
+      if (error.message.includes('rate limit') || error.message.includes('busy')) {
+        errorMessage = "AI service is busy. Please wait a moment and try again.";
+      } else if (error.message.includes('temporarily unavailable')) {
+        errorMessage = "AI service temporarily unavailable. Please try again in a moment.";
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to send message. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
