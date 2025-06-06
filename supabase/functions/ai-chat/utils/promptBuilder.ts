@@ -8,11 +8,11 @@ export function buildEnhancedPrompt(content: string, userProfile: any, ruthless:
     if (!userProfile || !userProfile.codename) {
       // If user is providing their name in response, acknowledge and ask next question
       if (content && (content.toLowerCase().includes('carlos') || content.toLowerCase().includes('name') || content.toLowerCase().includes('call me'))) {
-        return `User has provided their name/codename in response: "${content}"
+        return `User has provided their name in response: "${content}"
 
 Acknowledge this response briefly and ask the next onboarding question: "${getOnboardingQuestion('age')}"
 
-Keep it tactical and direct. One question only.`;
+Keep it direct and clear. One question only.`;
       }
       
       const firstContactMsg = getFirstContactMessage(userProfile?.id || 'anonymous');
@@ -20,7 +20,7 @@ Keep it tactical and direct. One question only.`;
 
 Then ask the first onboarding question: "${getOnboardingQuestion('codename')}"
 
-Keep it tactical and direct. One question only.`;
+Keep it direct and clear. One question only.`;
     }
     
     // Determine next onboarding step based on what's missing
@@ -30,7 +30,7 @@ Keep it tactical and direct. One question only.`;
 
 If they answered the previous question, acknowledge briefly and ask: "${getOnboardingQuestion(nextStep)}"
 
-If they haven't answered yet, repeat the current question. Keep it tactical and direct.`;
+If they haven't answered yet, repeat the current question. Keep it direct and clear.`;
     }
   }
 
@@ -38,15 +38,15 @@ If they haven't answered yet, repeat the current question. Keep it tactical and 
   let prompt = `User message: "${content}"
 
 User Profile Context:
-- Codename: ${userProfile?.codename || 'Unknown'}
+- Name: ${userProfile?.codename || 'Unknown'}
 - Age: ${userProfile?.age || 'Unknown'}
 - Physical Condition: ${userProfile?.physical_condition || 'Unknown'}
-- Intensity Mode: ${userProfile?.intensity_mode || 'TACTICAL'}
-- Mission: ${userProfile?.mission_90_day || 'Not set'}
-- Primary Vice: ${userProfile?.vice || 'Unknown'}`;
+- Intensity Preference: ${userProfile?.intensity_mode || 'DIRECT'}
+- Main Goal: ${userProfile?.mission_90_day || 'Not set'}
+- Main Challenge: ${userProfile?.vice || 'Unknown'}`;
 
   if (ruthless) {
-    prompt += "\n\nUSE RUTHLESS MODE: Short, dry, minimal. Cut 25% of words, strip justification.";
+    prompt += "\n\nUSE MINIMAL MODE: Short, direct, essential points only. Cut unnecessary words.";
   }
 
   return prompt;
