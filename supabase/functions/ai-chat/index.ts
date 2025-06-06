@@ -3,29 +3,16 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
+import { checkRateLimit } from "./utils/rateLimiter.ts";
+import { getUserProfile, updateUserProfile } from "./utils/userManager.ts";
+import { callOpenAI } from "./utils/openaiClient.ts";
+import { buildEnhancedPrompt } from "./utils/promptBuilder.ts";
+import { storeChatMessages, createWarLogEntry } from "./utils/dataStorage.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-// Simple rate limiting store
-const rateLimitStore = new Map();
-const RATE_LIMIT_WINDOW = 60000; // 1 minute
-const MAX_REQUESTS_PER_WINDOW = 3; // Very conservative limit
-
-function checkRateLimit(userId: string): boolean {
-  const now = Date.now();
-  const userRequests = rateLimitStore.get(userId) || [];
-  const validRequests = userRequests.filter((timestamp: number) => now - timestamp < RATE_LIMIT_WINDOW);
-  
-  if (validRequests.length >= MAX_REQUESTS_PER_WINDOW) {
-    return false;
-  }
-  
-  validRequests.push(now);
-  rateLimitStore.set(userId, validRequests);
-  return true;
-}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -74,33 +61,7 @@ serve(async (req) => {
           });
         }
 
-        // Get or create user profile
-        const { data: existingProfile } = await supabase
-          .from("users")
-          .select("*")
-          .eq("email", user.email)
-          .single();
-          
-        if (!existingProfile) {
-          // Create new user profile
-          const { data: newProfile } = await supabase
-            .from("users")
-            .insert([{ 
-              email: user.email,
-              profile_complete: false,
-              last_active: new Date().toISOString()
-            }])
-            .select()
-            .single();
-          userProfile = newProfile;
-        } else {
-          userProfile = existingProfile;
-          // Update last active
-          await supabase
-            .from("users")
-            .update({ last_active: new Date().toISOString() })
-            .eq("id", existingProfile.id);
-        }
+        userProfile = await getUserProfile(supabase, userId, user.email);
       }
     } else {
       // For anonymous users, use a stricter rate limit
@@ -116,125 +77,21 @@ serve(async (req) => {
 
     // Handle profile completion if profileData is provided
     if (profileData && userProfile) {
-      const { data: updatedProfile } = await supabase
-        .from("users")
-        .update({
-          intensity_mode: profileData.intensity_mode,
-          domain_focus: profileData.domain_focus,
-          current_mission: profileData.current_mission,
-          profile_complete: true,
-          onboarding_completed: true
-        })
-        .eq("id", userProfile.id)
-        .select()
-        .single();
-      userProfile = updatedProfile;
+      userProfile = await updateUserProfile(supabase, userProfile, profileData);
     }
 
     // Prepare the enhanced prompt
-    let enhancedPrompt = content;
-    
-    // Add user context if profile exists
-    if (userProfile) {
-      const contextInfo = [];
-      if (userProfile.intensity_mode) contextInfo.push(`intensity_mode: ${userProfile.intensity_mode}`);
-      if (userProfile.domain_focus) contextInfo.push(`domain_focus: ${userProfile.domain_focus}`);
-      if (userProfile.current_mission) contextInfo.push(`current_mission: ${userProfile.current_mission}`);
-      if (!userProfile.profile_complete) contextInfo.push(`profile_complete: false`);
-      
-      if (contextInfo.length > 0) {
-        enhancedPrompt = `${content}\n\nUser context: ${contextInfo.join(', ')}`;
-      }
-    }
-    
-    // Add ruthless mode indicator
-    if (ruthless) {
-      enhancedPrompt += `\n\nruthless mode: on`;
-    }
+    const enhancedPrompt = buildEnhancedPrompt(content, userProfile, ruthless);
 
-    console.log('Making OpenAI API request...');
-
-    // Call OpenAI API with simple retry logic
-    const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${openaiApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: counselorPrompt },
-          { role: "user", content: enhancedPrompt }
-        ],
-        max_tokens: 300,
-        temperature: 0.7,
-      }),
-    });
-
-    if (!openaiResponse.ok) {
-      const errorData = await openaiResponse.json().catch(() => ({}));
-      console.error('OpenAI API Error:', openaiResponse.status, errorData);
-      
-      if (openaiResponse.status === 429) {
-        throw new Error("The AI service is currently busy. Please try again in a few minutes.");
-      } else {
-        throw new Error(`AI service error (${openaiResponse.status}). Please try again.`);
-      }
-    }
-
-    const openaiData = await openaiResponse.json();
-    
-    if (!openaiData.choices || !openaiData.choices[0] || !openaiData.choices[0].message) {
-      throw new Error("Invalid response from AI service. Please try again.");
-    }
-    
-    const reply = openaiData.choices[0].message.content;
+    // Call OpenAI API
+    const reply = await callOpenAI(openaiApiKey, enhancedPrompt, counselorPrompt);
 
     console.log('OpenAI response received successfully');
 
     // Store chat messages
     if (userId !== 'anonymous') {
-      const { error } = await supabase
-        .from("chats")
-        .insert([
-          { user_id: userId, role: "user", content },
-          { user_id: userId, role: "assistant", content: reply }
-        ]);
-
-      if (error) {
-        console.error("Error storing chat:", error);
-      }
-
-      // Create enhanced war log entry if this appears to be a mission/decision
-      if (content.length > 50 && userProfile) {
-        // Extract potential commands from the AI response (basic parsing)
-        const commands = {};
-        const intensityMatch = reply.match(/intensity[:\s]+(tactical|ruthless|legion)/i);
-        const intensity = intensityMatch ? intensityMatch[1].toLowerCase() : userProfile.intensity_mode?.toLowerCase();
-        
-        // Look for common command patterns in the response
-        if (reply.toLowerCase().includes('workout') || reply.toLowerCase().includes('exercise')) {
-          commands['body'] = true;
-        }
-        if (reply.toLowerCase().includes('mindset') || reply.toLowerCase().includes('mental')) {
-          commands['mindset'] = true;
-        }
-        if (reply.toLowerCase().includes('environment') || reply.toLowerCase().includes('space')) {
-          commands['environment'] = true;
-        }
-
-        await supabase
-          .from("war_logs")
-          .insert([{
-            user_id: userProfile.id,
-            dilemma: content,
-            decision_path: reply.substring(0, 500), // Store first 500 chars of response
-            commands: Object.keys(commands).length > 0 ? commands : null,
-            intensity: intensity || null,
-            result: null // Will be updated later when user provides feedback
-          }]);
-      }
+      await storeChatMessages(supabase, userId, content, reply);
+      await createWarLogEntry(supabase, userProfile, content, reply);
     }
 
     return new Response(JSON.stringify({ 
