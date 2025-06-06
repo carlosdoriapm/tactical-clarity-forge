@@ -24,9 +24,17 @@ export async function callOpenAI(apiKey: string, prompt: string, counselorPrompt
     console.error('OpenAI API Error:', response.status, errorData);
     
     if (response.status === 429) {
-      throw new Error("The AI service is currently busy. Please try again in a few minutes.");
+      if (errorData.error?.code === 'insufficient_quota') {
+        throw new Error("The AI service quota has been exceeded. Please contact support or try again later.");
+      } else {
+        throw new Error("The AI service is currently busy. Please try again in a few minutes.");
+      }
+    } else if (response.status === 401) {
+      throw new Error("AI service authentication failed. Please contact support.");
+    } else if (response.status >= 500) {
+      throw new Error("AI service is temporarily unavailable. Please try again in a few minutes.");
     } else {
-      throw new Error(`AI service error (${response.status}). Please try again.`);
+      throw new Error(`AI service error (${response.status}). Please try again later.`);
     }
   }
 

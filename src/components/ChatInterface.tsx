@@ -74,18 +74,33 @@ const ChatInterface = () => {
       console.error('Chat error:', error);
       
       let errorMessage = "Failed to send message. Please try again.";
+      let toastTitle = "Chat Error";
       let toastDuration = 5000;
       
-      if (error.message.includes('busy') || error.message.includes('high demand')) {
+      if (error.message.includes('quota has been exceeded')) {
+        errorMessage = "The AI service quota has been exceeded. Please contact support for assistance.";
+        toastTitle = "Service Quota Exceeded";
+        toastDuration = 10000;
+      } else if (error.message.includes('busy') || error.message.includes('high demand')) {
         errorMessage = "The AI is experiencing high demand. Please wait 2-3 minutes and try again.";
+        toastTitle = "Service Busy";
         toastDuration = 8000;
       } else if (error.message.includes('too quickly') || error.message.includes('wait a moment')) {
         errorMessage = "Please wait a moment before sending another message.";
+        toastTitle = "Rate Limited";
         toastDuration = 6000;
+      } else if (error.message.includes('authentication failed')) {
+        errorMessage = "Service authentication issue. Please contact support.";
+        toastTitle = "Authentication Error";
+        toastDuration = 8000;
+      } else if (error.message.includes('temporarily unavailable')) {
+        errorMessage = "AI service is temporarily unavailable. Please try again in a few minutes.";
+        toastTitle = "Service Unavailable";
+        toastDuration = 8000;
       }
       
       toast({
-        title: "Service Busy",
+        title: toastTitle,
         description: errorMessage,
         variant: "destructive",
         duration: toastDuration,
