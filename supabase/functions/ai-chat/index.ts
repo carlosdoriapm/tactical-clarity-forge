@@ -8,26 +8,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Enhanced rate limiting store with exponential backoff
+// Simple rate limiting store
 const rateLimitStore = new Map();
 const RATE_LIMIT_WINDOW = 60000; // 1 minute
-const MAX_REQUESTS_PER_WINDOW = 5; // Reduced from 10 to 5
-const GLOBAL_RATE_LIMIT = new Map();
-const GLOBAL_WINDOW = 10000; // 10 seconds
-const MAX_GLOBAL_REQUESTS = 3; // Max 3 requests per 10 seconds globally
+const MAX_REQUESTS_PER_WINDOW = 3; // Very conservative limit
 
 function checkRateLimit(userId: string): boolean {
   const now = Date.now();
-  
-  // Check global rate limit first
-  const globalRequests = GLOBAL_RATE_LIMIT.get('global') || [];
-  const validGlobalRequests = globalRequests.filter((timestamp: number) => now - timestamp < GLOBAL_WINDOW);
-  
-  if (validGlobalRequests.length >= MAX_GLOBAL_REQUESTS) {
-    return false;
-  }
-  
-  // Check user-specific rate limit
   const userRequests = rateLimitStore.get(userId) || [];
   const validRequests = userRequests.filter((timestamp: number) => now - timestamp < RATE_LIMIT_WINDOW);
   
@@ -35,12 +22,8 @@ function checkRateLimit(userId: string): boolean {
     return false;
   }
   
-  // Add current request to both limits
   validRequests.push(now);
-  validGlobalRequests.push(now);
   rateLimitStore.set(userId, validRequests);
-  GLOBAL_RATE_LIMIT.set('global', validGlobalRequests);
-  
   return true;
 }
 
@@ -84,7 +67,7 @@ serve(async (req) => {
         // Check rate limit
         if (!checkRateLimit(userId)) {
           return new Response(JSON.stringify({ 
-            error: "Too many requests. Please wait a moment before sending another message. The AI service is busy processing other requests." 
+            error: "You're sending messages too quickly. Please wait a moment before trying again." 
           }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
             status: 429,
@@ -123,7 +106,7 @@ serve(async (req) => {
       // For anonymous users, use a stricter rate limit
       if (!checkRateLimit('anonymous')) {
         return new Response(JSON.stringify({ 
-          error: "Service is busy. Please try again in a few moments or sign in for priority access." 
+          error: "Please wait a moment before sending another message." 
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 429,
@@ -171,66 +154,32 @@ serve(async (req) => {
 
     console.log('Making OpenAI API request...');
 
-    // Call OpenAI API with enhanced retry logic and exponential backoff
-    let openaiResponse;
-    let retryCount = 0;
-    const maxRetries = 2; // Reduced retries
-    const baseDelay = 2000; // Start with 2 seconds
-    
-    while (retryCount < maxRetries) {
-      try {
-        openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${openaiApiKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "gpt-4o-mini",
-            messages: [
-              { role: "system", content: counselorPrompt },
-              { role: "user", content: enhancedPrompt }
-            ],
-            max_tokens: 400, // Reduced from 500
-            temperature: 0.7,
-          }),
-        });
+    // Call OpenAI API with simple retry logic
+    const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${openaiApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: counselorPrompt },
+          { role: "user", content: enhancedPrompt }
+        ],
+        max_tokens: 300,
+        temperature: 0.7,
+      }),
+    });
 
-        if (openaiResponse.status === 429) {
-          // Rate limited, use exponential backoff
-          retryCount++;
-          if (retryCount < maxRetries) {
-            const delay = baseDelay * Math.pow(2, retryCount); // Exponential backoff
-            console.log(`Rate limited, retrying in ${delay}ms... (attempt ${retryCount}/${maxRetries})`);
-            await new Promise(resolve => setTimeout(resolve, delay));
-            continue;
-          } else {
-            throw new Error("OpenAI API is currently overloaded. Please try again in a few minutes.");
-          }
-        }
-
-        if (!openaiResponse.ok) {
-          const errorData = await openaiResponse.json().catch(() => ({}));
-          console.error('OpenAI API Error:', openaiResponse.status, errorData);
-          throw new Error(`AI service temporarily unavailable (${openaiResponse.status}). Please try again in a moment.`);
-        }
-
-        break; // Success, exit retry loop
-      } catch (error) {
-        retryCount++;
-        console.error(`Request attempt ${retryCount} failed:`, error.message);
-        
-        if (retryCount >= maxRetries) {
-          // Final attempt failed
-          if (error.message.includes('rate limit') || error.message.includes('overloaded')) {
-            throw new Error("The AI service is currently overloaded. Please wait a few minutes and try again.");
-          }
-          throw new Error("AI service temporarily unavailable. Please try again in a moment.");
-        }
-        
-        // Wait before retry with exponential backoff
-        const delay = baseDelay * Math.pow(2, retryCount);
-        await new Promise(resolve => setTimeout(resolve, delay));
+    if (!openaiResponse.ok) {
+      const errorData = await openaiResponse.json().catch(() => ({}));
+      console.error('OpenAI API Error:', openaiResponse.status, errorData);
+      
+      if (openaiResponse.status === 429) {
+        throw new Error("The AI service is currently busy. Please try again in a few minutes.");
+      } else {
+        throw new Error(`AI service error (${openaiResponse.status}). Please try again.`);
       }
     }
 
@@ -302,16 +251,16 @@ serve(async (req) => {
   } catch (error) {
     console.error('AI Chat error:', error);
     
-    // Provide more specific error messages
+    // Provide specific error messages
     let errorMessage = error.message;
     let statusCode = 500;
     
-    if (error.message.includes('rate limit') || error.message.includes('Too Many Requests') || error.message.includes('overloaded')) {
-      errorMessage = "The AI service is currently busy processing many requests. Please wait a moment and try again.";
-      statusCode = 429;
-    } else if (error.message.includes('OpenAI API') || error.message.includes('temporarily unavailable')) {
-      errorMessage = "AI service temporarily unavailable. Please try again in a moment.";
+    if (error.message.includes('busy') || error.message.includes('AI service is currently busy')) {
+      errorMessage = "The AI is currently experiencing high demand. Please wait 2-3 minutes and try again.";
       statusCode = 503;
+    } else if (error.message.includes('rate limit') || error.message.includes('too quickly')) {
+      errorMessage = "Please wait a moment before sending another message.";
+      statusCode = 429;
     }
     
     return new Response(JSON.stringify({ error: errorMessage }), {
