@@ -13,46 +13,103 @@ interface ProfileSetupProps {
 const ProfileSetup = ({ onComplete, onSkip }: ProfileSetupProps) => {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    age_condition: '',
-    relationship_status: '',
-    top_pains: '',
-    addiction_vice: '',
+    codename: '',
+    age: '',
+    physical_condition: 'average' as 'fit' | 'average' | 'overweight' | 'injured' | 'unknown',
+    childhood_summary: '',
+    parents: '',
+    siblings: '',
+    relationship_status: 'single' as 'single' | 'partnered' | 'married' | 'divorced' | 'widowed',
+    school_experience: 'neutral' as 'war_zone' | 'throne' | 'exile' | 'neutral',
+    vice: '',
     mission_90_day: '',
-    greatest_fear: '',
-    intensity_mode: 'TACTICAL' as 'TACTICAL' | 'RUTHLESS' | 'LEGION',
-    domain_focus: '' as 'corpo' | 'dinheiro' | 'influencia' | ''
+    fear_block: '',
+    intensity_mode: 'TACTICAL' as 'TACTICAL' | 'RUTHLESS' | 'LEGION'
   });
 
   const questions = [
     {
-      key: 'age_condition',
-      label: 'Age & Physical Condition',
-      placeholder: 'e.g., 28, decent shape but inconsistent training'
+      key: 'codename',
+      label: 'Combat Codename',
+      placeholder: 'e.g., Shadow Wolf, Iron Phoenix, Night Hawk',
+      type: 'input'
+    },
+    {
+      key: 'age',
+      label: 'Age (12-80)',
+      placeholder: 'e.g., 28',
+      type: 'number'
+    },
+    {
+      key: 'physical_condition',
+      label: 'Physical Condition',
+      type: 'select',
+      options: [
+        { value: 'fit', label: 'Fit - Regular training, good shape' },
+        { value: 'average', label: 'Average - Decent shape, inconsistent' },
+        { value: 'overweight', label: 'Overweight - Need to rebuild' },
+        { value: 'injured', label: 'Injured - Working around limitations' },
+        { value: 'unknown', label: 'Unknown - Need assessment' }
+      ]
+    },
+    {
+      key: 'childhood_summary',
+      label: 'Childhood Summary (max 3 lines)',
+      placeholder: 'Brief overview of your formative years, key experiences that shaped you',
+      type: 'textarea'
+    },
+    {
+      key: 'parents',
+      label: 'Parents Status',
+      placeholder: 'e.g., "Alive, distant", "Father absent", "Both strong anchors"',
+      type: 'input'
+    },
+    {
+      key: 'siblings',
+      label: 'Siblings',
+      placeholder: 'e.g., "1 brother (rival)", "Only child", "2 sisters (supportive)"',
+      type: 'input'
     },
     {
       key: 'relationship_status',
       label: 'Relationship Status',
-      placeholder: 'e.g., single, married, complicated'
+      type: 'select',
+      options: [
+        { value: 'single', label: 'Single' },
+        { value: 'partnered', label: 'Partnered' },
+        { value: 'married', label: 'Married' },
+        { value: 'divorced', label: 'Divorced' },
+        { value: 'widowed', label: 'Widowed' }
+      ]
     },
     {
-      key: 'top_pains',
-      label: 'Top 3 Pains Right Now',
-      placeholder: 'e.g., lack of direction, financial stress, poor discipline'
+      key: 'school_experience',
+      label: 'School Experience',
+      type: 'select',
+      options: [
+        { value: 'war_zone', label: 'War Zone - Bullied, struggled, survival mode' },
+        { value: 'throne', label: 'Throne - Popular, successful, leadership' },
+        { value: 'exile', label: 'Exile - Outcast, isolated, observer' },
+        { value: 'neutral', label: 'Neutral - Average experience, blended in' }
+      ]
     },
     {
-      key: 'addiction_vice',
-      label: 'Main Addiction or Vice (if any)',
-      placeholder: 'e.g., social media, alcohol, procrastination'
+      key: 'vice',
+      label: 'Primary Vice or Weakness',
+      placeholder: 'e.g., social media addiction, alcohol, procrastination, anger',
+      type: 'textarea'
     },
     {
       key: 'mission_90_day',
       label: 'Core 90-Day Mission',
-      placeholder: 'e.g., lose 20lbs, increase income, build morning routine'
+      placeholder: 'e.g., lose 20lbs and build morning routine, increase income by $2K, quit smoking',
+      type: 'textarea'
     },
     {
-      key: 'greatest_fear',
+      key: 'fear_block',
       label: 'Greatest Fear Blocking Action',
-      placeholder: 'e.g., failure, judgment, not being good enough'
+      placeholder: 'e.g., failure and judgment, not being good enough, losing control',
+      type: 'textarea'
     }
   ];
 
@@ -64,15 +121,27 @@ const ProfileSetup = ({ onComplete, onSkip }: ProfileSetupProps) => {
     if (step < questions.length) {
       setStep(step + 1);
     } else {
-      setStep(questions.length + 1); // Move to intensity/domain selection
+      setStep(questions.length + 1); // Move to intensity selection
     }
   };
 
   const handleComplete = () => {
     onComplete({
       ...formData,
-      current_mission: formData.mission_90_day
+      age: parseInt(formData.age) || null
     });
+  };
+
+  const isCurrentStepValid = () => {
+    const currentQuestion = questions[step - 1];
+    if (!currentQuestion) return true;
+    
+    const value = formData[currentQuestion.key as keyof typeof formData];
+    if (currentQuestion.key === 'age') {
+      const age = parseInt(formData.age);
+      return age >= 12 && age <= 80;
+    }
+    return value && value.toString().trim() !== '';
   };
 
   if (step <= questions.length) {
@@ -100,12 +169,43 @@ const ProfileSetup = ({ onComplete, onSkip }: ProfileSetupProps) => {
             {step}. {currentQuestion.label}
           </Label>
           
-          <Textarea
-            value={formData[currentQuestion.key as keyof typeof formData] as string}
-            onChange={(e) => handleInputChange(currentQuestion.key, e.target.value)}
-            placeholder={currentQuestion.placeholder}
-            className="bg-warfare-dark text-white border-warfare-blue/30 min-h-[100px]"
-          />
+          {currentQuestion.type === 'select' ? (
+            <select
+              value={formData[currentQuestion.key as keyof typeof formData] as string}
+              onChange={(e) => handleInputChange(currentQuestion.key, e.target.value)}
+              className="w-full p-3 bg-warfare-dark text-white border border-warfare-blue/30 rounded-md"
+            >
+              {currentQuestion.options?.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          ) : currentQuestion.type === 'number' ? (
+            <Input
+              type="number"
+              min="12"
+              max="80"
+              value={formData[currentQuestion.key as keyof typeof formData] as string}
+              onChange={(e) => handleInputChange(currentQuestion.key, e.target.value)}
+              placeholder={currentQuestion.placeholder}
+              className="bg-warfare-dark text-white border-warfare-blue/30"
+            />
+          ) : currentQuestion.type === 'textarea' ? (
+            <Textarea
+              value={formData[currentQuestion.key as keyof typeof formData] as string}
+              onChange={(e) => handleInputChange(currentQuestion.key, e.target.value)}
+              placeholder={currentQuestion.placeholder}
+              className="bg-warfare-dark text-white border-warfare-blue/30 min-h-[100px]"
+            />
+          ) : (
+            <Input
+              value={formData[currentQuestion.key as keyof typeof formData] as string}
+              onChange={(e) => handleInputChange(currentQuestion.key, e.target.value)}
+              placeholder={currentQuestion.placeholder}
+              className="bg-warfare-dark text-white border-warfare-blue/30"
+            />
+          )}
           
           <div className="flex justify-between">
             <Button 
@@ -118,7 +218,7 @@ const ProfileSetup = ({ onComplete, onSkip }: ProfileSetupProps) => {
             <Button 
               onClick={handleNext}
               className="bg-warfare-red hover:bg-warfare-red/80"
-              disabled={!(formData[currentQuestion.key as keyof typeof formData] as string).trim()}
+              disabled={!isCurrentStepValid()}
             >
               Next
             </Button>
@@ -128,12 +228,12 @@ const ProfileSetup = ({ onComplete, onSkip }: ProfileSetupProps) => {
     );
   }
 
-  // Intensity and domain selection
+  // Intensity selection
   return (
     <div className="max-w-2xl mx-auto p-6 bg-warfare-dark/90 rounded-xl border border-warfare-blue/30">
       <div className="mb-6">
         <h2 className="text-xl font-bold text-white mb-2">Tactical Configuration</h2>
-        <p className="text-warfare-blue">Select your operational parameters</p>
+        <p className="text-warfare-blue">Select your operational intensity</p>
       </div>
 
       <div className="space-y-6">
@@ -155,40 +255,6 @@ const ProfileSetup = ({ onComplete, onSkip }: ProfileSetupProps) => {
                   {mode === 'TACTICAL' && 'Measured, direct guidance'}
                   {mode === 'RUTHLESS' && 'Blunt, no-excuse approach'}
                   {mode === 'LEGION' && 'Extreme, field-command discipline'}
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <Label className="text-white text-lg mb-3 block">Domain Focus (Optional)</Label>
-          <div className="grid gap-3">
-            <button
-              onClick={() => setFormData(prev => ({ ...prev, domain_focus: '' }))}
-              className={`p-3 rounded-lg border text-left ${
-                formData.domain_focus === ''
-                  ? 'border-warfare-red bg-warfare-red/20 text-white'
-                  : 'border-warfare-blue/30 bg-warfare-dark text-warfare-blue'
-              }`}
-            >
-              General Warfare
-            </button>
-            {(['corpo', 'dinheiro', 'influencia'] as const).map((domain) => (
-              <button
-                key={domain}
-                onClick={() => setFormData(prev => ({ ...prev, domain_focus: domain }))}
-                className={`p-3 rounded-lg border text-left ${
-                  formData.domain_focus === domain
-                    ? 'border-warfare-red bg-warfare-red/20 text-white'
-                    : 'border-warfare-blue/30 bg-warfare-dark text-warfare-blue'
-                }`}
-              >
-                {domain.charAt(0).toUpperCase() + domain.slice(1)}
-                <div className="text-sm mt-1">
-                  {domain === 'corpo' && 'Physical discipline & health'}
-                  {domain === 'dinheiro' && 'Wealth & financial strategy'}
-                  {domain === 'influencia' && 'Status & social power'}
                 </div>
               </button>
             ))}

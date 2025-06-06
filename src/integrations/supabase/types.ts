@@ -33,6 +33,117 @@ export type Database = {
         }
         Relationships: []
       }
+      combatant_profile: {
+        Row: {
+          age: number | null
+          childhood_summary: string
+          codename: string
+          created_at: string | null
+          fear_block: string
+          first_recognition: string | null
+          id: string
+          intensity_mode: string
+          mission_90_day: string
+          parents: string | null
+          physical_condition: string
+          profile_complete: boolean | null
+          relationship_status: string
+          school_experience: string
+          siblings: string | null
+          updated_at: string | null
+          user_id: string
+          vice: string
+        }
+        Insert: {
+          age?: number | null
+          childhood_summary: string
+          codename: string
+          created_at?: string | null
+          fear_block: string
+          first_recognition?: string | null
+          id?: string
+          intensity_mode?: string
+          mission_90_day: string
+          parents?: string | null
+          physical_condition: string
+          profile_complete?: boolean | null
+          relationship_status: string
+          school_experience: string
+          siblings?: string | null
+          updated_at?: string | null
+          user_id: string
+          vice: string
+        }
+        Update: {
+          age?: number | null
+          childhood_summary?: string
+          codename?: string
+          created_at?: string | null
+          fear_block?: string
+          first_recognition?: string | null
+          id?: string
+          intensity_mode?: string
+          mission_90_day?: string
+          parents?: string | null
+          physical_condition?: string
+          profile_complete?: boolean | null
+          relationship_status?: string
+          school_experience?: string
+          siblings?: string | null
+          updated_at?: string | null
+          user_id?: string
+          vice?: string
+        }
+        Relationships: []
+      }
+      combatant_war_log: {
+        Row: {
+          commit: string | null
+          completed: boolean | null
+          created_at: string | null
+          decision_map: Json | null
+          extract: string | null
+          id: string
+          input_text: string
+          intensity_mode: string
+          profile_id: string | null
+          recognition: string | null
+          system: Json | null
+          user_id: string
+          warning: string | null
+        }
+        Insert: {
+          commit?: string | null
+          completed?: boolean | null
+          created_at?: string | null
+          decision_map?: Json | null
+          extract?: string | null
+          id?: string
+          input_text: string
+          intensity_mode?: string
+          profile_id?: string | null
+          recognition?: string | null
+          system?: Json | null
+          user_id: string
+          warning?: string | null
+        }
+        Update: {
+          commit?: string | null
+          completed?: boolean | null
+          created_at?: string | null
+          decision_map?: Json | null
+          extract?: string | null
+          id?: string
+          input_text?: string
+          intensity_mode?: string
+          profile_id?: string | null
+          recognition?: string | null
+          system?: Json | null
+          user_id?: string
+          warning?: string | null
+        }
+        Relationships: []
+      }
       rituals: {
         Row: {
           duration_minutes: number | null
