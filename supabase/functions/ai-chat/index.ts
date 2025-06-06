@@ -164,8 +164,8 @@ You do not end sessions. Only the user may choose to end. If they say they're do
       userProfileData = await updateUserProfile(supabase, userProfileData.userProfile, profileData);
     }
 
-    // Prepare the enhanced prompt
-    const enhancedPrompt = buildEnhancedPrompt(content, userProfileData?.userProfile, ruthless);
+    // Prepare the enhanced prompt - pass the entire userProfileData object
+    const enhancedPrompt = buildEnhancedPrompt(content, userProfileData, ruthless);
 
     // Call OpenAI API
     const reply = await callOpenAI(openaiApiKey, enhancedPrompt, counselorPrompt);
