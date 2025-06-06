@@ -12,7 +12,7 @@ interface OnboardingConfig {
 
 const onboardingConfig: OnboardingConfig = {
   enabled: true,
-  first_message: "You showed up. That matters more than most people know.\n\nBefore I offer anything — I need to understand who I'm speaking to.\n\nOne question at a time. Let's start simple:\n\nWhat should I call you?",
+  first_message: "Everything you share here stays private. This is a space for truth. You have my full respect.\n\nWhat should I call you?",
   steps: [
     { id: "codename", prompt: "What should I call you?" },
     { id: "age", prompt: "How old are you?" },
@@ -39,8 +39,12 @@ export function getOnboardingQuestion(step: string): string {
 }
 
 export function getNextOnboardingStep(userProfile: any): string | null {
+  if (!userProfile) return "codename";
+  
   for (const step of onboardingConfig.steps) {
-    if (!userProfile[step.id]) {
+    // Check if this field is missing or empty
+    const fieldValue = userProfile[step.id];
+    if (!fieldValue || (typeof fieldValue === 'string' && fieldValue.trim() === '')) {
       return step.id;
     }
   }

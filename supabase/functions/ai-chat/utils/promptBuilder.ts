@@ -5,34 +5,46 @@ export function buildEnhancedPrompt(content: string, userProfile: any, ruthless:
   // If user has no profile or profile is incomplete, handle onboarding
   if (!userProfile || !userProfile.profile_complete) {
     // Check if this is the very first interaction (no profile data at all)
-    if (!userProfile || !userProfile.codename) {
-      // If user is providing their name in response, acknowledge and ask next question
-      if (content && (content.toLowerCase().includes('carlos') || content.toLowerCase().includes('name') || content.toLowerCase().includes('call me') || content.toLowerCase().includes("i'm ") || content.toLowerCase().includes('my name'))) {
-        const nextStep = getNextOnboardingStep({ codename: 'provided' });
-        if (nextStep) {
-          return `User has provided their name in response: "${content}"
-
-Acknowledge this response briefly and ask the next onboarding question: "${getOnboardingQuestion(nextStep)}"
-
-Keep it direct and clear. One question only.`;
-        }
-      }
-      
+    if (!userProfile) {
+      // Very first contact - show welcome message
       const firstContactMsg = getFirstContactMessage();
-      return `User is beginning onboarding. Use this first contact message: "${firstContactMsg}"
-
-Keep it direct and clear.`;
+      return `This is the user's first contact. Use this exact message: "${firstContactMsg}"`;
     }
     
-    // Determine next onboarding step based on what's missing
+    // Check if profile is completely empty (no onboarding data at all)
+    if (!userProfile.codename && !userProfile.age && !userProfile.physical_condition) {
+      // If user is providing their name in response, acknowledge and ask next question
+      if (content && (content.toLowerCase().includes('carlos') || content.toLowerCase().includes('name') || content.toLowerCase().includes('call me') || content.toLowerCase().includes("i'm ") || content.toLowerCase().includes('my name') || content.length < 50)) {
+        return `User has provided their name: "${content}"
+
+Acknowledge this briefly and ask the next onboarding question: "How old are you?"
+
+Keep it direct and clear. One question only.`;
+      }
+      
+      // Still need the name
+      const firstContactMsg = getFirstContactMessage();
+      return `User hasn't provided their name yet. Ask: "${firstContactMsg}"`;
+    }
+    
+    // Determine what information we still need
     const nextStep = getNextOnboardingStep(userProfile);
     if (nextStep) {
-      return `User is in onboarding. Current user input: "${content}"
+      const nextQuestion = getOnboardingQuestion(nextStep);
+      
+      return `User is in onboarding (has ${userProfile.codename ? 'name' : 'no name'}, ${userProfile.age ? 'age' : 'no age'}). 
 
-If they answered the previous question, acknowledge briefly and ask: "${getOnboardingQuestion(nextStep)}"
+Current user response: "${content}"
 
-If they haven't answered yet, repeat the current question. Keep it direct and clear.`;
+Acknowledge their previous answer briefly if appropriate, then ask: "${nextQuestion}"
+
+Keep it direct and clear. One question only.`;
     }
+    
+    // All onboarding complete but profile not marked complete
+    return `Onboarding appears complete. Current user message: "${content}"
+
+The user has provided all required information. You can now engage in normal counseling conversation. Acknowledge their completion of the initial questions and begin the counseling process.`;
   }
 
   // Standard interaction for complete profiles
