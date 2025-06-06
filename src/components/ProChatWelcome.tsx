@@ -44,17 +44,21 @@ const ProChatWelcome: React.FC<ProChatWelcomeProps> = ({ onMessageSent }) => {
       console.error('Chat error:', error);
       
       let errorMessage = "Failed to send message. Please try again.";
+      let toastDuration = 4000;
       
-      if (error.message.includes('rate limit') || error.message.includes('busy')) {
-        errorMessage = "AI service is busy. Please wait a moment and try again.";
+      if (error.message.includes('busy') || error.message.includes('overloaded') || error.message.includes('Too many requests')) {
+        errorMessage = "The AI is busy right now. Please wait 30 seconds and try again.";
+        toastDuration = 6000;
       } else if (error.message.includes('temporarily unavailable')) {
         errorMessage = "AI service temporarily unavailable. Please try again in a moment.";
+        toastDuration = 5000;
       }
       
       toast({
-        title: "Error",
+        title: "Service Busy",
         description: errorMessage,
         variant: "destructive",
+        duration: toastDuration,
       });
     } finally {
       setIsLoading(false);
