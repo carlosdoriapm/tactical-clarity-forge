@@ -20,7 +20,7 @@ interface WarLog {
   result?: string;
   dilemma?: string;
   decision_path?: string;
-  commands?: Record<string, any>;
+  commands?: any;
   reflections?: string;
 }
 
@@ -51,7 +51,7 @@ export const useProfile = () => {
       if (userProfile) {
         setProfile({
           email: userProfile.email,
-          age: userProfile.age ? userProfile.age.toString() : '',
+          age: '', // Age field doesn't exist in the database schema
           intensity_mode: (userProfile.intensity_mode as 'TACTICAL' | 'RUTHLESS' | 'LEGION') || 'TACTICAL',
           domain_focus: (userProfile.domain_focus as 'corpo' | 'dinheiro' | 'influencia' | '') || '',
           current_mission: userProfile.current_mission || '',
@@ -81,7 +81,19 @@ export const useProfile = () => {
         .order('date', { ascending: false })
         .limit(10);
 
-      setWarLogs(logs || []);
+      if (logs) {
+        const formattedLogs: WarLog[] = logs.map(log => ({
+          id: log.id,
+          date: log.date,
+          intensity: log.intensity || undefined,
+          result: log.result || undefined,
+          dilemma: log.dilemma || undefined,
+          decision_path: log.decision_path || undefined,
+          commands: log.commands || undefined,
+          reflections: log.reflections || undefined
+        }));
+        setWarLogs(formattedLogs);
+      }
     } catch (error) {
       console.error('Error loading war logs:', error);
     }

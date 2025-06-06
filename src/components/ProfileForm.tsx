@@ -41,10 +41,6 @@ const ProfileForm = ({ profile, onProfileUpdate }: ProfileFormProps) => {
         profile_complete: true
       };
 
-      if (localProfile.age) {
-        updateData.age = parseInt(localProfile.age);
-      }
-
       const { error } = await supabase
         .from('users')
         .update(updateData)
@@ -80,17 +76,6 @@ const ProfileForm = ({ profile, onProfileUpdate }: ProfileFormProps) => {
             value={localProfile.email}
             disabled
             className="bg-warfare-dark/50 text-white border-warfare-blue/30"
-          />
-        </div>
-
-        <div>
-          <Label className="text-white">Age</Label>
-          <Input
-            type="number"
-            value={localProfile.age}
-            onChange={(e) => setLocalProfile(prev => ({ ...prev, age: e.target.value }))}
-            placeholder="Enter your age"
-            className="bg-warfare-dark text-white border-warfare-blue/30"
           />
         </div>
 
