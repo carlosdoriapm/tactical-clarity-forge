@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import IcebreakerQuickStart from './IcebreakerQuickStart';
 
 interface ProChatWelcomeProps {
   onMessageSent: (message: string, response: string) => void;
@@ -44,6 +45,10 @@ const ProChatWelcome: React.FC<ProChatWelcomeProps> = ({ onMessageSent }) => {
     }
   };
 
+  const handleSuggestionSelect = (suggestion: string) => {
+    setInput(suggestion);
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-6 py-12 bg-black text-white">
       <h1 className="text-3xl md:text-5xl font-extrabold uppercase text-red-600 mb-4 text-center tracking-wide">
@@ -81,12 +86,7 @@ const ProChatWelcome: React.FC<ProChatWelcomeProps> = ({ onMessageSent }) => {
 
       <div className="text-sm text-gray-400 italic mb-4 mt-8 text-center max-w-2xl">
         Not sure how to begin? Try one of these:
-        <div className="mt-2 space-y-1 text-gray-500">
-          <div>• Let's get started.</div>
-          <div>• I need help with...</div>
-          <div>• I keep messing up...</div>
-          <div>• Here's where I'm stuck.</div>
-        </div>
+        <IcebreakerQuickStart onSelect={handleSuggestionSelect} />
       </div>
 
       <div className="mt-4 text-xs text-gray-600 italic">
