@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,10 +7,12 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
@@ -26,18 +27,16 @@ const Profile = () => {
   const [warLogs, setWarLogs] = useState([]);
 
   useEffect(() => {
-    loadProfile();
-    loadWarLogs();
-  }, []);
+    if (user) {
+      loadProfile();
+      loadWarLogs();
+    }
+  }, [user]);
 
   const loadProfile = async () => {
+    if (!user) return;
+    
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate('/');
-        return;
-      }
-
       const { data: userProfile } = await supabase
         .from('users')
         .select('*')
@@ -47,7 +46,7 @@ const Profile = () => {
       if (userProfile) {
         setProfile({
           email: userProfile.email,
-          age: (userProfile as any).age?.toString() || '',
+          age: userProfile.age?.toString() || '',
           intensity_mode: (userProfile.intensity_mode as 'TACTICAL' | 'RUTHLESS' | 'LEGION') || 'TACTICAL',
           domain_focus: (userProfile.domain_focus as 'corpo' | 'dinheiro' | 'influencia' | '') || '',
           current_mission: userProfile.current_mission || '',
@@ -56,47 +55,43 @@ const Profile = () => {
       }
     } catch (error) {
       console.error('Error loading profile:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load profile",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const loadWarLogs = async () => {
+    if (!user) return;
+    
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const { data: logs } = await supabase
+        .from('war_logs')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('date', { ascending: false })
+        .limit(10);
 
-      const { data: userProfile } = await supabase
-        .from('users')
-        .select('id')
-        .eq('email', user.email)
-        .single();
-
-      if (userProfile) {
-        const { data: logs } = await supabase
-          .from('war_logs')
-          .select('*')
-          .eq('user_id', userProfile.id)
-          .order('date', { ascending: false })
-          .limit(10);
-
-        setWarLogs(logs || []);
-      }
+      setWarLogs(logs || []);
     } catch (error) {
       console.error('Error loading war logs:', error);
     }
   };
 
   const saveProfile = async () => {
+    if (!user) return;
+    
     try {
       setSaving(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
       const updateData: any = {
         intensity_mode: profile.intensity_mode,
         domain_focus: profile.domain_focus || null,
-        current_mission: profile.current_mission
+        current_mission: profile.current_mission,
+        profile_complete: true
       };
 
       if (profile.age) {
@@ -127,31 +122,22 @@ const Profile = () => {
   };
 
   const resetWarLogs = async () => {
+    if (!user) return;
+    
     try {
       setResetting(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const { error } = await supabase
+        .from('war_logs')
+        .delete()
+        .eq('user_id', user.id);
 
-      const { data: userProfile } = await supabase
-        .from('users')
-        .select('id')
-        .eq('email', user.email)
-        .single();
+      if (error) throw error;
 
-      if (userProfile) {
-        const { error } = await supabase
-          .from('war_logs')
-          .delete()
-          .eq('user_id', userProfile.id);
-
-        if (error) throw error;
-
-        setWarLogs([]);
-        toast({
-          title: "Success",
-          description: "War logs cleared successfully",
-        });
-      }
+      setWarLogs([]);
+      toast({
+        title: "Success",
+        description: "War logs cleared successfully",
+      });
     } catch (error) {
       console.error('Error resetting war logs:', error);
       toast({
@@ -179,16 +165,15 @@ const Profile = () => {
           <header className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold text-white">Command Profile</h1>
             <Button 
-              onClick={() => navigate('/chat')}
+              onClick={() => navigate('/dashboard')}
               variant="outline"
               className="text-warfare-blue border-warfare-blue hover:bg-warfare-blue hover:text-white"
             >
-              Back to Chat
+              Back to Dashboard
             </Button>
           </header>
 
           <div className="grid gap-8 md:grid-cols-2">
-            {/* Profile Settings */}
             <div className="glass-card p-6 rounded-xl">
               <h2 className="text-xl font-bold text-white mb-6">Profile Settings</h2>
               
@@ -278,7 +263,6 @@ const Profile = () => {
               </div>
             </div>
 
-            {/* War Logs */}
             <div className="glass-card p-6 rounded-xl">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold text-white">War Logs</h2>
