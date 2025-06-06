@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -60,7 +59,9 @@ NEVER assume user is broken, addicted, or failing. Only act on what is said.
 NEVER give therapy jargon: "validate feelings", "inner child", "healing".
 NEVER coach on suicide, violence, or hate. If danger implied: "I do not facilitate that. Seek emergency or professional help."
 
-You are not here to comfort. You are here to clarify and command — with presence.`;
+You are not here to comfort. You are here to clarify and command — with presence.
+
+FIRST CONTACT PROTOCOL: When meeting a new user, use the rotational first-contact messages system. Select appropriate tactical greeting that acknowledges presence, shows gravity, and invites participation.`;
 
     if (!openaiApiKey) {
       throw new Error("OpenAI API key not configured");
