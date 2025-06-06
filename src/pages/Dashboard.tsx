@@ -1,62 +1,86 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Activity, Book, Code, TrendingUp } from "lucide-react"
 import { MissionCard } from "@/components/MissionCard"
 import { RitualSummary } from "@/components/RitualSummary"
 import { WarCodePreview } from "@/components/WarCodePreview"
 import { MissionTimeline } from "@/components/MissionTimeline"
+import { useDashboardData } from "@/hooks/useDashboardData"
 
 const Dashboard = () => {
-  const stats = [
+  const { loading, stats, recentActivity, lastMission, ritualsSummary } = useDashboardData();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-warfare-dark flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-warfare-red"></div>
+      </div>
+    );
+  }
+
+  const dashboardStats = [
     {
       title: "War Logs",
-      value: "12",
+      value: stats.warLogsCount.toString(),
       description: "Tactical decisions logged",
       icon: Book,
       color: "text-blue-500"
     },
     {
       title: "Rituals",
-      value: "8",
-      description: "Completed this week",
+      value: stats.ritualsCount.toString(),
+      description: "Active rituals tracked",
       icon: Activity,
       color: "text-green-500"
     },
     {
       title: "War Code",
-      value: "24",
+      value: stats.warCodeFragmentsCount.toString(),
       description: "Fragments captured",
       icon: Code,
       color: "text-purple-500"
     },
     {
-      title: "Performance",
-      value: "94%",
-      description: "Mission success rate",
+      title: "Best Streak",
+      value: stats.currentStreak.toString(),
+      description: "Days consecutive",
       icon: TrendingUp,
       color: "text-orange-500"
     }
-  ]
+  ];
 
-  // Sample data - could come from props or API calls
-  const lastMission = {
-    dilemma: "Resource allocation under pressure",
-    decisionPath: "Prioritized core objectives",
-    outcome: "Met primary targets",
-    date: "2024-01-14"
-  }
-
-  const rituals = {
-    current: 7,
-    best: 12,
-    lastCompleted: "Morning Focus Session"
-  }
-
+  // Default war code fragments for display
   const fragments = [
     { symbol: "⚡", mantra: "Strike with precision" },
     { symbol: "🔥", mantra: "Forge through resistance" },
     { symbol: "⚔️", mantra: "Embrace the struggle" },
     { symbol: "🎯", mantra: "Focus cuts through chaos" }
-  ]
+  ];
+
+  const getActivityIcon = (type: string, status?: string) => {
+    switch (type) {
+      case 'war_log':
+        return status === 'success' ? 'text-green-500' : 
+               status === 'fail' ? 'text-red-500' : 'text-blue-500';
+      case 'ritual':
+        return 'text-green-500';
+      case 'war_code':
+        return 'text-purple-500';
+      default:
+        return 'text-gray-500';
+    }
+  };
+
+  const formatTimeAgo = (timestamp: string) => {
+    const now = new Date();
+    const time = new Date(timestamp);
+    const diffInHours = Math.floor((now.getTime() - time.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours < 24) return `${diffInHours} hours ago`;
+    const days = Math.floor(diffInHours / 24);
+    return `${days} days ago`;
+  };
 
   return (
     <div className="min-h-screen bg-warfare-dark p-6">
@@ -70,14 +94,14 @@ const Dashboard = () => {
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <MissionCard mission={lastMission} />
-            <RitualSummary rituals={rituals} />
+            <RitualSummary rituals={ritualsSummary} />
             <WarCodePreview fragments={fragments} />
           </div>
         </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat, index) => (
+          {dashboardStats.map((stat, index) => (
             <Card key={index} className="bg-warfare-card border-warfare-gray/20">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-warfare-gray">
@@ -106,27 +130,19 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                  <div className="flex-1">
-                    <p className="text-white text-sm">War log completed</p>
-                    <p className="text-warfare-gray text-xs">2 hours ago</p>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-                  <div className="flex-1">
-                    <p className="text-white text-sm">Ritual session finished</p>
-                    <p className="text-warfare-gray text-xs">4 hours ago</p>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-purple-500 rounded-full mr-3"></div>
-                  <div className="flex-1">
-                    <p className="text-white text-sm">War code fragment saved</p>
-                    <p className="text-warfare-gray text-xs">6 hours ago</p>
-                  </div>
-                </div>
+                {recentActivity.length === 0 ? (
+                  <p className="text-warfare-gray text-sm">No recent activity. Start your first mission!</p>
+                ) : (
+                  recentActivity.map((activity) => (
+                    <div key={activity.id} className="flex items-center">
+                      <div className={`w-2 h-2 rounded-full mr-3 ${getActivityIcon(activity.type, activity.status)}`}></div>
+                      <div className="flex-1">
+                        <p className="text-white text-sm">{activity.description}</p>
+                        <p className="text-warfare-gray text-xs">{formatTimeAgo(activity.timestamp)}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
@@ -142,15 +158,21 @@ const Dashboard = () => {
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 bg-warfare-dark rounded-lg">
                   <span className="text-white text-sm">Complete morning ritual</span>
-                  <span className="text-green-500 text-xs">DONE</span>
+                  <span className={`text-xs ${stats.currentStreak > 0 ? 'text-green-500' : 'text-yellow-500'}`}>
+                    {stats.currentStreak > 0 ? 'DONE' : 'PENDING'}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-warfare-dark rounded-lg">
                   <span className="text-white text-sm">Log tactical decision</span>
-                  <span className="text-yellow-500 text-xs">PENDING</span>
+                  <span className={`text-xs ${stats.warLogsCount > 0 ? 'text-green-500' : 'text-yellow-500'}`}>
+                    {stats.warLogsCount > 0 ? 'ACTIVE' : 'PENDING'}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-warfare-dark rounded-lg">
                   <span className="text-white text-sm">Review war codes</span>
-                  <span className="text-yellow-500 text-xs">PENDING</span>
+                  <span className={`text-xs ${stats.warCodeFragmentsCount > 0 ? 'text-green-500' : 'text-yellow-500'}`}>
+                    {stats.warCodeFragmentsCount > 0 ? 'ACTIVE' : 'PENDING'}
+                  </span>
                 </div>
               </div>
             </CardContent>
