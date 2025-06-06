@@ -51,7 +51,7 @@ export const useProfile = () => {
       if (userProfile) {
         setProfile({
           email: userProfile.email,
-          age: userProfile.age?.toString() || '',
+          age: userProfile.age ? userProfile.age.toString() : '',
           intensity_mode: (userProfile.intensity_mode as 'TACTICAL' | 'RUTHLESS' | 'LEGION') || 'TACTICAL',
           domain_focus: (userProfile.domain_focus as 'corpo' | 'dinheiro' | 'influencia' | '') || '',
           current_mission: userProfile.current_mission || '',
