@@ -1,78 +1,48 @@
 
-interface FirstContactHook {
+interface OnboardingStep {
   id: string;
-  tone: string;
-  message: string;
+  prompt: string;
 }
 
-const firstContactMessages: FirstContactHook[] = [
-  {
-    id: "hook_01",
-    tone: "Empathetic + Strong",
-    message: "You didn't land here by accident.\nSomething inside you wants more — or to stop drifting.\nLet's start building your profile. One question at a time."
-  },
-  {
-    id: "hook_02", 
-    tone: "Calm + Commanding",
-    message: "You showed up. That's the signal.\nNow I need clarity — not chaos.\nWho are you?"
-  },
-  {
-    id: "hook_03",
-    tone: "Quiet + Unyielding", 
-    message: "I won't talk to a stranger.\nBefore we work together — I need to know you.\nOne question. Then another. Until your profile is complete."
-  },
-  {
-    id: "hook_04",
-    tone: "Strategic + Personal",
-    message: "Most men wait until everything falls apart.\nYou didn't. That matters.\nLet's start with the basics. What's your name?"
-  },
-  {
-    id: "hook_05",
-    tone: "Minimal + Powerful",
-    message: "You're here. That's not nothing.\nWe move forward only with facts.\nFirst: what should I call you?"
-  }
-];
+interface OnboardingConfig {
+  enabled: boolean;
+  first_message: string;
+  steps: OnboardingStep[];
+}
 
-const fallbackMessage = "You made it here. That already says something.\nI don't work with strangers. Before I offer any guidance, I need to know who I'm talking to.\n\nOne question at a time. Ready?";
+const onboardingConfig: OnboardingConfig = {
+  enabled: true,
+  first_message: "You showed up. That matters more than most people know.\n\nBefore I offer anything — I need to understand who I'm speaking to.\n\nOne question at a time. Let's start simple:\n\nWhat should I call you?",
+  steps: [
+    { id: "codename", prompt: "What should I call you?" },
+    { id: "age", prompt: "How old are you?" },
+    { id: "physical_condition", prompt: "How would you describe your current physical condition?" },
+    { id: "relationship_status", prompt: "What's your relationship status?" },
+    { id: "childhood_summary", prompt: "If you had to describe your childhood in 3 honest lines, what would they be?" },
+    { id: "parents", prompt: "What's your connection like with your parents?" },
+    { id: "siblings", prompt: "Any siblings? If so, what kind of impact did they have on you?" },
+    { id: "school_experience", prompt: "How were your school years — smooth, difficult, or something else?" },
+    { id: "vice", prompt: "What's one habit or behavior you've been wanting to change lately?" },
+    { id: "mission_90_day", prompt: "If you had 90 days to shift your life — what would you focus on?" },
+    { id: "fear_block", prompt: "Is there any recurring fear or pattern that tends to block you?" },
+    { id: "intensity_mode", prompt: "Lastly — how do you prefer I speak to you:\n• Calm and focused (TACTICAL)\n• Direct and sharp (RUTHLESS)\n• No-nonsense, all-in (LEGION)" }
+  ]
+};
 
-export function getFirstContactMessage(userId: string, previousHookId?: string): string {
-  // Create a simple hash from userId to ensure consistent but varied selection
-  const hash = userId.split('').reduce((a, b) => {
-    a = ((a << 5) - a) + b.charCodeAt(0);
-    return a & a;
-  }, 0);
-  
-  // Filter out the previously used hook to avoid repetition
-  let availableMessages = firstContactMessages;
-  if (previousHookId) {
-    availableMessages = firstContactMessages.filter(msg => msg.id !== previousHookId);
-  }
-  
-  // If no messages available (shouldn't happen), use fallback
-  if (availableMessages.length === 0) {
-    return fallbackMessage;
-  }
-  
-  // Select message based on hash
-  const index = Math.abs(hash) % availableMessages.length;
-  return availableMessages[index].message;
+export function getFirstContactMessage(): string {
+  return onboardingConfig.first_message;
 }
 
 export function getOnboardingQuestion(step: string): string {
-  const questions = {
-    "codename": "What should I call you? Your name or a preferred name.",
-    "age": "How old are you?",
-    "physical_condition": "How's your physical state? Fit, average, injured?",
-    "relationship_status": "What's your current relationship status?", 
-    "childhood_summary": "Describe your childhood in 3 honest lines.",
-    "parents": "Parents — alive? close? absent?",
-    "siblings": "Siblings — who shaped you, if anyone?",
-    "school_experience": "Your school years — challenging, successful, difficult, or neutral?",
-    "vice": "What's the main habit or pattern you're working against?",
-    "mission_90_day": "What's your main goal for the next 90 days?",
-    "fear_block": "What fear or pattern keeps holding you back?",
-    "intensity_mode": "Choose your preference: DIRECT / MINIMAL / FIRM."
-  };
-  
-  return questions[step] || "Tell me more.";
+  const stepConfig = onboardingConfig.steps.find(s => s.id === step);
+  return stepConfig ? stepConfig.prompt : "Tell me more.";
+}
+
+export function getNextOnboardingStep(userProfile: any): string | null {
+  for (const step of onboardingConfig.steps) {
+    if (!userProfile[step.id]) {
+      return step.id;
+    }
+  }
+  return null; // All steps complete
 }

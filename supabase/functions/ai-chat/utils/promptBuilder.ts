@@ -1,5 +1,5 @@
 
-import { getFirstContactMessage, getOnboardingQuestion } from "./firstContactHooks.ts";
+import { getFirstContactMessage, getOnboardingQuestion, getNextOnboardingStep } from "./firstContactHooks.ts";
 
 export function buildEnhancedPrompt(content: string, userProfile: any, ruthless: boolean): string {
   // If user has no profile or profile is incomplete, handle onboarding
@@ -7,20 +7,21 @@ export function buildEnhancedPrompt(content: string, userProfile: any, ruthless:
     // Check if this is the very first interaction (no profile data at all)
     if (!userProfile || !userProfile.codename) {
       // If user is providing their name in response, acknowledge and ask next question
-      if (content && (content.toLowerCase().includes('carlos') || content.toLowerCase().includes('name') || content.toLowerCase().includes('call me'))) {
-        return `User has provided their name in response: "${content}"
+      if (content && (content.toLowerCase().includes('carlos') || content.toLowerCase().includes('name') || content.toLowerCase().includes('call me') || content.toLowerCase().includes("i'm ") || content.toLowerCase().includes('my name'))) {
+        const nextStep = getNextOnboardingStep({ codename: 'provided' });
+        if (nextStep) {
+          return `User has provided their name in response: "${content}"
 
-Acknowledge this response briefly and ask the next onboarding question: "${getOnboardingQuestion('age')}"
+Acknowledge this response briefly and ask the next onboarding question: "${getOnboardingQuestion(nextStep)}"
 
 Keep it direct and clear. One question only.`;
+        }
       }
       
-      const firstContactMsg = getFirstContactMessage(userProfile?.id || 'anonymous');
-      return `User is beginning onboarding. Start with this first contact message: "${firstContactMsg}"
+      const firstContactMsg = getFirstContactMessage();
+      return `User is beginning onboarding. Use this first contact message: "${firstContactMsg}"
 
-Then ask the first onboarding question: "${getOnboardingQuestion('codename')}"
-
-Keep it direct and clear. One question only.`;
+Keep it direct and clear.`;
     }
     
     // Determine next onboarding step based on what's missing
@@ -41,7 +42,7 @@ User Profile Context:
 - Name: ${userProfile?.codename || 'Unknown'}
 - Age: ${userProfile?.age || 'Unknown'}
 - Physical Condition: ${userProfile?.physical_condition || 'Unknown'}
-- Intensity Preference: ${userProfile?.intensity_mode || 'DIRECT'}
+- Intensity Preference: ${userProfile?.intensity_mode || 'TACTICAL'}
 - Main Goal: ${userProfile?.mission_90_day || 'Not set'}
 - Main Challenge: ${userProfile?.vice || 'Unknown'}`;
 
@@ -50,20 +51,4 @@ User Profile Context:
   }
 
   return prompt;
-}
-
-function getNextOnboardingStep(userProfile: any): string | null {
-  const steps = [
-    'codename', 'age', 'physical_condition', 'relationship_status', 
-    'childhood_summary', 'parents', 'siblings', 'school_experience',
-    'vice', 'mission_90_day', 'fear_block', 'intensity_mode'
-  ];
-  
-  for (const step of steps) {
-    if (!userProfile[step]) {
-      return step;
-    }
-  }
-  
-  return null; // All steps complete
 }
