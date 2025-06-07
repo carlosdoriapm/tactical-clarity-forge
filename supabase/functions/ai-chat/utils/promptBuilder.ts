@@ -5,33 +5,28 @@ export function buildEnhancedPrompt(content: string, userProfileData: any, ruthl
   // Extract the actual user profile from the nested structure
   const userProfile = userProfileData?.userProfile || userProfileData;
   
+  console.log('Building prompt for profile:', JSON.stringify(userProfile));
+  
   // If user has no profile or profile is incomplete, handle onboarding
   if (!userProfile || !userProfile.profile_complete) {
     // Check if this is the very first interaction (no profile data at all)
     if (!userProfile) {
-      // Very first contact - show welcome message
+      console.log('No profile found - first contact');
       const firstContactMsg = getFirstContactMessage();
       return `This is the user's first contact. Use this exact message: "${firstContactMsg}"`;
     }
     
     // Check if profile is completely empty (no onboarding data at all)
     if (!userProfile.codename && !userProfile.age && !userProfile.physical_condition) {
-      // If user is providing their name in response, acknowledge and ask next question
-      if (content && (content.toLowerCase().includes('carlos') || content.toLowerCase().includes('name') || content.toLowerCase().includes('call me') || content.toLowerCase().includes("i'm ") || content.toLowerCase().includes('my name') || content.length < 50)) {
-        return `User has provided their name: "${content}"
-
-Acknowledge this briefly and ask the next onboarding question: "How old are you?"
-
-Keep it direct and clear. One question only.`;
-      }
-      
-      // Still need the name
+      console.log('Profile exists but empty - asking for name');
       const firstContactMsg = getFirstContactMessage();
       return `User hasn't provided their name yet. Ask: "${firstContactMsg}"`;
     }
     
-    // Determine what information we still need using the actual profile data
+    // If we have a name but need more info, determine what's next
     const nextStep = getNextOnboardingStep(userProfile);
+    console.log('Next onboarding step needed:', nextStep);
+    
     if (nextStep) {
       const nextQuestion = getOnboardingQuestion(nextStep);
       
@@ -43,12 +38,14 @@ Keep it direct and clear. One question only.`;
     }
     
     // All onboarding complete but profile not marked complete
+    console.log('Onboarding appears complete');
     return `Onboarding appears complete. Current user message: "${content}"
 
 The user has provided all required information. You can now engage in normal counseling conversation. Acknowledge their completion of the initial questions and begin the counseling process.`;
   }
 
   // Standard interaction for complete profiles
+  console.log('Profile complete - normal interaction');
   let prompt = `User message: "${content}"
 
 User Profile Context:

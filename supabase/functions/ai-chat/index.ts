@@ -115,35 +115,31 @@ You do not end sessions. Only the user may choose to end. If they say they're do
         
         // Handle onboarding responses by updating profile data
         if (userProfileData && !userProfileData.userProfile.profile_complete) {
-          const updatedProfileData = { ...userProfileData.userProfile };
-          let needsUpdate = false;
+          console.log('Current profile state:', JSON.stringify(userProfileData.userProfile));
+          console.log('Processing content:', content);
           
-          // More robust name detection
-          if (!updatedProfileData.codename) {
-            // Extract name from common patterns or just use the input if it's short enough
-            let name = null;
-            const lowerContent = content.toLowerCase();
+          // Simplified name detection - if no codename exists and content looks like a name
+          if (!userProfileData.userProfile.codename && content.trim().length > 0 && content.trim().length < 50) {
+            const trimmedContent = content.trim();
             
-            if (lowerContent.includes("i'm ") || lowerContent.includes("i am ")) {
-              const match = content.match(/(?:i'm|i am)\s+([a-zA-Z]+)/i);
-              name = match ? match[1] : null;
-            } else if (lowerContent.includes('call me ')) {
-              const match = content.match(/call me\s+([a-zA-Z]+)/i);
-              name = match ? match[1] : null;
-            } else if (content.length <= 30 && /^[a-zA-Z\s]+$/.test(content.trim())) {
-              // If it's short and only contains letters, likely a name
-              name = content.trim().split(' ')[0];
-            }
+            // Extract first word as potential name (simple approach)
+            const firstWord = trimmedContent.split(' ')[0];
             
-            if (name) {
-              updatedProfileData.codename = name;
-              needsUpdate = true;
+            // If it's a reasonable length and contains only letters
+            if (firstWord.length >= 2 && firstWord.length <= 20 && /^[a-zA-Z]+$/.test(firstWord)) {
+              console.log('Detected name:', firstWord);
+              
+              try {
+                // Update the profile with the detected name
+                const updatedProfileData = await updateUserProfile(supabase, userProfileData.userProfile, { 
+                  codename: firstWord 
+                });
+                userProfileData = updatedProfileData;
+                console.log('Profile updated with name:', firstWord);
+              } catch (error) {
+                console.error('Error updating profile with name:', error);
+              }
             }
-          }
-          
-          if (needsUpdate) {
-            await updateUserProfile(supabase, updatedProfileData, { codename: updatedProfileData.codename });
-            userProfileData.userProfile = updatedProfileData;
           }
         }
       }
