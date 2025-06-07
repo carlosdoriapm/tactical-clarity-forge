@@ -142,10 +142,6 @@ export async function updateUserProfile(supabase: any, userProfile: any, profile
   if (isComplete) {
     usersUpdateData.profile_complete = true;
     usersUpdateData.onboarding_completed = true;
-  } else {
-    // If not complete, make sure we don't have stale complete flags
-    usersUpdateData.profile_complete = false;
-    usersUpdateData.onboarding_completed = false;
   }
 
   console.log('=== UPDATING USERS TABLE ===');

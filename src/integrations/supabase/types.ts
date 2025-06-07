@@ -36,63 +36,63 @@ export type Database = {
       combatant_profile: {
         Row: {
           age: number | null
-          childhood_summary: string
-          codename: string
+          childhood_summary: string | null
+          codename: string | null
           created_at: string | null
-          fear_block: string
+          fear_block: string | null
           first_recognition: string | null
           id: string
-          intensity_mode: string
-          mission_90_day: string
+          intensity_mode: string | null
+          mission_90_day: string | null
           parents: string | null
-          physical_condition: string
+          physical_condition: string | null
           profile_complete: boolean | null
-          relationship_status: string
-          school_experience: string
+          relationship_status: string | null
+          school_experience: string | null
           siblings: string | null
           updated_at: string | null
           user_id: string
-          vice: string
+          vice: string | null
         }
         Insert: {
           age?: number | null
-          childhood_summary: string
-          codename: string
+          childhood_summary?: string | null
+          codename?: string | null
           created_at?: string | null
-          fear_block: string
+          fear_block?: string | null
           first_recognition?: string | null
           id?: string
-          intensity_mode?: string
-          mission_90_day: string
+          intensity_mode?: string | null
+          mission_90_day?: string | null
           parents?: string | null
-          physical_condition: string
+          physical_condition?: string | null
           profile_complete?: boolean | null
-          relationship_status: string
-          school_experience: string
+          relationship_status?: string | null
+          school_experience?: string | null
           siblings?: string | null
           updated_at?: string | null
           user_id: string
-          vice: string
+          vice?: string | null
         }
         Update: {
           age?: number | null
-          childhood_summary?: string
-          codename?: string
+          childhood_summary?: string | null
+          codename?: string | null
           created_at?: string | null
-          fear_block?: string
+          fear_block?: string | null
           first_recognition?: string | null
           id?: string
-          intensity_mode?: string
-          mission_90_day?: string
+          intensity_mode?: string | null
+          mission_90_day?: string | null
           parents?: string | null
-          physical_condition?: string
+          physical_condition?: string | null
           profile_complete?: boolean | null
-          relationship_status?: string
-          school_experience?: string
+          relationship_status?: string | null
+          school_experience?: string | null
           siblings?: string | null
           updated_at?: string | null
           user_id?: string
-          vice?: string
+          vice?: string | null
         }
         Relationships: []
       }
