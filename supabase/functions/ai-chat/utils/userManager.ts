@@ -135,13 +135,17 @@ export async function updateUserProfile(supabase: any, userProfile: any, profile
     console.log('New combatant profile:', JSON.stringify(newCombatant, null, 2));
   }
 
-  // Also update the legacy users table for compatibility
+  // Also update the legacy users table for compatibility - but ONLY mark complete if truly complete
   const usersUpdateData: any = {};
   if (combatantData.intensity_mode) usersUpdateData.intensity_mode = combatantData.intensity_mode;
   if (combatantData.mission_90_day) usersUpdateData.current_mission = combatantData.mission_90_day;
   if (isComplete) {
     usersUpdateData.profile_complete = true;
     usersUpdateData.onboarding_completed = true;
+  } else {
+    // If not complete, make sure we don't have stale complete flags
+    usersUpdateData.profile_complete = false;
+    usersUpdateData.onboarding_completed = false;
   }
 
   console.log('=== UPDATING USERS TABLE ===');

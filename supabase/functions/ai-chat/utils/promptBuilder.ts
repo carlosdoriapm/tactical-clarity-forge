@@ -20,18 +20,35 @@ export function buildEnhancedPrompt(content: string, userProfileData: any, ruthl
     return `This is the user's first contact. Use this exact message: "${firstContactMsg}"`;
   }
   
-  // If profile is marked as complete, proceed with normal conversation
-  if (userProfile.profile_complete) {
+  // Check if we actually have a complete combatant profile with all required fields
+  const hasCompleteProfile = combatantProfile && 
+    combatantProfile.codename && 
+    combatantProfile.age && 
+    combatantProfile.physical_condition && 
+    combatantProfile.childhood_summary && 
+    combatantProfile.parents && 
+    combatantProfile.relationship_status && 
+    combatantProfile.school_experience && 
+    combatantProfile.vice && 
+    combatantProfile.mission_90_day && 
+    combatantProfile.fear_block && 
+    combatantProfile.intensity_mode;
+
+  console.log('=== PROFILE COMPLETENESS CHECK ===');
+  console.log('Has complete profile:', hasCompleteProfile);
+  
+  // If we truly have a complete profile, proceed with normal conversation
+  if (hasCompleteProfile) {
     console.log('=== PROFILE COMPLETE - NORMAL CONVERSATION ===');
     let prompt = `User message: "${content}"
 
 User Profile Context:
-- Name: ${combatantProfile?.codename || 'Unknown'}
-- Age: ${combatantProfile?.age || 'Unknown'}
-- Physical Condition: ${combatantProfile?.physical_condition || 'Unknown'}
-- Intensity Preference: ${combatantProfile?.intensity_mode || 'TACTICAL'}
-- Main Goal: ${combatantProfile?.mission_90_day || 'Not set'}
-- Main Challenge: ${combatantProfile?.vice || 'Unknown'}`;
+- Name: ${combatantProfile.codename}
+- Age: ${combatantProfile.age}
+- Physical Condition: ${combatantProfile.physical_condition}
+- Intensity Preference: ${combatantProfile.intensity_mode}
+- Main Goal: ${combatantProfile.mission_90_day}
+- Main Challenge: ${combatantProfile.vice}`;
 
     if (ruthless) {
       prompt += "\n\nUSE MINIMAL MODE: Short, direct, essential points only. Cut unnecessary words.";

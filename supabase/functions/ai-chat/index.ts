@@ -119,8 +119,8 @@ You do not end sessions. Only the user may choose to end. If they say they're do
         console.log('User profile:', JSON.stringify(userProfileData?.userProfile, null, 2));
         console.log('Combatant profile:', JSON.stringify(userProfileData?.combatantProfile, null, 2));
         
-        // Handle onboarding name detection and update ONLY if we don't have a codename
-        if (userProfileData && userProfileData.userProfile && !userProfileData.userProfile.profile_complete) {
+        // Handle name detection and saving ONLY if we don't have a codename yet
+        if (userProfileData && userProfileData.userProfile) {
           
           // Check if we need to extract and save the name
           if (!userProfileData.combatantProfile?.codename && content.trim().length > 0) {
@@ -128,19 +128,18 @@ You do not end sessions. Only the user may choose to end. If they say they're do
             console.log('Current combatant profile codename:', userProfileData.combatantProfile?.codename);
             console.log('Processing user input for name:', content);
             
-            // Simple name extraction - first word that looks like a name
-            const words = content.trim().split(/\s+/);
-            const potentialName = words[0];
+            // Simple name extraction - look for a name-like input
+            const trimmedContent = content.trim();
             
-            // Basic validation - should be 2-20 characters, only letters
-            if (potentialName.length >= 2 && potentialName.length <= 20 && /^[a-zA-Z]+$/.test(potentialName)) {
+            // If it's a short response that could be a name (2-20 characters, mostly letters)
+            if (trimmedContent.length >= 2 && trimmedContent.length <= 20 && /^[a-zA-Z\s]+$/.test(trimmedContent)) {
               console.log('=== SAVING NAME ===');
-              console.log('Detected name to save:', potentialName);
+              console.log('Detected name to save:', trimmedContent);
               
               try {
                 // Update combatant profile with the name
                 const updatedProfileData = await updateUserProfile(supabase, userProfileData.userProfile, { 
-                  codename: potentialName 
+                  codename: trimmedContent 
                 });
                 
                 userProfileData = updatedProfileData;
@@ -151,7 +150,7 @@ You do not end sessions. Only the user may choose to end. If they say they're do
               }
             } else {
               console.log('=== NAME NOT DETECTED ===');
-              console.log('Input does not match name pattern:', potentialName);
+              console.log('Input does not match name pattern:', trimmedContent);
             }
           } else {
             console.log('=== SKIPPING NAME DETECTION ===');
