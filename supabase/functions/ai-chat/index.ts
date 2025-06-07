@@ -26,6 +26,9 @@ serve(async (req) => {
       throw new Error("Content is required");
     }
 
+    console.log('=== CHAT REQUEST START ===');
+    console.log('User message:', content);
+
     // Get environment variables
     const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -112,34 +115,48 @@ You do not end sessions. Only the user may choose to end. If they say they're do
         }
 
         userProfileData = await getUserProfile(supabase, userId, user.email);
+        console.log('=== INITIAL PROFILE DATA ===');
+        console.log('User profile:', JSON.stringify(userProfileData?.userProfile, null, 2));
+        console.log('Combatant profile:', JSON.stringify(userProfileData?.combatantProfile, null, 2));
         
-        // Handle onboarding responses by updating profile data
-        if (userProfileData && !userProfileData.userProfile.profile_complete) {
-          console.log('Current profile state:', JSON.stringify(userProfileData.userProfile));
-          console.log('Processing content:', content);
+        // Handle onboarding name detection and update ONLY if we don't have a codename
+        if (userProfileData && userProfileData.userProfile && !userProfileData.userProfile.profile_complete) {
           
-          // Simplified name detection - if no codename exists and content looks like a name
-          if (!userProfileData.userProfile.codename && content.trim().length > 0 && content.trim().length < 50) {
-            const trimmedContent = content.trim();
+          // Check if we need to extract and save the name
+          if (!userProfileData.combatantProfile?.codename && content.trim().length > 0) {
+            console.log('=== NAME DETECTION LOGIC ===');
+            console.log('Current combatant profile codename:', userProfileData.combatantProfile?.codename);
+            console.log('Processing user input for name:', content);
             
-            // Extract first word as potential name (simple approach)
-            const firstWord = trimmedContent.split(' ')[0];
+            // Simple name extraction - first word that looks like a name
+            const words = content.trim().split(/\s+/);
+            const potentialName = words[0];
             
-            // If it's a reasonable length and contains only letters
-            if (firstWord.length >= 2 && firstWord.length <= 20 && /^[a-zA-Z]+$/.test(firstWord)) {
-              console.log('Detected name:', firstWord);
+            // Basic validation - should be 2-20 characters, only letters
+            if (potentialName.length >= 2 && potentialName.length <= 20 && /^[a-zA-Z]+$/.test(potentialName)) {
+              console.log('=== SAVING NAME ===');
+              console.log('Detected name to save:', potentialName);
               
               try {
-                // Update the profile with the detected name
+                // Update combatant profile with the name
                 const updatedProfileData = await updateUserProfile(supabase, userProfileData.userProfile, { 
-                  codename: firstWord 
+                  codename: potentialName 
                 });
+                
                 userProfileData = updatedProfileData;
-                console.log('Profile updated with name:', firstWord);
+                console.log('=== NAME SAVED SUCCESSFULLY ===');
+                console.log('Updated profile data:', JSON.stringify(updatedProfileData?.combatantProfile, null, 2));
               } catch (error) {
-                console.error('Error updating profile with name:', error);
+                console.error('=== ERROR SAVING NAME ===', error);
               }
+            } else {
+              console.log('=== NAME NOT DETECTED ===');
+              console.log('Input does not match name pattern:', potentialName);
             }
+          } else {
+            console.log('=== SKIPPING NAME DETECTION ===');
+            console.log('Already has codename or empty input');
+            console.log('Current codename:', userProfileData.combatantProfile?.codename);
           }
         }
       }
@@ -157,15 +174,24 @@ You do not end sessions. Only the user may choose to end. If they say they're do
 
     // Handle profile completion if profileData is provided
     if (profileData && userProfileData) {
+      console.log('=== COMPLETING PROFILE ===');
+      console.log('Profile data to save:', JSON.stringify(profileData, null, 2));
       userProfileData = await updateUserProfile(supabase, userProfileData.userProfile, profileData);
     }
 
+    console.log('=== FINAL PROFILE DATA FOR PROMPT ===');
+    console.log('Final user profile:', JSON.stringify(userProfileData?.userProfile, null, 2));
+    console.log('Final combatant profile:', JSON.stringify(userProfileData?.combatantProfile, null, 2));
+
     // Prepare the enhanced prompt - pass the entire userProfileData object
     const enhancedPrompt = buildEnhancedPrompt(content, userProfileData, ruthless);
+    console.log('=== GENERATED PROMPT ===');
+    console.log('Enhanced prompt:', enhancedPrompt);
 
     // Call OpenAI API
     const reply = await callOpenAI(openaiApiKey, enhancedPrompt, counselorPrompt);
 
+    console.log('=== OPENAI RESPONSE ===');
     console.log('OpenAI response received successfully');
 
     // Store chat messages and create log entry
@@ -177,6 +203,8 @@ You do not end sessions. Only the user may choose to end. If they say they're do
         await createWarLogEntry(supabase, userProfileData.userProfile, userProfileData.combatantProfile, content, reply);
       }
     }
+
+    console.log('=== CHAT REQUEST END ===');
 
     return new Response(JSON.stringify({ 
       reply,
