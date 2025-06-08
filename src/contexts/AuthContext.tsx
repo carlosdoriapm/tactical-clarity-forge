@@ -28,30 +28,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Get initial session
+    const initializeAuth = async () => {
+      try {
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+        console.log('Initial session:', initialSession?.user?.email, 'Error:', error);
+        
+        if (initialSession) {
+          setSession(initialSession);
+          setUser(initialSession.user);
+        }
+      } catch (error) {
+        console.error('Error getting initial session:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         
         // Create user profile if it doesn't exist
         if (session?.user && event === 'SIGNED_IN') {
-          setTimeout(() => {
-            createUserProfile(session.user);
-          }, 0);
+          await createUserProfile(session.user);
         }
         
         setLoading(false);
       }
     );
-
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
 
     return () => subscription.unsubscribe();
   }, []);
@@ -65,7 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
 
       if (!existingProfile) {
-        await supabase
+        const { error } = await supabase
           .from('users')
           .insert([{
             email: user.email,
@@ -73,10 +83,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             profile_complete: false,
             onboarding_completed: false
           }]);
-        console.log('User profile created');
+        
+        if (error) {
+          console.error('Error creating user profile:', error);
+        } else {
+          console.log('User profile created successfully');
+        }
       }
     } catch (error) {
-      console.error('Error creating user profile:', error);
+      console.error('Error in createUserProfile:', error);
     }
   };
 

@@ -13,14 +13,44 @@ const ProChatWelcome: React.FC<ProChatWelcomeProps> = ({ onMessageSent }) => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { user, session } = useAuth();
+  const { user, session, loading } = useAuth();
 
-  console.log('ProChatWelcome - User:', user?.email, 'Session:', !!session);
+  console.log('ProChatWelcome - Auth state:', { 
+    user: user?.email, 
+    hasSession: !!session,
+    sessionAccessToken: !!session?.access_token,
+    loading 
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isLoading || !user || !session) {
-      console.log('Submit blocked:', { input: !!input.trim(), loading: isLoading, user: !!user, session: !!session });
+    
+    if (!input.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a message",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isLoading) return;
+
+    if (!user || !session) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to access the War Room.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!session.access_token) {
+      toast({
+        title: "Session Error",
+        description: "Your session is invalid. Please log in again.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -28,7 +58,10 @@ const ProChatWelcome: React.FC<ProChatWelcomeProps> = ({ onMessageSent }) => {
       setIsLoading(true);
       
       console.log('Sending welcome message to AI chat function...');
-      console.log('Session token:', session.access_token ? 'Present' : 'Missing');
+      console.log('Session details:', { 
+        userId: user.id,
+        hasAccessToken: !!session.access_token 
+      });
       
       const { data, error } = await supabase.functions.invoke('ai-chat', {
         body: { 
@@ -36,7 +69,8 @@ const ProChatWelcome: React.FC<ProChatWelcomeProps> = ({ onMessageSent }) => {
           ruthless: true
         },
         headers: {
-          Authorization: `Bearer ${session.access_token}`
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
         }
       });
 
@@ -70,6 +104,18 @@ const ProChatWelcome: React.FC<ProChatWelcomeProps> = ({ onMessageSent }) => {
       setIsLoading(false);
     }
   };
+
+  // Show loading state while checking auth
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen px-6 py-12 bg-black text-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <p className="text-gray-300">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!user || !session) {
     return (
@@ -109,6 +155,7 @@ const ProChatWelcome: React.FC<ProChatWelcomeProps> = ({ onMessageSent }) => {
           placeholder="Example: Slipped back into dopamine trap. Skipped cold shower again."
           className="w-full px-4 py-3 bg-zinc-900 border border-red-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-600"
           disabled={isLoading}
+          autoFocus
         />
 
         <Button

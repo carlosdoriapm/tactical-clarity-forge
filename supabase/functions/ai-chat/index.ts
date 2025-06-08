@@ -32,26 +32,47 @@ serve(async (req) => {
     const authHeader = req.headers.get('Authorization');
     console.log('Auth header present:', !!authHeader);
     
-    if (!authHeader) {
-      console.error('No authorization header');
-      throw new Error('No authorization header provided');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('No valid authorization header');
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
+    
+    const token = authHeader.replace('Bearer ', '');
+    console.log('Token extracted, length:', token.length);
     
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
+      { 
+        global: { 
+          headers: { 
+            Authorization: `Bearer ${token}` 
+          } 
+        } 
+      }
     );
     
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
     console.log('User from auth:', user?.email, 'Auth error:', authError);
     
     if (authError || !user) {
       console.error('Authentication failed:', authError);
-      throw new Error('Not authenticated');
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication token' }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
 
-    // Simplified rate limiting
+    // Check rate limit
     const rateLimitCheck = await checkRateLimit(supabaseClient, user.id);
     if (!rateLimitCheck.allowed) {
       return new Response(
@@ -141,9 +162,9 @@ serve(async (req) => {
     console.error('Chat error:', error);
     return new Response(
       JSON.stringify({ 
-        error: error.message.includes('quota') 
+        error: error.message?.includes('quota') 
           ? 'Service quota exceeded. Please try again later.'
-          : 'An error occurred processing your request.'
+          : 'An error occurred processing your request. Please try again.'
       }),
       { 
         status: 500, 

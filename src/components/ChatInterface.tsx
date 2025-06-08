@@ -20,9 +20,14 @@ const ChatInterface = () => {
   const [showWelcome, setShowWelcome] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-  const { user, session } = useAuth();
+  const { user, session, loading } = useAuth();
 
-  console.log('ChatInterface - User:', user?.email, 'Session:', !!session);
+  console.log('ChatInterface - Auth state:', { 
+    user: user?.email, 
+    hasSession: !!session,
+    sessionAccessToken: !!session?.access_token,
+    loading 
+  });
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -48,11 +53,28 @@ const ChatInterface = () => {
   };
 
   const sendMessage = async (content: string) => {
-    if (!content.trim() || !user || !session) {
-      console.log('Missing requirements:', { content: !!content.trim(), user: !!user, session: !!session });
+    if (!content.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a message",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!user || !session) {
       toast({
         title: "Authentication Required",
         description: "Please log in to use the chat.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!session.access_token) {
+      toast({
+        title: "Session Error",
+        description: "Your session is invalid. Please log in again.",
         variant: "destructive",
       });
       return;
@@ -65,7 +87,10 @@ const ChatInterface = () => {
       setInput('');
       
       console.log('Sending message to AI chat function...');
-      console.log('Session token:', session.access_token ? 'Present' : 'Missing');
+      console.log('Session details:', { 
+        userId: user.id,
+        hasAccessToken: !!session.access_token 
+      });
       
       const { data, error } = await supabase.functions.invoke('ai-chat', {
         body: { 
@@ -73,7 +98,8 @@ const ChatInterface = () => {
           ruthless: true
         },
         headers: {
-          Authorization: `Bearer ${session.access_token}`
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
         }
       });
 
@@ -120,6 +146,18 @@ const ChatInterface = () => {
       handleSubmit(e);
     }
   };
+
+  // Show loading state while checking auth
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64 bg-zinc-900/50 rounded-lg">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <p className="text-white">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Show login message if user is not authenticated
   if (!user || !session) {
