@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import ProChatWelcome from './ProChatWelcome';
 
 interface Message {
@@ -19,6 +20,7 @@ const ChatInterface = () => {
   const [showWelcome, setShowWelcome] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -44,7 +46,14 @@ const ChatInterface = () => {
   };
 
   const sendMessage = async (content: string) => {
-    if (!content.trim()) return;
+    if (!content.trim() || !user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to use the chat.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       setIsLoading(true);
@@ -52,11 +61,21 @@ const ChatInterface = () => {
       appendToChat('user', content);
       setInput('');
       
+      // Get the current session to ensure we have a valid token
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('No active session found');
+      }
+
       const { data, error } = await supabase.functions.invoke('ai-chat', {
         body: { 
           content, 
           ruthless: true
-        }
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
 
       if (error) {
@@ -75,35 +94,19 @@ const ChatInterface = () => {
       
       let errorMessage = "Failed to send message. Please try again.";
       let toastTitle = "Chat Error";
-      let toastDuration = 5000;
       
-      if (error.message.includes('quota has been exceeded')) {
-        errorMessage = "The AI service quota has been exceeded. Please contact support for assistance.";
-        toastTitle = "Service Quota Exceeded";
-        toastDuration = 10000;
-      } else if (error.message.includes('busy') || error.message.includes('high demand')) {
-        errorMessage = "The AI is experiencing high demand. Please wait 2-3 minutes and try again.";
-        toastTitle = "Service Busy";
-        toastDuration = 8000;
-      } else if (error.message.includes('too quickly') || error.message.includes('wait a moment')) {
-        errorMessage = "Please wait a moment before sending another message.";
-        toastTitle = "Rate Limited";
-        toastDuration = 6000;
-      } else if (error.message.includes('authentication failed')) {
-        errorMessage = "Service authentication issue. Please contact support.";
+      if (error.message.includes('No active session')) {
+        errorMessage = "Your session has expired. Please log in again.";
+        toastTitle = "Session Expired";
+      } else if (error.message.includes('Not authenticated')) {
+        errorMessage = "Authentication failed. Please log in again.";
         toastTitle = "Authentication Error";
-        toastDuration = 8000;
-      } else if (error.message.includes('temporarily unavailable')) {
-        errorMessage = "AI service is temporarily unavailable. Please try again in a few minutes.";
-        toastTitle = "Service Unavailable";
-        toastDuration = 8000;
       }
       
       toast({
         title: toastTitle,
         description: errorMessage,
         variant: "destructive",
-        duration: toastDuration,
       });
     } finally {
       setIsLoading(false);
@@ -123,6 +126,20 @@ const ChatInterface = () => {
       handleSubmit(e);
     }
   };
+
+  // Show login message if user is not authenticated
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center h-64 bg-zinc-900/50 rounded-lg">
+        <div className="text-center">
+          <p className="text-white mb-4">Please log in to access the chat.</p>
+          <Button onClick={() => window.location.href = '/auth'} className="bg-red-700 hover:bg-red-800">
+            Go to Login
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (showWelcome) {
     return <ProChatWelcome onMessageSent={handleWelcomeMessageSent} />;

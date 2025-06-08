@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import IcebreakerQuickStart from './IcebreakerQuickStart';
 
 interface ProChatWelcomeProps {
@@ -13,19 +14,30 @@ const ProChatWelcome: React.FC<ProChatWelcomeProps> = ({ onMessageSent }) => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || !user) return;
 
     try {
       setIsLoading(true);
+      
+      // Get the current session to ensure we have a valid token
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('No active session found');
+      }
       
       const { data, error } = await supabase.functions.invoke('ai-chat', {
         body: { 
           content: input.trim(), 
           ruthless: true
-        }
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
 
       if (error) {
@@ -45,35 +57,19 @@ const ProChatWelcome: React.FC<ProChatWelcomeProps> = ({ onMessageSent }) => {
       
       let errorMessage = "Failed to send message. Please try again.";
       let toastTitle = "Chat Error";
-      let toastDuration = 5000;
       
-      if (error.message.includes('quota has been exceeded')) {
-        errorMessage = "The AI service quota has been exceeded. Please contact support for assistance.";
-        toastTitle = "Service Quota Exceeded";
-        toastDuration = 10000;
-      } else if (error.message.includes('busy') || error.message.includes('high demand')) {
-        errorMessage = "The AI is experiencing high demand. Please wait 2-3 minutes and try again.";
-        toastTitle = "Service Busy";
-        toastDuration = 8000;
-      } else if (error.message.includes('too quickly') || error.message.includes('wait a moment')) {
-        errorMessage = "Please wait a moment before sending another message.";
-        toastTitle = "Rate Limited";
-        toastDuration = 6000;
-      } else if (error.message.includes('authentication failed')) {
-        errorMessage = "Service authentication issue. Please contact support.";
+      if (error.message.includes('No active session')) {
+        errorMessage = "Your session has expired. Please log in again.";
+        toastTitle = "Session Expired";
+      } else if (error.message.includes('Not authenticated')) {
+        errorMessage = "Authentication failed. Please log in again.";
         toastTitle = "Authentication Error";
-        toastDuration = 8000;
-      } else if (error.message.includes('temporarily unavailable')) {
-        errorMessage = "AI service is temporarily unavailable. Please try again in a few minutes.";
-        toastTitle = "Service Unavailable";
-        toastDuration = 8000;
       }
       
       toast({
         title: toastTitle,
         description: errorMessage,
         variant: "destructive",
-        duration: toastDuration,
       });
     } finally {
       setIsLoading(false);
@@ -83,6 +79,20 @@ const ProChatWelcome: React.FC<ProChatWelcomeProps> = ({ onMessageSent }) => {
   const handleSuggestionSelect = (suggestion: string) => {
     setInput(suggestion);
   };
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen px-6 py-12 bg-black text-white">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-red-600 mb-4">Authentication Required</h1>
+          <p className="text-gray-300 mb-6">Please log in to access the War Room.</p>
+          <Button onClick={() => window.location.href = '/auth'} className="bg-red-700 hover:bg-red-800">
+            Go to Login
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-6 py-12 bg-black text-white">
