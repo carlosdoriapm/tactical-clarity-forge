@@ -20,7 +20,9 @@ const ChatInterface = () => {
   const [showWelcome, setShowWelcome] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
+
+  console.log('ChatInterface - User:', user?.email, 'Session:', !!session);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -46,7 +48,8 @@ const ChatInterface = () => {
   };
 
   const sendMessage = async (content: string) => {
-    if (!content.trim() || !user) {
+    if (!content.trim() || !user || !session) {
+      console.log('Missing requirements:', { content: !!content.trim(), user: !!user, session: !!session });
       toast({
         title: "Authentication Required",
         description: "Please log in to use the chat.",
@@ -62,11 +65,15 @@ const ChatInterface = () => {
       setInput('');
       
       console.log('Sending message to AI chat function...');
+      console.log('Session token:', session.access_token ? 'Present' : 'Missing');
       
       const { data, error } = await supabase.functions.invoke('ai-chat', {
         body: { 
           content, 
           ruthless: true
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
         }
       });
 
@@ -92,7 +99,7 @@ const ChatInterface = () => {
       
       toast({
         title: "Chat Error",
-        description: "Failed to send message. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to send message. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -115,7 +122,7 @@ const ChatInterface = () => {
   };
 
   // Show login message if user is not authenticated
-  if (!user) {
+  if (!user || !session) {
     return (
       <div className="flex items-center justify-center h-64 bg-zinc-900/50 rounded-lg">
         <div className="text-center">

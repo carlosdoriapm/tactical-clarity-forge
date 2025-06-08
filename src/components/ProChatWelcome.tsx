@@ -13,21 +13,30 @@ const ProChatWelcome: React.FC<ProChatWelcomeProps> = ({ onMessageSent }) => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
+
+  console.log('ProChatWelcome - User:', user?.email, 'Session:', !!session);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isLoading || !user) return;
+    if (!input.trim() || isLoading || !user || !session) {
+      console.log('Submit blocked:', { input: !!input.trim(), loading: isLoading, user: !!user, session: !!session });
+      return;
+    }
 
     try {
       setIsLoading(true);
       
       console.log('Sending welcome message to AI chat function...');
+      console.log('Session token:', session.access_token ? 'Present' : 'Missing');
       
       const { data, error } = await supabase.functions.invoke('ai-chat', {
         body: { 
           content: input.trim(), 
           ruthless: true
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
         }
       });
 
@@ -54,7 +63,7 @@ const ProChatWelcome: React.FC<ProChatWelcomeProps> = ({ onMessageSent }) => {
       
       toast({
         title: "Chat Error",
-        description: "Failed to send message. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to send message. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -62,7 +71,7 @@ const ProChatWelcome: React.FC<ProChatWelcomeProps> = ({ onMessageSent }) => {
     }
   };
 
-  if (!user) {
+  if (!user || !session) {
     return (
       <div className="flex items-center justify-center min-h-screen px-6 py-12 bg-black text-white">
         <div className="text-center">

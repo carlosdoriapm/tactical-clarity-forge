@@ -29,15 +29,27 @@ serve(async (req) => {
     console.log('User message:', content);
     
     // Get user from JWT
-    const authHeader = req.headers.get('Authorization')!;
+    const authHeader = req.headers.get('Authorization');
+    console.log('Auth header present:', !!authHeader);
+    
+    if (!authHeader) {
+      console.error('No authorization header');
+      throw new Error('No authorization header provided');
+    }
+    
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: authHeader } } }
     );
     
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    console.log('User from auth:', user?.email, 'Auth error:', authError);
+    
+    if (authError || !user) {
+      console.error('Authentication failed:', authError);
+      throw new Error('Not authenticated');
+    }
 
     // Simplified rate limiting
     const rateLimitCheck = await checkRateLimit(supabaseClient, user.id);
