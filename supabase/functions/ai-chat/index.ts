@@ -39,12 +39,12 @@ serve(async (req) => {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    // Check rate limiting
+    // Simplified rate limiting
     const rateLimitCheck = await checkRateLimit(supabaseClient, user.id);
     if (!rateLimitCheck.allowed) {
       return new Response(
         JSON.stringify({ 
-          error: `Rate limit exceeded. Please wait ${rateLimitCheck.waitTime} seconds before sending another message.` 
+          error: `Please wait ${rateLimitCheck.waitTime} seconds before sending another message.` 
         }),
         { 
           status: 429, 
@@ -56,14 +56,11 @@ serve(async (req) => {
     // Get or create user profile data
     const userProfileData = await getUserProfile(supabaseClient, user.id, user.email!);
     
-    console.log('=== INITIAL PROFILE DATA ===');
+    console.log('=== PROFILE DATA ===');
     console.log('User profile:', JSON.stringify(userProfileData.userProfile, null, 2));
     console.log('Combatant profile:', JSON.stringify(userProfileData.combatantProfile, null, 2));
 
     // Name detection logic
-    console.log('=== NAME DETECTION LOGIC ===');
-    console.log('Current combatant profile codename:', userProfileData.combatantProfile?.codename);
-    
     const trimmedContent = content.trim();
     
     // Check if this looks like a name response and we don't have a name yet
@@ -72,7 +69,6 @@ serve(async (req) => {
                          !['yes', 'no', 'maybe', 'help', 'ok', 'sure'].includes(trimmedContent.toLowerCase());
     
     if (!userProfileData.combatantProfile?.codename && looksLikeName) {
-      console.log('Processing user input for name:', trimmedContent);
       console.log('=== SAVING NAME ===');
       console.log('Detected name to save:', trimmedContent);
       
@@ -88,21 +84,16 @@ serve(async (req) => {
         userProfileData.combatantProfile = updatedProfiles.combatantProfile;
         
         console.log('=== NAME SAVED SUCCESSFULLY ===');
-        console.log('Updated combatant profile:', JSON.stringify(updatedProfiles.combatantProfile, null, 2));
       } catch (error) {
         console.error('=== ERROR SAVING NAME ===', error);
         throw error;
       }
     }
 
-    console.log('=== FINAL PROFILE DATA FOR PROMPT ===');
-    console.log('Final user profile:', JSON.stringify(userProfileData.userProfile, null, 2));
-    console.log('Final combatant profile:', JSON.stringify(userProfileData.combatantProfile, null, 2));
-
     // Build the enhanced prompt
     const enhancedPrompt = buildEnhancedPrompt(content, userProfileData, ruthless);
     
-    console.log('=== GENERATED PROMPT ===');
+    console.log('=== ENHANCED PROMPT ===');
     console.log('Enhanced prompt:', enhancedPrompt);
 
     // Make OpenAI request
