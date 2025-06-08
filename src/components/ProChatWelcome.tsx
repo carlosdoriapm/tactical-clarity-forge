@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import IcebreakerQuickStart from './IcebreakerQuickStart';
 
 interface ProChatWelcomeProps {
   onMessageSent: (message: string, response: string) => void;
@@ -23,22 +22,16 @@ const ProChatWelcome: React.FC<ProChatWelcomeProps> = ({ onMessageSent }) => {
     try {
       setIsLoading(true);
       
-      // Get the current session to ensure we have a valid token
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error('No active session found');
-      }
+      console.log('Sending welcome message to AI chat function...');
       
       const { data, error } = await supabase.functions.invoke('ai-chat', {
         body: { 
           content: input.trim(), 
           ruthless: true
-        },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        }
       });
+
+      console.log('AI chat response:', { data, error });
 
       if (error) {
         console.error('Supabase function error:', error);
@@ -49,35 +42,24 @@ const ProChatWelcome: React.FC<ProChatWelcomeProps> = ({ onMessageSent }) => {
         throw new Error(data.error);
       }
 
+      if (!data?.reply) {
+        throw new Error('No response received from AI service');
+      }
+
       onMessageSent(input.trim(), data.reply);
       setInput('');
       
     } catch (error) {
       console.error('Chat error:', error);
       
-      let errorMessage = "Failed to send message. Please try again.";
-      let toastTitle = "Chat Error";
-      
-      if (error.message.includes('No active session')) {
-        errorMessage = "Your session has expired. Please log in again.";
-        toastTitle = "Session Expired";
-      } else if (error.message.includes('Not authenticated')) {
-        errorMessage = "Authentication failed. Please log in again.";
-        toastTitle = "Authentication Error";
-      }
-      
       toast({
-        title: toastTitle,
-        description: errorMessage,
+        title: "Chat Error",
+        description: "Failed to send message. Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleSuggestionSelect = (suggestion: string) => {
-    setInput(suggestion);
   };
 
   if (!user) {
@@ -128,11 +110,6 @@ const ProChatWelcome: React.FC<ProChatWelcomeProps> = ({ onMessageSent }) => {
           {isLoading ? 'ANALYZING...' : 'Request Orders'}
         </Button>
       </form>
-
-      <div className="text-sm text-gray-400 italic mb-4 mt-8 text-center max-w-2xl">
-        Not sure how to begin? Try one of these:
-        <IcebreakerQuickStart onSelect={handleSuggestionSelect} />
-      </div>
 
       <div className="mt-4 text-xs text-gray-600 italic">
         Premium Chat Active — Tactical Intelligence Engaged

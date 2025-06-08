@@ -12,13 +12,6 @@ const Chat = () => {
         </header>
         
         <div className="glass-card p-6 rounded-xl">
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-white mb-2">Premium Chat Active</h2>
-            <p className="text-warfare-blue">
-              Get tactical advice from your Warfare Counselor for any situation.
-            </p>
-          </div>
-          
           <ChatInterface />
         </div>
       </div>

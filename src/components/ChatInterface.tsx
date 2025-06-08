@@ -61,22 +61,16 @@ const ChatInterface = () => {
       appendToChat('user', content);
       setInput('');
       
-      // Get the current session to ensure we have a valid token
-      const { data: { session } } = await supabase.auth.getSession();
+      console.log('Sending message to AI chat function...');
       
-      if (!session) {
-        throw new Error('No active session found');
-      }
-
       const { data, error } = await supabase.functions.invoke('ai-chat', {
         body: { 
           content, 
           ruthless: true
-        },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        }
       });
+
+      console.log('AI chat response:', { data, error });
 
       if (error) {
         console.error('Supabase function error:', error);
@@ -87,25 +81,18 @@ const ChatInterface = () => {
         throw new Error(data.error);
       }
 
+      if (!data?.reply) {
+        throw new Error('No response received from AI service');
+      }
+
       appendToChat('assistant', data.reply);
       
     } catch (error) {
       console.error('Chat error:', error);
       
-      let errorMessage = "Failed to send message. Please try again.";
-      let toastTitle = "Chat Error";
-      
-      if (error.message.includes('No active session')) {
-        errorMessage = "Your session has expired. Please log in again.";
-        toastTitle = "Session Expired";
-      } else if (error.message.includes('Not authenticated')) {
-        errorMessage = "Authentication failed. Please log in again.";
-        toastTitle = "Authentication Error";
-      }
-      
       toast({
-        title: toastTitle,
-        description: errorMessage,
+        title: "Chat Error",
+        description: "Failed to send message. Please try again.",
         variant: "destructive",
       });
     } finally {
