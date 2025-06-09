@@ -17,6 +17,9 @@ interface Message {
   content: string;
 }
 
+// N8N Webhook URL
+const N8N_WEBHOOK_URL = 'https://carlosdoriapm.app.n8n.cloud/webhook-test/legionary';
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -158,6 +161,41 @@ serve(async (req) => {
         console.error('=== ERROR SAVING NAME ===', error);
         throw error;
       }
+    }
+
+    // Send data to N8N webhook
+    console.log('=== SENDING DATA TO N8N WEBHOOK ===');
+    try {
+      const webhookData = {
+        timestamp: new Date().toISOString(),
+        user_id: user.id,
+        user_email: user.email,
+        user_message: content,
+        ruthless_mode: ruthless,
+        codename: userProfileData.combatantProfile?.codename || null,
+        intensity_mode: userProfileData.userProfile?.intensity_mode || 'TACTICAL'
+      };
+
+      console.log('Sending data to webhook:', webhookData);
+
+      const webhookResponse = await fetch(N8N_WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(webhookData),
+      });
+
+      console.log('Webhook response status:', webhookResponse.status);
+      
+      if (!webhookResponse.ok) {
+        console.error('Webhook failed:', await webhookResponse.text());
+      } else {
+        console.log('Data sent to webhook successfully');
+      }
+    } catch (webhookError) {
+      console.error('Error sending to webhook:', webhookError);
+      // Don't fail the main request if webhook fails
     }
 
     // Build the enhanced prompt
