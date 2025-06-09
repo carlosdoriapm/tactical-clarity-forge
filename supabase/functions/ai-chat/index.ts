@@ -24,8 +24,45 @@ serve(async (req) => {
 
   try {
     console.log('=== CHAT REQUEST START ===');
+    console.log('Request method:', req.method);
+    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
     
-    const { content, ruthless = false } = await req.json();
+    // Parse request body with error handling
+    let requestBody;
+    try {
+      const bodyText = await req.text();
+      console.log('Raw request body:', bodyText);
+      
+      if (!bodyText || bodyText.trim() === '') {
+        throw new Error('Request body is empty');
+      }
+      
+      requestBody = JSON.parse(bodyText);
+      console.log('Parsed request body:', requestBody);
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON in request body' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+    
+    const { content, ruthless = false } = requestBody;
+    
+    if (!content || typeof content !== 'string') {
+      console.error('Missing or invalid content in request');
+      return new Response(
+        JSON.stringify({ error: 'Content is required and must be a string' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+    
     console.log('User message:', content);
     
     // Get user from JWT
@@ -90,8 +127,8 @@ serve(async (req) => {
     const userProfileData = await getUserProfile(supabaseClient, user.id, user.email!);
     
     console.log('=== PROFILE DATA ===');
-    console.log('User profile:', JSON.stringify(userProfileData.userProfile, null, 2));
-    console.log('Combatant profile:', JSON.stringify(userProfileData.combatantProfile, null, 2));
+    console.log('User profile exists:', !!userProfileData.userProfile);
+    console.log('Combatant profile exists:', !!userProfileData.combatantProfile);
 
     // Name detection logic
     const trimmedContent = content.trim();
@@ -127,7 +164,7 @@ serve(async (req) => {
     const enhancedPrompt = buildEnhancedPrompt(content, userProfileData, ruthless);
     
     console.log('=== ENHANCED PROMPT ===');
-    console.log('Enhanced prompt:', enhancedPrompt);
+    console.log('Enhanced prompt length:', enhancedPrompt.length);
 
     // Make OpenAI request
     console.log('Making OpenAI API request...');
@@ -150,7 +187,7 @@ serve(async (req) => {
     console.log('=== OPENAI RESPONSE ===');
     const reply = response.choices[0]?.message?.content || "I apologize, but I couldn't generate a response. Please try again.";
     
-    console.log('OpenAI response received successfully');
+    console.log('OpenAI response received successfully, length:', reply.length);
     console.log('=== CHAT REQUEST END ===');
 
     return new Response(

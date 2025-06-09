@@ -15,10 +15,10 @@ const ProChatWelcome: React.FC<ProChatWelcomeProps> = ({ onMessageSent }) => {
   const { toast } = useToast();
   const { user, session, loading } = useAuth();
 
-  console.log('ProChatWelcome - Auth state:', { 
+  console.log('ProChatWelcome - Current auth state:', { 
     user: user?.email, 
     hasSession: !!session,
-    sessionAccessToken: !!session?.access_token,
+    sessionValid: !!session?.access_token,
     loading 
   });
 
@@ -36,7 +36,7 @@ const ProChatWelcome: React.FC<ProChatWelcomeProps> = ({ onMessageSent }) => {
 
     if (isLoading) return;
 
-    if (!user || !session) {
+    if (!user || !session?.access_token) {
       toast({
         title: "Authentication Required",
         description: "Please log in to access the War Room.",
@@ -45,22 +45,13 @@ const ProChatWelcome: React.FC<ProChatWelcomeProps> = ({ onMessageSent }) => {
       return;
     }
 
-    if (!session.access_token) {
-      toast({
-        title: "Session Error",
-        description: "Your session is invalid. Please log in again.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
       setIsLoading(true);
       
-      console.log('Sending welcome message to AI chat function...');
-      console.log('Session details:', { 
+      console.log('ProChatWelcome: Sending welcome message...', {
+        content: input.substring(0, 50) + '...',
         userId: user.id,
-        hasAccessToken: !!session.access_token 
+        tokenLength: session.access_token.length
       });
       
       const { data, error } = await supabase.functions.invoke('ai-chat', {
@@ -74,18 +65,20 @@ const ProChatWelcome: React.FC<ProChatWelcomeProps> = ({ onMessageSent }) => {
         }
       });
 
-      console.log('AI chat response:', { data, error });
+      console.log('ProChatWelcome: AI response received:', { data, error });
 
       if (error) {
-        console.error('Supabase function error:', error);
+        console.error('ProChatWelcome: Supabase function error:', error);
         throw new Error(error.message || 'Failed to communicate with AI service');
       }
 
       if (data?.error) {
+        console.error('ProChatWelcome: AI service error:', data.error);
         throw new Error(data.error);
       }
 
       if (!data?.reply) {
+        console.error('ProChatWelcome: No reply in response:', data);
         throw new Error('No response received from AI service');
       }
 
@@ -93,7 +86,7 @@ const ProChatWelcome: React.FC<ProChatWelcomeProps> = ({ onMessageSent }) => {
       setInput('');
       
     } catch (error) {
-      console.error('Chat error:', error);
+      console.error('ProChatWelcome: Chat error:', error);
       
       toast({
         title: "Chat Error",

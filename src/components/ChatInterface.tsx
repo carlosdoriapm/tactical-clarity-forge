@@ -22,10 +22,10 @@ const ChatInterface = () => {
   const { toast } = useToast();
   const { user, session, loading } = useAuth();
 
-  console.log('ChatInterface - Auth state:', { 
+  console.log('ChatInterface - Current auth state:', { 
     user: user?.email, 
     hasSession: !!session,
-    sessionAccessToken: !!session?.access_token,
+    sessionValid: !!session?.access_token,
     loading 
   });
 
@@ -62,19 +62,10 @@ const ChatInterface = () => {
       return;
     }
 
-    if (!user || !session) {
+    if (!user || !session?.access_token) {
       toast({
         title: "Authentication Required",
         description: "Please log in to use the chat.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!session.access_token) {
-      toast({
-        title: "Session Error",
-        description: "Your session is invalid. Please log in again.",
         variant: "destructive",
       });
       return;
@@ -86,15 +77,15 @@ const ChatInterface = () => {
       appendToChat('user', content);
       setInput('');
       
-      console.log('Sending message to AI chat function...');
-      console.log('Session details:', { 
+      console.log('ChatInterface: Sending message to AI...', {
+        content: content.substring(0, 50) + '...',
         userId: user.id,
-        hasAccessToken: !!session.access_token 
+        tokenLength: session.access_token.length
       });
       
       const { data, error } = await supabase.functions.invoke('ai-chat', {
         body: { 
-          content, 
+          content: content.trim(), 
           ruthless: true
         },
         headers: {
@@ -103,25 +94,30 @@ const ChatInterface = () => {
         }
       });
 
-      console.log('AI chat response:', { data, error });
+      console.log('ChatInterface: AI response received:', { data, error });
 
       if (error) {
-        console.error('Supabase function error:', error);
+        console.error('ChatInterface: Supabase function error:', error);
         throw new Error(error.message || 'Failed to communicate with AI service');
       }
 
       if (data?.error) {
+        console.error('ChatInterface: AI service error:', data.error);
         throw new Error(data.error);
       }
 
       if (!data?.reply) {
+        console.error('ChatInterface: No reply in response:', data);
         throw new Error('No response received from AI service');
       }
 
       appendToChat('assistant', data.reply);
       
     } catch (error) {
-      console.error('Chat error:', error);
+      console.error('ChatInterface: Chat error:', error);
+      
+      // Remove the user message we added since the request failed
+      setMessages(prev => prev.slice(0, -1));
       
       toast({
         title: "Chat Error",
