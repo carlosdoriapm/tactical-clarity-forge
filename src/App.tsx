@@ -11,6 +11,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import Chat from "./pages/Chat";
 import Profile from "./pages/Profile";
 import Success from "./pages/Success";
 import NotFound from "./pages/NotFound";
@@ -34,6 +35,12 @@ const App = () => (
                 <Layout>
                   <Dashboard />
                 </Layout>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/chat" element={
+              <ProtectedRoute>
+                <Chat />
               </ProtectedRoute>
             } />
             

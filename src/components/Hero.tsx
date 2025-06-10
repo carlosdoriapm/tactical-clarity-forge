@@ -50,19 +50,19 @@ const Hero = () => {
             {user ? (
               <>
                 <Button 
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate('/chat')}
                   size="lg" 
                   className="bg-warfare-red hover:bg-red-600 text-white font-bold py-4 px-8 text-lg"
                 >
-                  Enter Command Center
+                  Start Chat Mission
                 </Button>
                 <Button 
-                  onClick={() => navigate('/chat')}
+                  onClick={() => navigate('/dashboard')}
                   size="lg" 
                   variant="outline"
                   className="border-warfare-blue text-warfare-blue hover:bg-warfare-blue hover:text-white py-4 px-8 text-lg"
                 >
-                  Start Chat Mission
+                  Command Center
                 </Button>
               </>
             ) : (
