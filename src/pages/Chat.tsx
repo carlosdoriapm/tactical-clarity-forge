@@ -4,6 +4,7 @@ import { Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Message {
   id: string;
@@ -25,7 +26,6 @@ const Chat = () => {
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -46,20 +46,50 @@ const Chat = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentMessage = inputValue;
     setInputValue('');
     setIsTyping(true);
 
-    // Simulate bot response
-    setTimeout(() => {
+    try {
+      console.log('Sending message to AI:', currentMessage);
+      
+      const { data, error } = await supabase.functions.invoke('ai-chat', {
+        body: { 
+          message: currentMessage,
+          userId: user?.id || 'anonymous'
+        }
+      });
+
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
+
+      console.log('AI response received:', data);
+
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: 'I hear your words, and I understand the weight they carry. Like a general surveying the battlefield, let me offer you this counsel: In every challenge lies the seed of triumph. Tell me more about the specific obstacles you face, and together we shall forge a path forward.',
+        content: data.response || 'I hear your words, warrior. Let me gather my thoughts and provide you with proper counsel.',
         isBot: true,
         timestamp: new Date()
       };
+
       setMessages(prev => [...prev, botMessage]);
+
+    } catch (error) {
+      console.error('Error sending message:', error);
+      
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: 'The connection to the war room has been disrupted, warrior. Try again, and I shall provide the counsel you seek.',
+        isBot: true,
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsTyping(false);
-    }, 2000);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -125,7 +155,6 @@ const Chat = () => {
           <div className="flex items-end space-x-4">
             <div className="flex-1 relative">
               <Textarea
-                ref={textareaRef}
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
