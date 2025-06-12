@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface Message {
   id: string;
@@ -15,6 +16,7 @@ interface Message {
 
 const Chat = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -36,7 +38,7 @@ const Chat = () => {
   }, [messages]);
 
   const handleSend = async () => {
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || isTyping) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -50,8 +52,12 @@ const Chat = () => {
     setInputValue('');
     setIsTyping(true);
 
+    console.log('=== SENDING MESSAGE ===');
+    console.log('Message:', currentMessage);
+    console.log('User ID:', user?.id);
+
     try {
-      console.log('Sending message to AI:', currentMessage);
+      console.log('Calling Supabase function...');
       
       const { data, error } = await supabase.functions.invoke('ai-chat', {
         body: { 
@@ -60,33 +66,66 @@ const Chat = () => {
         }
       });
 
+      console.log('=== SUPABASE RESPONSE ===');
+      console.log('Data:', data);
+      console.log('Error:', error);
+
       if (error) {
         console.error('Supabase function error:', error);
-        throw error;
+        throw new Error(error.message || 'Failed to get response from advisor');
       }
 
-      console.log('AI response received:', data);
+      if (!data) {
+        console.error('No data received from function');
+        throw new Error('No response received from advisor');
+      }
+
+      // Verificar se temos uma resposta válida
+      const responseText = data.response || data.error || 'I hear your words, warrior. Let me gather my thoughts and provide you with proper counsel.';
+
+      console.log('Final response text:', responseText);
 
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: data.response || 'I hear your words, warrior. Let me gather my thoughts and provide you with proper counsel.',
+        content: responseText,
         isBot: true,
         timestamp: new Date()
       };
 
       setMessages(prev => [...prev, botMessage]);
 
+      // Mostrar toast de sucesso se não houve erro
+      if (!data.error && data.success !== false) {
+        toast({
+          title: "Counsel received",
+          description: "Your tactical advisor has responded",
+        });
+      } else if (data.error) {
+        toast({
+          title: "Communication issue",
+          description: data.error,
+          variant: "destructive",
+        });
+      }
+
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('=== ERROR HANDLING ===');
+      console.error('Error:', error);
       
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: 'The connection to the war room has been disrupted, warrior. Try again, and I shall provide the counsel you seek.',
+        content: 'The connection to the war room has been disrupted, warrior. Our communication lines are compromised. Try again, and I shall provide the counsel you seek.',
         isBot: true,
         timestamp: new Date()
       };
       
       setMessages(prev => [...prev, errorMessage]);
+      
+      toast({
+        title: "Connection failed",
+        description: error instanceof Error ? error.message : "Failed to reach your tactical advisor",
+        variant: "destructive",
+      });
     } finally {
       setIsTyping(false);
     }
@@ -106,6 +145,9 @@ const Chat = () => {
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl font-bold text-white mb-2">Warfare Counselor</h1>
           <p className="text-warfare-blue/80">Your tactical advisor awaits your counsel</p>
+          {user && (
+            <p className="text-xs text-warfare-blue/60 mt-1">Connected as: {user.email}</p>
+          )}
         </div>
       </div>
 
@@ -141,6 +183,7 @@ const Chat = () => {
                   <div className="w-2 h-2 bg-warfare-yellow rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
                   <div className="w-2 h-2 bg-warfare-blue rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
                 </div>
+                <p className="text-xs text-warfare-blue/60 mt-2">Your advisor is formulating counsel...</p>
               </div>
             </div>
           )}
