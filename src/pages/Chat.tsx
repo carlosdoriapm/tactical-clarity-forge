@@ -1,6 +1,6 @@
 
 import { useState, useRef, useEffect } from 'react';
-import { Send } from 'lucide-react';
+import { Send, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,6 +27,7 @@ const Chat = () => {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'unknown' | 'testing' | 'good' | 'error'>('unknown');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -36,6 +37,47 @@ const Chat = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const testConnection = async () => {
+    setConnectionStatus('testing');
+    try {
+      console.log('🔍 Testing connection to edge function...');
+      
+      const { data, error } = await supabase.functions.invoke('ai-chat', {
+        body: { 
+          message: 'test connection',
+          userId: user?.id || 'test'
+        }
+      });
+
+      console.log('Connection test result:', { data, error });
+
+      if (error) {
+        console.error('❌ Connection test failed:', error);
+        setConnectionStatus('error');
+        toast({
+          title: "Connection Test Failed",
+          description: `Error: ${error.message}`,
+          variant: "destructive",
+        });
+      } else {
+        console.log('✅ Connection test successful');
+        setConnectionStatus('good');
+        toast({
+          title: "Connection OK",
+          description: "Chat system is working properly",
+        });
+      }
+    } catch (error) {
+      console.error('💥 Connection test error:', error);
+      setConnectionStatus('error');
+      toast({
+        title: "Connection Error",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleSend = async () => {
     if (!inputValue.trim() || isTyping) return;
@@ -52,12 +94,12 @@ const Chat = () => {
     setInputValue('');
     setIsTyping(true);
 
-    console.log('🚀 INICIANDO ENVIO DE MENSAGEM');
-    console.log('Mensagem:', currentMessage);
+    console.log('🚀 SENDING MESSAGE');
+    console.log('Message:', currentMessage);
     console.log('User ID:', user?.id || 'anonymous');
 
     try {
-      console.log('📡 Chamando função Supabase...');
+      console.log('📡 Calling Supabase function...');
       
       const { data, error } = await supabase.functions.invoke('ai-chat', {
         body: { 
@@ -66,37 +108,38 @@ const Chat = () => {
         }
       });
 
-      console.log('📨 RESPOSTA DO SUPABASE:');
+      console.log('📨 SUPABASE RESPONSE:');
       console.log('Data:', data);
       console.log('Error:', error);
 
       if (error) {
-        console.error('❌ Erro da função Supabase:', error);
-        throw new Error(`Supabase function error: ${error.message}`);
+        console.error('❌ Supabase function error:', error);
+        throw new Error(`Function error: ${error.message}`);
       }
 
       if (!data) {
-        console.error('❌ Nenhum dado recebido');
-        throw new Error('No data received from function');
+        console.error('❌ No data received');
+        throw new Error('No response received');
       }
 
-      // Verificar estrutura da resposta
+      // Handle response
       let responseText = '';
       let hasError = false;
 
       if (data.success === false || data.error) {
-        console.warn('⚠️ Resposta com erro:', data.error);
+        console.warn('⚠️ Response with error:', data.error);
         responseText = data.response || data.error || 'An error occurred, warrior.';
         hasError = true;
       } else if (data.response) {
-        console.log('✅ Resposta bem-sucedida');
+        console.log('✅ Successful response');
         responseText = data.response;
+        setConnectionStatus('good');
       } else {
-        console.warn('⚠️ Estrutura de resposta inesperada:', data);
+        console.warn('⚠️ Unexpected response structure:', data);
         responseText = 'I hear your words, warrior. Let me gather my thoughts and provide you with proper counsel.';
       }
 
-      console.log('💬 Texto da resposta final:', responseText);
+      console.log('💬 Final response text:', responseText);
 
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -107,7 +150,7 @@ const Chat = () => {
 
       setMessages(prev => [...prev, botMessage]);
 
-      // Toast notification
+      // Show toast
       if (!hasError) {
         toast({
           title: "Counsel received",
@@ -119,12 +162,13 @@ const Chat = () => {
           description: "There was an issue, but your advisor responded",
           variant: "destructive",
         });
+        setConnectionStatus('error');
       }
 
     } catch (error) {
-      console.error('💥 ERRO CRÍTICO:');
-      console.error('Tipo:', error.constructor.name);
-      console.error('Mensagem:', error.message);
+      console.error('💥 CRITICAL ERROR:');
+      console.error('Type:', error.constructor.name);
+      console.error('Message:', error.message);
       console.error('Stack:', error.stack);
       
       const errorMessage: Message = {
@@ -135,6 +179,7 @@ const Chat = () => {
       };
       
       setMessages(prev => [...prev, errorMessage]);
+      setConnectionStatus('error');
       
       toast({
         title: "Connection failed",
@@ -143,7 +188,7 @@ const Chat = () => {
       });
     } finally {
       setIsTyping(false);
-      console.log('🏁 Finalizado envio de mensagem');
+      console.log('🏁 Message sending completed');
     }
   };
 
@@ -154,16 +199,53 @@ const Chat = () => {
     }
   };
 
+  const getStatusIcon = () => {
+    switch (connectionStatus) {
+      case 'testing':
+        return <div className="w-3 h-3 bg-yellow-500 rounded-full animate-pulse" />;
+      case 'good':
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'error':
+        return <AlertCircle className="w-4 h-4 text-red-500" />;
+      default:
+        return <div className="w-3 h-3 bg-gray-500 rounded-full" />;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-warfare-dark via-slate-900 to-warfare-dark flex flex-col">
       {/* Chat Header */}
       <div className="flex-shrink-0 p-6 border-b border-warfare-red/20">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold text-white mb-2">Warfare Counselor</h1>
-          <p className="text-warfare-blue/80">Your tactical advisor awaits your counsel</p>
-          {user && (
-            <p className="text-xs text-warfare-blue/60 mt-1">Connected as: {user.email}</p>
-          )}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-white mb-2">Warfare Counselor</h1>
+              <p className="text-warfare-blue/80">Your tactical advisor awaits your counsel</p>
+              {user && (
+                <p className="text-xs text-warfare-blue/60 mt-1">Connected as: {user.email}</p>
+              )}
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                {getStatusIcon()}
+                <span className="text-sm text-white">
+                  {connectionStatus === 'testing' && 'Testing...'}
+                  {connectionStatus === 'good' && 'Connected'}
+                  {connectionStatus === 'error' && 'Error'}
+                  {connectionStatus === 'unknown' && 'Unknown'}
+                </span>
+              </div>
+              <Button
+                onClick={testConnection}
+                disabled={connectionStatus === 'testing'}
+                size="sm"
+                variant="outline"
+                className="border-warfare-red/30 text-white hover:bg-warfare-red/10"
+              >
+                Test Connection
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -231,7 +313,7 @@ const Chat = () => {
             </Button>
           </div>
           <p className="text-xs text-warfare-blue/60 mt-2 text-center">
-            Press Enter to send • Shift + Enter for new line
+            Press Enter to send • Shift + Enter for new line • Use "Test Connection" to verify system status
           </p>
         </div>
       </div>

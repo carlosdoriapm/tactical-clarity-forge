@@ -72,25 +72,40 @@ serve(async (req) => {
 
     console.log('✅ Message validated:', { messageLength: message.length, userId });
 
-    // Send to webhook (non-blocking)
+    // Test webhook first (with timeout)
+    console.log('🔍 Testing webhook connectivity...');
     const webhookData = {
       timestamp: new Date().toISOString(),
       userId: userId || 'anonymous',
       message: message.trim(),
-      source: 'warfare_counselor_chat'
+      source: 'warfare_counselor_chat',
+      test: true
     };
 
-    console.log('Sending to webhook (non-blocking)...');
-    fetch(webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(webhookData),
-    }).catch(error => {
-      console.warn('⚠️ Webhook failed (non-critical):', error.message);
-    });
+    try {
+      const webhookController = new AbortController();
+      const webhookTimeout = setTimeout(() => webhookController.abort(), 5000); // 5 second timeout
+
+      const webhookResponse = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(webhookData),
+        signal: webhookController.signal
+      });
+
+      clearTimeout(webhookTimeout);
+      
+      if (webhookResponse.ok) {
+        console.log('✅ Webhook is working:', webhookResponse.status);
+      } else {
+        console.warn('⚠️ Webhook returned non-OK status:', webhookResponse.status);
+      }
+    } catch (webhookError) {
+      console.warn('⚠️ Webhook test failed (proceeding anyway):', webhookError.message);
+    }
 
     // Call OpenAI API
-    console.log('Calling OpenAI API...');
+    console.log('🤖 Calling OpenAI API...');
     const openAIPayload = {
       model: 'gpt-4o-mini',
       messages: [
@@ -104,7 +119,10 @@ serve(async (req) => {
       temperature: 0.7,
     };
 
-    console.log('OpenAI payload:', { model: openAIPayload.model, messageCount: openAIPayload.messages.length });
+    console.log('OpenAI payload prepared:', { model: openAIPayload.model, messageCount: openAIPayload.messages.length });
+
+    const openAIController = new AbortController();
+    const openAITimeout = setTimeout(() => openAIController.abort(), 30000); // 30 second timeout
 
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -113,8 +131,10 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(openAIPayload),
+      signal: openAIController.signal
     });
 
+    clearTimeout(openAITimeout);
     console.log('OpenAI response status:', openAIResponse.status);
 
     if (!openAIResponse.ok) {
@@ -132,7 +152,7 @@ serve(async (req) => {
     }
 
     const openAIData = await openAIResponse.json();
-    console.log('OpenAI response data:', { 
+    console.log('OpenAI response received:', { 
       choices: openAIData.choices?.length || 0,
       usage: openAIData.usage 
     });
@@ -151,12 +171,27 @@ serve(async (req) => {
       });
     }
 
-    console.log('✅ AI response generated:', { length: aiResponse.length });
+    console.log('✅ AI response generated successfully:', { length: aiResponse.length });
+
+    // Send final webhook (non-blocking)
+    console.log('📤 Sending final webhook...');
+    fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...webhookData,
+        test: false,
+        ai_response: aiResponse.trim()
+      }),
+    }).catch(error => {
+      console.warn('⚠️ Final webhook failed (non-critical):', error.message);
+    });
 
     const successResponse = {
       response: aiResponse.trim(),
       success: true,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      webhook_status: 'tested'
     };
 
     console.log('=== AI CHAT FUNCTION SUCCESS ===');
