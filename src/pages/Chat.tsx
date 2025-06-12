@@ -48,16 +48,16 @@ const Chat = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
-    const currentMessage = inputValue;
+    const currentMessage = inputValue.trim();
     setInputValue('');
     setIsTyping(true);
 
-    console.log('=== SENDING MESSAGE ===');
-    console.log('Message:', currentMessage);
-    console.log('User ID:', user?.id);
+    console.log('🚀 INICIANDO ENVIO DE MENSAGEM');
+    console.log('Mensagem:', currentMessage);
+    console.log('User ID:', user?.id || 'anonymous');
 
     try {
-      console.log('Calling Supabase function...');
+      console.log('📡 Chamando função Supabase...');
       
       const { data, error } = await supabase.functions.invoke('ai-chat', {
         body: { 
@@ -66,24 +66,37 @@ const Chat = () => {
         }
       });
 
-      console.log('=== SUPABASE RESPONSE ===');
+      console.log('📨 RESPOSTA DO SUPABASE:');
       console.log('Data:', data);
       console.log('Error:', error);
 
       if (error) {
-        console.error('Supabase function error:', error);
-        throw new Error(error.message || 'Failed to get response from advisor');
+        console.error('❌ Erro da função Supabase:', error);
+        throw new Error(`Supabase function error: ${error.message}`);
       }
 
       if (!data) {
-        console.error('No data received from function');
-        throw new Error('No response received from advisor');
+        console.error('❌ Nenhum dado recebido');
+        throw new Error('No data received from function');
       }
 
-      // Verificar se temos uma resposta válida
-      const responseText = data.response || data.error || 'I hear your words, warrior. Let me gather my thoughts and provide you with proper counsel.';
+      // Verificar estrutura da resposta
+      let responseText = '';
+      let hasError = false;
 
-      console.log('Final response text:', responseText);
+      if (data.success === false || data.error) {
+        console.warn('⚠️ Resposta com erro:', data.error);
+        responseText = data.response || data.error || 'An error occurred, warrior.';
+        hasError = true;
+      } else if (data.response) {
+        console.log('✅ Resposta bem-sucedida');
+        responseText = data.response;
+      } else {
+        console.warn('⚠️ Estrutura de resposta inesperada:', data);
+        responseText = 'I hear your words, warrior. Let me gather my thoughts and provide you with proper counsel.';
+      }
+
+      console.log('💬 Texto da resposta final:', responseText);
 
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -94,27 +107,29 @@ const Chat = () => {
 
       setMessages(prev => [...prev, botMessage]);
 
-      // Mostrar toast de sucesso se não houve erro
-      if (!data.error && data.success !== false) {
+      // Toast notification
+      if (!hasError) {
         toast({
           title: "Counsel received",
           description: "Your tactical advisor has responded",
         });
-      } else if (data.error) {
+      } else {
         toast({
           title: "Communication issue",
-          description: data.error,
+          description: "There was an issue, but your advisor responded",
           variant: "destructive",
         });
       }
 
     } catch (error) {
-      console.error('=== ERROR HANDLING ===');
-      console.error('Error:', error);
+      console.error('💥 ERRO CRÍTICO:');
+      console.error('Tipo:', error.constructor.name);
+      console.error('Mensagem:', error.message);
+      console.error('Stack:', error.stack);
       
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: 'The connection to the war room has been disrupted, warrior. Our communication lines are compromised. Try again, and I shall provide the counsel you seek.',
+        content: 'The connection to the war room has been severed, warrior. Our communication lines are down. Check your connection and try again.',
         isBot: true,
         timestamp: new Date()
       };
@@ -123,11 +138,12 @@ const Chat = () => {
       
       toast({
         title: "Connection failed",
-        description: error instanceof Error ? error.message : "Failed to reach your tactical advisor",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
         variant: "destructive",
       });
     } finally {
       setIsTyping(false);
+      console.log('🏁 Finalizado envio de mensagem');
     }
   };
 
