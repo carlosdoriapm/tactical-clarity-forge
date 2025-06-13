@@ -3,7 +3,6 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-const webhookUrl = 'https://carlosdoriapm.app.n8n.cloud/webhook-test/legionary';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,7 +12,6 @@ const corsHeaders = {
 serve(async (req) => {
   console.log('=== AI CHAT FUNCTION START ===');
   console.log('Method:', req.method);
-  console.log('Headers:', Object.fromEntries(req.headers.entries()));
 
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -23,31 +21,31 @@ serve(async (req) => {
 
   try {
     // Verificar chave API
-    console.log('Checking API key...');
+    console.log('Checking OpenAI API key...');
     if (!openAIApiKey) {
-      console.error('❌ OpenAI API key not found in environment');
+      console.error('❌ OpenAI API key not found');
       return new Response(JSON.stringify({ 
         error: 'API key not configured',
-        response: 'The strategic communication systems are offline, warrior. Contact your commander to restore the connection.',
+        response: 'Os sistemas de comunicação estão offline, guerreiro. Entre em contato com seu comandante para restaurar a conexão.',
         success: false
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-    console.log('✅ API key found');
+    console.log('✅ OpenAI API key found');
 
     // Parse request body
     console.log('Parsing request body...');
     let requestBody;
     try {
       requestBody = await req.json();
-      console.log('Request body:', requestBody);
+      console.log('Request body parsed:', requestBody);
     } catch (parseError) {
       console.error('❌ Failed to parse request body:', parseError);
       return new Response(JSON.stringify({
         error: 'Invalid request format',
-        response: 'Your message format is unclear, warrior. Speak plainly.',
+        response: 'Seu formato de mensagem não está claro, guerreiro. Fale claramente.',
         success: false
       }), {
         status: 400,
@@ -62,7 +60,7 @@ serve(async (req) => {
       console.error('❌ Invalid or empty message');
       return new Response(JSON.stringify({
         error: 'Message required',
-        response: 'Speak your thoughts clearly, warrior. I need your words to provide counsel.',
+        response: 'Fale seus pensamentos claramente, guerreiro. Preciso de suas palavras para fornecer conselho.',
         success: false
       }), {
         status: 400,
@@ -72,46 +70,14 @@ serve(async (req) => {
 
     console.log('✅ Message validated:', { messageLength: message.length, userId });
 
-    // Test webhook first (with timeout)
-    console.log('🔍 Testing webhook connectivity...');
-    const webhookData = {
-      timestamp: new Date().toISOString(),
-      userId: userId || 'anonymous',
-      message: message.trim(),
-      source: 'warfare_counselor_chat',
-      test: true
-    };
-
-    try {
-      const webhookController = new AbortController();
-      const webhookTimeout = setTimeout(() => webhookController.abort(), 5000); // 5 second timeout
-
-      const webhookResponse = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(webhookData),
-        signal: webhookController.signal
-      });
-
-      clearTimeout(webhookTimeout);
-      
-      if (webhookResponse.ok) {
-        console.log('✅ Webhook is working:', webhookResponse.status);
-      } else {
-        console.warn('⚠️ Webhook returned non-OK status:', webhookResponse.status);
-      }
-    } catch (webhookError) {
-      console.warn('⚠️ Webhook test failed (proceeding anyway):', webhookError.message);
-    }
-
-    // Call OpenAI API
+    // Call OpenAI API directly (removing webhook dependency)
     console.log('🤖 Calling OpenAI API...');
     const openAIPayload = {
-      model: 'gpt-4o-mini',
+      model: 'gpt-4.1-2025-04-14',
       messages: [
         { 
           role: 'system', 
-          content: 'You are a tactical advisor, forged in the crucible of ancient wisdom and modern strategy. You speak with the clarity of Caesar and the resolve of Marcus Aurelius. Provide counsel that is direct, powerful, and actionable. Keep responses concise but impactful, like a Roman general addressing his troops before battle. Maximum 200 words.'
+          content: 'Você é um conselheiro tático, forjado no cadinho da sabedoria antiga e estratégia moderna. Você fala com a clareza de César e a determinação de Marco Aurélio. Forneça conselhos diretos, poderosos e práticos. Mantenha as respostas concisas mas impactantes, como um general romano dirigindo-se às suas tropas antes da batalha. Máximo 200 palavras. Responda sempre em português.'
         },
         { role: 'user', content: message.trim() }
       ],
@@ -119,11 +85,7 @@ serve(async (req) => {
       temperature: 0.7,
     };
 
-    console.log('OpenAI payload prepared:', { model: openAIPayload.model, messageCount: openAIPayload.messages.length });
-
-    const openAIController = new AbortController();
-    const openAITimeout = setTimeout(() => openAIController.abort(), 30000); // 30 second timeout
-
+    console.log('Making OpenAI request...');
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -131,10 +93,8 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(openAIPayload),
-      signal: openAIController.signal
     });
 
-    clearTimeout(openAITimeout);
     console.log('OpenAI response status:', openAIResponse.status);
 
     if (!openAIResponse.ok) {
@@ -143,7 +103,7 @@ serve(async (req) => {
       
       return new Response(JSON.stringify({
         error: `OpenAI API error: ${openAIResponse.status}`,
-        response: 'The Oracle is temporarily silent, warrior. Our communication channels are disrupted. Try again in a moment.',
+        response: 'O Oráculo está temporariamente silencioso, guerreiro. Nossos canais de comunicação estão interrompidos. Tente novamente em um momento.',
         success: false
       }), {
         status: 500,
@@ -163,7 +123,7 @@ serve(async (req) => {
       console.error('❌ No AI response content');
       return new Response(JSON.stringify({
         error: 'No AI response',
-        response: 'The tactical advisors are deliberating, warrior. Your request is being processed. Try again.',
+        response: 'Os conselheiros táticos estão deliberando, guerreiro. Sua solicitação está sendo processada. Tente novamente.',
         success: false
       }), {
         status: 500,
@@ -171,27 +131,12 @@ serve(async (req) => {
       });
     }
 
-    console.log('✅ AI response generated successfully:', { length: aiResponse.length });
-
-    // Send final webhook (non-blocking)
-    console.log('📤 Sending final webhook...');
-    fetch(webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...webhookData,
-        test: false,
-        ai_response: aiResponse.trim()
-      }),
-    }).catch(error => {
-      console.warn('⚠️ Final webhook failed (non-critical):', error.message);
-    });
+    console.log('✅ AI response generated successfully');
 
     const successResponse = {
       response: aiResponse.trim(),
       success: true,
-      timestamp: new Date().toISOString(),
-      webhook_status: 'tested'
+      timestamp: new Date().toISOString()
     };
 
     console.log('=== AI CHAT FUNCTION SUCCESS ===');
@@ -210,7 +155,7 @@ serve(async (req) => {
     
     const errorResponse = {
       error: error.message || 'Unknown error',
-      response: 'The war room communications have been severed, warrior. Our strategists are working to restore the connection. Stand ready and try again.',
+      response: 'A sala de guerra teve suas comunicações cortadas, guerreiro. Nossos estrategistas estão trabalhando para restaurar a conexão. Mantenha-se pronto e tente novamente.',
       success: false,
       timestamp: new Date().toISOString()
     };
