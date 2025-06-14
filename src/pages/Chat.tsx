@@ -36,6 +36,11 @@ const Chat = () => {
   const [connectionStatus, setConnectionStatus] = useState<'unknown' | 'testing' | 'good' | 'error'>('unknown');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Debug logging
+  useEffect(() => {
+    console.log('🔍 Chat auth state:', { user: !!user, userEmail: user?.email, loading });
+  }, [user, loading]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -44,8 +49,9 @@ const Chat = () => {
     scrollToBottom();
   }, [messages]);
 
-  // Se ainda está carregando, mostra loading
+  // Show loading only for a short time, then show login if no user
   if (loading) {
+    console.log('⏳ Chat: Showing loading state...');
     return (
       <div className="min-h-screen bg-gradient-to-br from-warfare-dark via-slate-900 to-warfare-dark flex items-center justify-center">
         <div className="text-center">
@@ -56,8 +62,9 @@ const Chat = () => {
     );
   }
 
-  // Se não há usuário autenticado, mostra tela de login
-  if (!user) {
+  // If not loading and no user, show login screen
+  if (!loading && !user) {
+    console.log('🔐 Chat: No user, showing login screen...');
     return (
       <div className="min-h-screen bg-gradient-to-br from-warfare-dark via-slate-900 to-warfare-dark flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-8">
@@ -77,6 +84,9 @@ const Chat = () => {
       </div>
     );
   }
+
+  // User is authenticated, show the chat
+  console.log('✅ Chat: User authenticated, rendering chat interface...');
 
   const testConnection = async () => {
     console.log('🔍 Testing connection...');
