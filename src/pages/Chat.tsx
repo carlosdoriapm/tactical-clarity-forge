@@ -1,11 +1,12 @@
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, AlertCircle, CheckCircle } from 'lucide-react';
+import { Send, AlertCircle, CheckCircle, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface Message {
   id: string;
@@ -17,8 +18,9 @@ interface Message {
 const Chat = () => {
   console.log('🎯 Chat component rendering...');
   
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -41,6 +43,40 @@ const Chat = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Se ainda está carregando, mostra loading
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-warfare-dark via-slate-900 to-warfare-dark flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-warfare-red mx-auto mb-4"></div>
+          <p className="text-white">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Se não há usuário autenticado, mostra tela de login
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-warfare-dark via-slate-900 to-warfare-dark flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-8">
+          <LogIn className="w-16 h-16 text-warfare-red mx-auto mb-6" />
+          <h1 className="text-3xl font-bold text-white mb-4">Acesso Restrito</h1>
+          <p className="text-warfare-blue mb-8">
+            Para acessar o Conselheiro de Guerra, você precisa estar autenticado. 
+            Faça login para continuar sua jornada tática.
+          </p>
+          <Button 
+            onClick={() => navigate('/auth')}
+            className="bg-warfare-red hover:bg-warfare-red/80 text-white px-8 py-3"
+          >
+            Fazer Login
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const testConnection = async () => {
     console.log('🔍 Testing connection...');
@@ -223,6 +259,14 @@ const Chat = () => {
                 className="border-warfare-red/30 text-white hover:bg-warfare-red/10"
               >
                 Testar Conexão
+              </Button>
+              <Button
+                onClick={() => navigate('/dashboard')}
+                size="sm"
+                variant="outline" 
+                className="border-warfare-blue/30 text-white hover:bg-warfare-blue/10"
+              >
+                Dashboard
               </Button>
             </div>
           </div>
