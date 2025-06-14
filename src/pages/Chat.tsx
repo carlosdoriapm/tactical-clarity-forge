@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { toast as sonnerToast } from "sonner";
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -18,7 +19,7 @@ const Chat = () => {
   console.log('🎯 Chat component rendering/re-rendering...');
   
   const { user, loading: authLoading } = useAuth();
-  const { toast } = useToast();
+  const { toast } = useToast(); // Shadcn toast
   const navigate = useNavigate();
   
   const [messages, setMessages] = useState<Message[]>([
@@ -42,11 +43,17 @@ const Chat = () => {
       user: user ? user.email : 'No user', 
       authLoading 
     });
+    if (!authLoading && user) {
+      sonnerToast.success("Autenticação verificada.", { description: `Usuário ${user.email} conectado.`});
+    } else if (!authLoading && !user) {
+      sonnerToast.error("Usuário não autenticado.", { description: "Redirecionando para login."});
+    }
   }, [user, authLoading]);
 
   // Debug logging for connection status
   useEffect(() => {
     console.log('🔄 Chat Connection Status Updated:', connectionStatus);
+    // sonnerToast.info(`Status da conexão: ${connectionStatus}`); // Might be too noisy
   }, [connectionStatus]);
 
   const scrollToBottom = () => {
@@ -71,7 +78,7 @@ const Chat = () => {
   }
 
   // If not auth loading and no user, show login screen
-  if (!authLoading && !user) {
+  if (!user) { // Simplified condition as authLoading is false here
     console.log('🔐 Chat: No user authenticated, showing login screen...');
     return (
       <div className="min-h-screen bg-gradient-to-br from-warfare-dark via-slate-900 to-warfare-dark flex items-center justify-center">
@@ -97,16 +104,19 @@ const Chat = () => {
   const testConnection = async () => {
     if (connectionStatus === 'testing' || isSending) {
       console.log('⚠️ Test Connection: Already testing or sending message.');
+      sonnerToast.info("Teste de conexão já em progresso ou mensagem sendo enviada.");
       return;
     }
     console.log('🔍 Chat: testConnection initiated...');
+    sonnerToast.loading("Testando conexão com o servidor...");
     setConnectionStatus('testing');
     
     try {
       const { data, error } = await supabase.functions.invoke('ai-chat', {
         body: { 
           message: 'teste de conexão',
-          userId: user?.id || 'test-user-connection-test'
+          userId: user?.id || 'test-user-connection-test',
+          isTest: true
         }
       });
 
@@ -115,43 +125,24 @@ const Chat = () => {
       if (error) {
         console.error('❌ Chat: testConnection - Supabase function invocation error:', error);
         setConnectionStatus('error');
-        toast({
-          title: "Teste de Conexão Falhou",
-          description: `Erro ao invocar função: ${error.message}`,
-          variant: "destructive",
-        });
+        sonnerToast.error("Teste de Conexão Falhou", { description: `Erro ao invocar função: ${error.message}`});
       } else if (data && data.success === false) {
         console.warn('⚠️ Chat: testConnection - Function returned success:false:', data);
         setConnectionStatus('error');
-        toast({
-          title: "Teste de Conexão Falhou",
-          description: data.response || data.error || "A função retornou um erro.",
-          variant: "destructive",
-        });
+        sonnerToast.error("Teste de Conexão Falhou", { description: data.response || data.error || "A função retornou um erro."});
       } else if (data && data.success === true) {
         console.log('✅ Chat: testConnection - Successful.');
         setConnectionStatus('good');
-        toast({
-          title: "Conexão Estabelecida",
-          description: "O sistema de comunicação está operacional.",
-        });
+        sonnerToast.success("Conexão Estabelecida", { description: "O sistema de comunicação está operacional." });
       } else {
         console.error('❌ Chat: testConnection - Unexpected response structure:', data);
         setConnectionStatus('error');
-        toast({
-          title: "Teste de Conexão Inconclusivo",
-          description: "Resposta inesperada da função de teste.",
-          variant: "destructive",
-        });
+        sonnerToast.warning("Teste de Conexão Inconclusivo", { description: "Resposta inesperada da função de teste." });
       }
     } catch (error) {
       console.error('💥 Chat: testConnection - Critical error during test:', error);
       setConnectionStatus('error');
-      toast({
-        title: "Erro Crítico no Teste de Conexão",
-        description: error instanceof Error ? error.message : "Ocorreu um erro desconhecido.",
-        variant: "destructive",
-      });
+      sonnerToast.error("Erro Crítico no Teste de Conexão", { description: error instanceof Error ? error.message : "Ocorreu um erro desconhecido." });
     }
   };
 
@@ -159,10 +150,14 @@ const Chat = () => {
     const trimmedInput = inputValue.trim();
     if (!trimmedInput || isTyping || isSending) {
       console.log('⚠️ Chat: handleSend - Cannot send: empty message, bot typing, or message already sending.', { trimmedInput, isTyping, isSending });
+      if (!trimmedInput) sonnerToast.warning("Mensagem vazia", { description: "Por favor, digite sua consulta." });
+      if (isTyping) sonnerToast.info("Aguarde", { description: "O conselheiro está formulando uma resposta." });
+      if (isSending) sonnerToast.info("Enviando", { description: "Sua mensagem anterior ainda está sendo processada." });
       return;
     }
 
     console.log('🚀 Chat: handleSend - Sending message:', trimmedInput);
+    sonnerToast.info("Enviando sua mensagem...", { id: "sending-message" });
     setIsSending(true);
 
     const userMessage: Message = {
@@ -174,7 +169,7 @@ const Chat = () => {
 
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
-    setIsTyping(true);
+    setIsTyping(true); // Bot starts "typing" immediately after user sends
 
     try {
       console.log('📡 Chat: handleSend - Calling edge function "ai-chat" with:', { message: trimmedInput, userId: user?.id });
@@ -185,6 +180,7 @@ const Chat = () => {
           userId: user?.id || 'anonymous-chat-user'
         }
       });
+      sonnerToast.dismiss("sending-message");
 
       console.log('📨 Chat: handleSend - Response from "ai-chat":', { data, functionInvokeError });
 
@@ -198,11 +194,7 @@ const Chat = () => {
           timestamp: new Date()
         };
         setMessages(prev => [...prev, botErrorMessage]);
-        toast({
-          title: "Erro de Comunicação",
-          description: `Não foi possível enviar sua mensagem: ${functionInvokeError.message}`,
-          variant: "destructive",
-        });
+        sonnerToast.error("Erro de Comunicação", { description: `Não foi possível enviar sua mensagem: ${functionInvokeError.message}` });
         return;
       }
 
@@ -216,11 +208,7 @@ const Chat = () => {
           timestamp: new Date()
         };
         setMessages(prev => [...prev, botErrorMessage]);
-        toast({
-          title: "Resposta Não Recebida",
-          description: "A função 'ai-chat' não retornou dados.",
-          variant: "destructive",
-        });
+        sonnerToast.error("Resposta Não Recebida", { description: "A função 'ai-chat' não retornou dados." });
         return;
       }
 
@@ -229,19 +217,17 @@ const Chat = () => {
         console.warn('⚠️ Chat: handleSend - "ai-chat" returned success:false or an error property:', data);
         responseText = data.response || data.error || 'Ocorreu um erro ao processar sua solicitação, guerreiro.';
         setConnectionStatus('error');
-        toast({
-          title: "Conselheiro Indisponível",
-          description: responseText,
-          variant: data.success === false ? "default" : "destructive",
-        });
+        sonnerToast.warning("Conselheiro Indisponível", { description: responseText });
       } else if (data.response) {
         console.log('✅ Chat: handleSend - "ai-chat" successful response.');
         responseText = data.response;
         setConnectionStatus('good');
+        sonnerToast.success("Conselho Recebido");
       } else {
         console.warn('⚠️ Chat: handleSend - Unexpected response structure from "ai-chat":', data);
         responseText = 'Recebi uma resposta inesperada do conselheiro. Deixe-me tentar entender.';
-        setConnectionStatus('error');
+        setConnectionStatus('error'); // Or 'unknown' if appropriate
+        sonnerToast.warning("Resposta Inesperada", { description: "O formato da resposta do conselheiro não é o esperado." });
       }
 
       const botMessage: Message = {
@@ -262,14 +248,11 @@ const Chat = () => {
         timestamp: new Date()
       };
       setMessages(prev => [...prev, botErrorMessage]);
-      toast({
-        title: "Falha Crítica na Conexão",
-        description: criticalError instanceof Error ? criticalError.message : "Erro desconhecido ao enviar mensagem.",
-        variant: "destructive",
-      });
+      sonnerToast.error("Falha Crítica na Conexão", { description: criticalError instanceof Error ? criticalError.message : "Erro desconhecido ao enviar mensagem." });
     } finally {
       setIsTyping(false);
       setIsSending(false);
+      sonnerToast.dismiss("sending-message");
     }
   };
 
@@ -282,17 +265,20 @@ const Chat = () => {
 
   const getStatusIcon = () => {
     if (isSending) {
+      // This div can have a title for tooltip
       return <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse" title="Enviando..." />;
     }
     switch (connectionStatus) {
       case 'testing':
+        // This div can have a title for tooltip
         return <div className="w-3 h-3 bg-yellow-500 rounded-full animate-pulse" title="Testando Conexão..." />;
       case 'good':
-        return <CheckCircle className="w-4 h-4 text-green-500" title="Conectado" />;
+        // Lucide icons don't take 'title' prop directly this way for HTML tooltips
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
       case 'error':
-        return <AlertCircle className="w-4 h-4 text-red-500" title="Erro de Conexão" />;
+        return <AlertCircle className="w-4 h-4 text-red-500" />;
       default: // unknown
-        return <MessageSquare className="w-4 h-4 text-gray-500" title="Status Desconhecido" />;
+        return <MessageSquare className="w-4 h-4 text-gray-500" />;
     }
   };
 
@@ -310,7 +296,13 @@ const Chat = () => {
               )}
             </div>
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2" title={
+                isSending ? "Enviando..." :
+                connectionStatus === 'testing' ? "Testando Conexão..." :
+                connectionStatus === 'good' ? "Conectado" :
+                connectionStatus === 'error' ? "Erro de Conexão" :
+                "Status Desconhecido"
+              }>
                 {getStatusIcon()}
                 <span className="text-sm text-white">
                   {isSending && 'Enviando...'}
