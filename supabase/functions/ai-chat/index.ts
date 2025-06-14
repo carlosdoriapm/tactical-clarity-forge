@@ -70,10 +70,10 @@ serve(async (req) => {
 
     console.log('✅ Message validated:', { messageLength: message.length, userId });
 
-    // Call OpenAI API directly (removing webhook dependency)
+    // Call OpenAI API
     console.log('🤖 Calling OpenAI API...');
     const openAIPayload = {
-      model: 'gpt-4.1-2025-04-14',
+      model: 'gpt-4o-mini',
       messages: [
         { 
           role: 'system', 

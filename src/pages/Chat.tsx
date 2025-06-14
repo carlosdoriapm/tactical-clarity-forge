@@ -15,7 +15,7 @@ interface Message {
 }
 
 const Chat = () => {
-  console.log('🎯 Chat component loading...');
+  console.log('🎯 Chat component rendering...');
   
   const { user } = useAuth();
   const { toast } = useToast();
@@ -148,11 +148,6 @@ const Chat = () => {
       };
 
       setMessages(prev => [...prev, botMessage]);
-
-      toast({
-        title: "Resposta recebida",
-        description: "Seu conselheiro tático respondeu",
-      });
 
     } catch (error) {
       console.error('💥 Critical error:', error);
