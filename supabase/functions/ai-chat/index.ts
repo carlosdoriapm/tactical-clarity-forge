@@ -2,8 +2,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -20,21 +18,6 @@ serve(async (req) => {
   }
 
   try {
-    // Verificar chave API
-    console.log('Checking OpenAI API key...');
-    if (!openAIApiKey) {
-      console.error('❌ OpenAI API key not found');
-      return new Response(JSON.stringify({ 
-        error: 'API key not configured',
-        response: 'Os sistemas de comunicação estão offline, guerreiro. Entre em contato com seu comandante para restaurar a conexão.',
-        success: false
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    console.log('✅ OpenAI API key found');
-
     // Parse request body
     console.log('Parsing request body...');
     let requestBody;
@@ -70,39 +53,33 @@ serve(async (req) => {
 
     console.log('✅ Message validated:', { messageLength: message.length, userId });
 
-    // Call OpenAI API
-    console.log('🤖 Calling OpenAI API...');
-    const openAIPayload = {
-      model: 'gpt-4o-mini',
-      messages: [
-        { 
-          role: 'system', 
-          content: 'Você é um conselheiro tático, forjado no cadinho da sabedoria antiga e estratégia moderna. Você fala com a clareza de César e a determinação de Marco Aurélio. Forneça conselhos diretos, poderosos e práticos. Mantenha as respostas concisas mas impactantes, como um general romano dirigindo-se às suas tropas antes da batalha. Máximo 200 palavras. Responda sempre em português.'
-        },
-        { role: 'user', content: message.trim() }
-      ],
-      max_tokens: 300,
-      temperature: 0.7,
+    // Call N8N webhook
+    console.log('🔗 Calling N8N webhook...');
+    const webhookUrl = 'https://carlosdoriapm.app.n8n.cloud/webhook-test/legionary';
+    
+    const webhookPayload = {
+      message: message.trim(),
+      userId: userId || 'anonymous',
+      timestamp: new Date().toISOString()
     };
 
-    console.log('Making OpenAI request...');
-    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    console.log('Making N8N webhook request...');
+    const webhookResponse = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(openAIPayload),
+      body: JSON.stringify(webhookPayload),
     });
 
-    console.log('OpenAI response status:', openAIResponse.status);
+    console.log('N8N webhook response status:', webhookResponse.status);
 
-    if (!openAIResponse.ok) {
-      const errorText = await openAIResponse.text();
-      console.error('❌ OpenAI API error:', { status: openAIResponse.status, error: errorText });
+    if (!webhookResponse.ok) {
+      const errorText = await webhookResponse.text();
+      console.error('❌ N8N webhook error:', { status: webhookResponse.status, error: errorText });
       
       return new Response(JSON.stringify({
-        error: `OpenAI API error: ${openAIResponse.status}`,
+        error: `Webhook error: ${webhookResponse.status}`,
         response: 'O Oráculo está temporariamente silencioso, guerreiro. Nossos canais de comunicação estão interrompidos. Tente novamente em um momento.',
         success: false
       }), {
@@ -111,16 +88,25 @@ serve(async (req) => {
       });
     }
 
-    const openAIData = await openAIResponse.json();
-    console.log('OpenAI response received:', { 
-      choices: openAIData.choices?.length || 0,
-      usage: openAIData.usage 
-    });
+    const webhookData = await webhookResponse.json();
+    console.log('N8N webhook response received:', webhookData);
 
-    const aiResponse = openAIData.choices?.[0]?.message?.content;
+    // Extract the response from webhook data
+    let aiResponse = '';
+    
+    if (webhookData.response) {
+      aiResponse = webhookData.response;
+    } else if (webhookData.message) {
+      aiResponse = webhookData.message;
+    } else if (typeof webhookData === 'string') {
+      aiResponse = webhookData;
+    } else {
+      console.warn('⚠️ Unexpected webhook response structure:', webhookData);
+      aiResponse = 'Ouço suas palavras, guerreiro. Deixe-me reunir meus pensamentos.';
+    }
 
     if (!aiResponse) {
-      console.error('❌ No AI response content');
+      console.error('❌ No AI response content from webhook');
       return new Response(JSON.stringify({
         error: 'No AI response',
         response: 'Os conselheiros táticos estão deliberando, guerreiro. Sua solicitação está sendo processada. Tente novamente.',
