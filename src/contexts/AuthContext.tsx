@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -74,7 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log('AuthProvider: Auth state changed:', {
           event,
           hasSession: !!session,
@@ -85,7 +86,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // Create user profile if it doesn't exist
         if (session?.user && event === 'SIGNED_IN') {
-          await createUserProfile(session.user);
+          // Removed await to prevent potential deadlocks as per Supabase best practices.
+          createUserProfile(session.user);
         }
         
         setLoading(false);
@@ -190,3 +192,4 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     </AuthContext.Provider>
   );
 };
+
