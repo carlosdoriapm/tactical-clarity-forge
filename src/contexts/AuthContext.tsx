@@ -1,7 +1,7 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 interface AuthContextType {
   user: User | null;
@@ -29,8 +29,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     console.log('AuthProvider: Initializing auth...');
-    
-    // Get initial session
+    let unsubscribed = false;
     const initializeAuth = async () => {
       try {
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
@@ -39,24 +38,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           userEmail: initialSession?.user?.email,
           error: error
         });
-        
+        if (error) {
+          console.error('AuthProvider: Error getting initial session:', error);
+          toast({
+            title: "Erro de autenticação",
+            description: error.message || "Falha ao carregar sessão inicial...",
+            variant: "destructive",
+          });
+        }
         if (initialSession && initialSession.user) {
           setSession(initialSession);
           setUser(initialSession.user);
           console.log('AuthProvider: User authenticated:', initialSession.user.email);
         } else {
           console.log('AuthProvider: No authenticated user found');
+          setSession(null);
+          setUser(null);
         }
       } catch (error) {
         console.error('AuthProvider: Error getting initial session:', error);
+        toast({
+          title: "Erro de autenticação",
+          description: error instanceof Error ? error.message : "Erro desconhecido ao carregar sessão inicial.",
+          variant: "destructive",
+        });
+        setSession(null);
+        setUser(null);
       } finally {
-        setLoading(false);
+        if (!unsubscribed) {
+          setLoading(false);
+        }
       }
     };
 
     initializeAuth();
 
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('AuthProvider: Auth state changed:', {
@@ -64,10 +80,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           hasSession: !!session,
           userEmail: session?.user?.email
         });
-        
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         // Create user profile if it doesn't exist
         if (session?.user && event === 'SIGNED_IN') {
           await createUserProfile(session.user);
@@ -78,6 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     return () => {
+      unsubscribed = true;
       console.log('AuthProvider: Cleaning up auth listener');
       subscription.unsubscribe();
     };
