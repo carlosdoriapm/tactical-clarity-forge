@@ -1,25 +1,21 @@
+
 import { useState, useRef, useEffect } from 'react';
-import { Send, AlertCircle, CheckCircle, LogIn, MessageSquare } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast as sonnerToast } from "sonner";
-import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
-interface Message {
-  id: string;
-  content: string;
-  isBot: boolean;
-  timestamp: Date;
-}
+import { Message } from '@/types/chat';
+import AuthLoading from '@/components/chat/AuthLoading';
+import LoginPrompt from '@/components/chat/LoginPrompt';
+import ChatHeader from '@/components/chat/ChatHeader';
+import MessageList from '@/components/chat/MessageList';
+import ChatInput from '@/components/chat/ChatInput';
 
 const Chat = () => {
   console.log('🎯 Chat component rendering/re-rendering...');
   
   const { user, loading: authLoading } = useAuth();
-  const { toast } = useToast(); // Shadcn toast
   const navigate = useNavigate();
   
   const [messages, setMessages] = useState<Message[]>([
@@ -37,7 +33,6 @@ const Chat = () => {
   const [connectionStatus, setConnectionStatus] = useState<'unknown' | 'testing' | 'good' | 'error'>('unknown');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Debug logging for auth state
   useEffect(() => {
     console.log('🔍 Chat Auth State Updated:', { 
       user: user ? user.email : 'No user', 
@@ -50,10 +45,8 @@ const Chat = () => {
     }
   }, [user, authLoading]);
 
-  // Debug logging for connection status
   useEffect(() => {
     console.log('🔄 Chat Connection Status Updated:', connectionStatus);
-    // sonnerToast.info(`Status da conexão: ${connectionStatus}`); // Might be too noisy
   }, [connectionStatus]);
 
   const scrollToBottom = () => {
@@ -64,41 +57,16 @@ const Chat = () => {
     scrollToBottom();
   }, [messages]);
 
-  // Show loading state if auth is still loading
   if (authLoading) {
     console.log('⏳ Chat: Auth loading, showing loading screen...');
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-warfare-dark via-slate-900 to-warfare-dark flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-warfare-red mx-auto mb-4"></div>
-          <p className="text-white">Carregando autenticação...</p>
-        </div>
-      </div>
-    );
+    return <AuthLoading />;
   }
 
-  // If not auth loading and no user, show login screen
-  if (!user) { // Simplified condition as authLoading is false here
+  if (!user) {
     console.log('🔐 Chat: No user authenticated, showing login screen...');
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-warfare-dark via-slate-900 to-warfare-dark flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-8">
-          <LogIn className="w-16 h-16 text-warfare-red mx-auto mb-6" />
-          <h1 className="text-3xl font-bold text-white mb-4">Acesso Restrito</h1>
-          <p className="text-warfare-blue mb-8">
-            Para acessar o Conselheiro de Guerra, você precisa estar autenticado. 
-            Faça login para continuar sua jornada tática.
-          </p>
-          <Button 
-            onClick={() => navigate('/auth')}
-            className="bg-warfare-red hover:bg-warfare-red/80 text-white px-8 py-3"
-          >
-            Fazer Login
-          </Button>
-        </div>
-      </div>
-    );
+    return <LoginPrompt onLoginClick={() => navigate('/auth')} />;
   }
+  
   console.log('✅ Chat: User authenticated, rendering chat interface for', user?.email);
 
   const testConnection = async () => {
@@ -169,7 +137,7 @@ const Chat = () => {
 
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
-    setIsTyping(true); // Bot starts "typing" immediately after user sends
+    setIsTyping(true);
 
     try {
       console.log('📡 Chat: handleSend - Calling edge function "ai-chat" with:', { message: trimmedInput, userId: user?.id });
@@ -226,7 +194,7 @@ const Chat = () => {
       } else {
         console.warn('⚠️ Chat: handleSend - Unexpected response structure from "ai-chat":', data);
         responseText = 'Recebi uma resposta inesperada do conselheiro. Deixe-me tentar entender.';
-        setConnectionStatus('error'); // Or 'unknown' if appropriate
+        setConnectionStatus('error');
         sonnerToast.warning("Resposta Inesperada", { description: "O formato da resposta do conselheiro não é o esperado." });
       }
 
@@ -263,144 +231,28 @@ const Chat = () => {
     }
   };
 
-  const getStatusIcon = () => {
-    if (isSending) {
-      // This div can have a title for tooltip
-      return <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse" title="Enviando..." />;
-    }
-    switch (connectionStatus) {
-      case 'testing':
-        // This div can have a title for tooltip
-        return <div className="w-3 h-3 bg-yellow-500 rounded-full animate-pulse" title="Testando Conexão..." />;
-      case 'good':
-        // Lucide icons don't take 'title' prop directly this way for HTML tooltips
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case 'error':
-        return <AlertCircle className="w-4 h-4 text-red-500" />;
-      default: // unknown
-        return <MessageSquare className="w-4 h-4 text-gray-500" />;
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-warfare-dark via-slate-900 to-warfare-dark flex flex-col">
-      {/* Header */}
-      <div className="flex-shrink-0 p-6 border-b border-warfare-red/20">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-white mb-2">Conselheiro de Guerra</h1>
-              <p className="text-warfare-blue/80">Seu conselheiro tático aguarda suas palavras</p>
-              {user && (
-                <p className="text-xs text-warfare-blue/60 mt-1">Conectado como: {user.email}</p>
-              )}
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2" title={
-                isSending ? "Enviando..." :
-                connectionStatus === 'testing' ? "Testando Conexão..." :
-                connectionStatus === 'good' ? "Conectado" :
-                connectionStatus === 'error' ? "Erro de Conexão" :
-                "Status Desconhecido"
-              }>
-                {getStatusIcon()}
-                <span className="text-sm text-white">
-                  {isSending && 'Enviando...'}
-                  {!isSending && connectionStatus === 'testing' && 'Testando...'}
-                  {!isSending && connectionStatus === 'good' && 'Conectado'}
-                  {!isSending && connectionStatus === 'error' && 'Erro'}
-                  {!isSending && connectionStatus === 'unknown' && 'Desconhecido'}
-                </span>
-              </div>
-              <Button
-                onClick={testConnection}
-                disabled={connectionStatus === 'testing' || isSending}
-                size="sm"
-                variant="outline"
-                className="border-warfare-red/30 text-white hover:bg-warfare-red/10"
-              >
-                Testar Conexão
-              </Button>
-              <Button
-                onClick={() => navigate('/dashboard')}
-                size="sm"
-                variant="outline" 
-                className="border-warfare-blue/30 text-white hover:bg-warfare-blue/10"
-              >
-                Dashboard
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-4xl mx-auto space-y-6">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.isBot ? 'justify-start' : 'justify-end'}`}
-            >
-              <div
-                className={`max-w-2xl rounded-2xl px-6 py-4 ${
-                  message.isBot
-                    ? 'bg-gradient-to-r from-warfare-red/10 to-warfare-yellow/10 backdrop-blur-sm border border-warfare-red/20 text-white shadow-lg'
-                    : 'bg-gradient-to-r from-slate-800 to-slate-700 text-white shadow-lg'
-                }`}
-              >
-                <p className="text-base leading-relaxed whitespace-pre-wrap">{message.content}</p>
-                <div className="mt-2 text-xs text-warfare-blue/60">
-                  {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </div>
-              </div>
-            </div>
-          ))}
-
-          {isTyping && (
-            <div className="flex justify-start">
-              <div className="max-w-2xl rounded-2xl px-6 py-4 bg-gradient-to-r from-warfare-red/10 to-warfare-yellow/10 backdrop-blur-sm border border-warfare-red/20">
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-warfare-red rounded-full animate-pulse"></div>
-                  <div className="w-2 h-2 bg-warfare-yellow rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                  <div className="w-2 h-2 bg-warfare-blue rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
-                </div>
-                <p className="text-xs text-warfare-blue/60 mt-2">Seu conselheiro está formulando um conselho...</p>
-              </div>
-            </div>
-          )}
-
-          <div ref={messagesEndRef} />
-        </div>
-      </div>
-
-      {/* Input Area */}
-      <div className="flex-shrink-0 p-6 border-t border-warfare-red/20 bg-gradient-to-r from-warfare-dark/50 to-slate-900/50 backdrop-blur-sm">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-end space-x-4">
-            <div className="flex-1 relative">
-              <Textarea
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Fale sua mente, guerreiro..."
-                className="min-h-[60px] max-h-32 resize-none bg-slate-800/50 border-warfare-red/30 text-white placeholder:text-warfare-blue/60 focus:border-warfare-red focus:ring-warfare-red/50 rounded-xl"
-                disabled={isTyping || isSending}
-              />
-            </div>
-            <Button
-              onClick={handleSend}
-              disabled={!inputValue.trim() || isTyping || isSending}
-              className="h-[60px] w-[60px] rounded-xl bg-gradient-to-r from-warfare-red to-red-600 hover:from-red-600 hover:to-warfare-red text-white shadow-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Send className="h-5 w-5" />
-            </Button>
-          </div>
-          <p className="text-xs text-warfare-blue/60 mt-2 text-center">
-            Pressione Enter para enviar • Shift + Enter para nova linha
-          </p>
-        </div>
-      </div>
+      <ChatHeader
+        user={user}
+        connectionStatus={connectionStatus}
+        isSending={isSending}
+        onTestConnection={testConnection}
+        onNavigateToDashboard={() => navigate('/dashboard')}
+      />
+      <MessageList
+        messages={messages}
+        isTyping={isTyping}
+        messagesEndRef={messagesEndRef}
+      />
+      <ChatInput
+        inputValue={inputValue}
+        onInputChange={setInputValue}
+        onSendMessage={handleSend}
+        onKeyDown={handleKeyDown}
+        isTyping={isTyping}
+        isSending={isSending}
+      />
     </div>
   );
 };
