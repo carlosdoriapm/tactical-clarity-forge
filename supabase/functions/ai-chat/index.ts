@@ -2,9 +2,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-// Pega a chave da API da OpenAI dos segredos do projeto Supabase
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -17,8 +14,9 @@ serve(async (req) => {
   }
 
   try {
-    // Extrai a mensagem do corpo da requisição
-    const { message } = await req.json();
+    // Extrai o corpo da requisição
+    const body = await req.json();
+    const { message } = body;
 
     if (!message) {
       return new Response(JSON.stringify({ 
@@ -31,44 +29,37 @@ serve(async (req) => {
       });
     }
 
-    // Chama a API do OpenAI para obter uma resposta
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const webhookUrl = 'https://carlosdoriapm.app.n8n.cloud/webhook-test/legionary';
+
+    // Chama o webhook com os dados da mensagem
+    const webhookResponse = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { 
-            role: 'system', 
-            content: 'Você é um conselheiro tático chamado Conselheiro de Guerra. Você fala como um filósofo estoico e general romano, fornecendo conselhos sábios sobre estratégia, vida e qualquer outro tópico. Dirija-se ao usuário como "guerreiro". Mantenha suas respostas em português do Brasil.' 
-          },
-          { role: 'user', content: message }
-        ],
-      }),
+      body: JSON.stringify(body), // Encaminha o corpo inteiro da requisição original
     });
 
-    if (!response.ok) {
-        const errorBody = await response.json();
-        console.error('OpenAI API error:', errorBody);
+    if (!webhookResponse.ok) {
+        const errorText = await webhookResponse.text();
+        console.error('Webhook error:', { status: webhookResponse.status, body: errorText });
         return new Response(JSON.stringify({ 
-            error: `OpenAI API error: ${errorBody.error.message}`,
-            response: 'O Oráculo está enfrentando interferências. A sabedoria está turva no momento.',
+            error: `Webhook returned status ${webhookResponse.status}`,
+            response: 'O nexo estratégico falhou. O Conselheiro de Guerra não pôde ser contatado.',
             success: false,
         }), {
-            status: response.status,
+            status: webhookResponse.status,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
     }
+    
+    // A estrutura da resposta do n8n pode variar. Tentamos extrair a resposta de forma flexível.
+    const responseData = await webhookResponse.json();
+    const aiResponse = responseData.response || responseData.text || responseData.message || (typeof responseData === 'string' ? responseData : JSON.stringify(responseData));
 
-    const data = await response.json();
-    const aiResponse = data.choices[0].message.content;
-
-    // Retorna a resposta da IA no formato esperado pelo frontend
+    // Retorna a resposta no formato esperado pelo frontend
     const successResponse = {
-      response: aiResponse.trim(),
+      response: aiResponse.toString().trim(),
       success: true,
       timestamp: new Date().toISOString()
     };
