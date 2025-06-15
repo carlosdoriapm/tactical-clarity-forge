@@ -1,171 +1,163 @@
 
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import React, { useCallback } from 'react';
+import { useMachine } from '@xstate/react';
+import { dtmMachine } from '@/machines/dtmMachine';
 import { BackToDashboard } from '@/components/BackToDashboard';
 import { useTranslation } from '@/hooks/useTranslation';
+import LoaderSpinner from "@/components/LoaderSpinner";
 
-type State = 'idle' | 'loading' | 'success' | 'error';
+type Milestone = { date: string; event: string };
+type Timeline = Milestone[];
 
-interface Decision {
-  id: string;
-  title: string;
-  description: string;
-  options: string[];
-  consequences: string[];
-  timestamp: Date;
+interface TimelineViewProps {
+  result: { timeline_short: Timeline; timeline_long: Timeline };
+  onNew: () => void;
+}
+
+const TimelineView: React.FC<TimelineViewProps> = ({ result, onNew }) => (
+  <div>
+    <div className="mb-6">
+      <h3 className="text-lg font-bold text-white mb-2">Short-term Timeline</h3>
+      <ol className="mb-4">
+        {result.timeline_short.map((m, i) => (
+          <li key={i} className="text-white mb-1">
+            <span className="font-mono text-cyan-300">{m.date}:</span> {m.event}
+          </li>
+        ))}
+      </ol>
+      <h3 className="text-lg font-bold text-white mb-2">Long-term Timeline</h3>
+      <ol>
+        {result.timeline_long.map((m, i) => (
+          <li key={i} className="text-white mb-1">
+            <span className="font-mono text-indigo-300">{m.date}:</span> {m.event}
+          </li>
+        ))}
+      </ol>
+    </div>
+    <button
+      onClick={onNew}
+      className="bg-warfare-blue hover:bg-warfare-blue/80 text-white px-6 py-2 rounded-lg"
+    >
+      New Decision
+    </button>
+  </div>
+);
+
+const ErrorView: React.FC<{ error: string; onRetry: () => void }> = ({ error, onRetry }) => (
+  <div className="text-center my-10">
+    <div className="text-red-400 mb-4 font-bold text-lg">Error: {error}</div>
+    <button
+      onClick={onRetry}
+      className="bg-warfare-red hover:bg-warfare-red/80 text-white px-6 py-3 rounded-lg transition-colors"
+    >
+      Try Again
+    </button>
+  </div>
+);
+
+function safeJSON(str: string) {
+  try {
+    const data = JSON.parse(str);
+    if (
+      !data ||
+      typeof data !== "object" ||
+      !Array.isArray(data.timeline_short) ||
+      !Array.isArray(data.timeline_long)
+    ) {
+      return { ok: false, error: "Malformed JSON" };
+    }
+    return { ok: true, data };
+  } catch (e) {
+    return { ok: false, error: "Invalid JSON" };
+  }
+}
+
+async function fetchDecisionTimeline(decision: string) {
+  if (decision.length > 240) throw new Error("DECISION_TOO_LONG");
+  // User must be authenticated for caching
+  const res = await fetch("/rpc/dtm_generate_v1_1", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ decision }),
+  });
+  if (!res.ok) {
+    let message = "API Error";
+    try {
+      message = (await res.json()).error || message;
+    } catch {}
+    throw new Error(message);
+  }
+  const { content } = await res.json();
+  const result = safeJSON(content);
+  if (!result.ok) throw new Error("E_BAD_JSON");
+  return result.data;
 }
 
 const TimeMachineDemo = () => {
   const { t } = useTranslation();
-  const [decision, setDecision] = useState<Decision | null>(null);
-  const [selectedOption, setSelectedOption] = useState<number | null>(null);
-  const [currentState, setCurrentState] = useState<State>('idle');
-
-  const { data: analysisData, status } = useQuery({
-    queryKey: ['tactical-analysis', decision?.id],
-    queryFn: async () => {
-      if (!decision) return null;
-      
-      const { data, error } = await supabase.functions.invoke('tactical-analysis', {
-        body: {
-          decision: decision.title,
-          context: decision.description,
-          options: decision.options
-        }
-      });
-      
-      if (error) throw error;
-      return data;
+  const [state, send, service] = useMachine(dtmMachine, {
+    services: {
+      fetchDecisionTimeline: async (ctx) => fetchDecisionTimeline(ctx.input),
     },
-    enabled: !!decision
   });
 
-  React.useEffect(() => {
-    console.log('[TimeMachine] status:', status);
-  }, [status]);
+  const [inputValue, setInputValue] = React.useState("");
 
-  const handleDecisionSubmit = (newDecision: Decision) => {
-    setDecision(newDecision);
-    setCurrentState('loading');
-  };
-
-  const handleOptionSelect = (optionIndex: number) => {
-    setSelectedOption(optionIndex);
-    setCurrentState('success');
-  };
-
-  const resetMachine = () => {
-    setDecision(null);
-    setSelectedOption(null);
-    setCurrentState('idle');
-  };
-
-  const getStatusDisplay = () => {
-    if (status === 'pending') return 'Analyzing...';
-    if (status === 'error') return 'Analysis Failed';
-    if (status === 'success') return 'Analysis Complete';
-    return 'Ready';
-  };
+  const onSubmit = useCallback(() => {
+    if (inputValue.trim().length === 0) return;
+    send({ type: "SUBMIT", input: inputValue });
+  }, [inputValue, send]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-warfare-dark via-slate-900 to-warfare-dark p-6">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-2xl mx-auto">
         <BackToDashboard />
-        
         <header className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">{t('decision_tm')}</h1>
-          <p className="text-warfare-gray">Analyze decisions through time and consequence</p>
+          <p className="text-warfare-gray">Visualize two timelines for your decision: short and long-term</p>
         </header>
-
         <div className="glass-card p-6 rounded-xl">
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-white mb-2">Status: {getStatusDisplay()}</h2>
-            {status === 'pending' && (
-              <div className="w-full bg-warfare-gray/20 rounded-full h-2">
-                <div className="bg-warfare-blue h-2 rounded-full animate-pulse w-1/2"></div>
-              </div>
-            )}
-          </div>
-
-          {currentState === 'idle' && (
-            <div className="text-center">
-              <p className="text-warfare-gray mb-4">
-                Enter a decision you're facing to see potential outcomes
-              </p>
-              <button
-                onClick={() => {
-                  const mockDecision: Decision = {
-                    id: '1',
-                    title: 'Career Change',
-                    description: 'Considering switching from corporate job to freelancing',
-                    options: ['Stay in corporate', 'Go freelance', 'Hybrid approach'],
-                    consequences: ['Stability vs Growth', 'Security vs Freedom', 'Balance vs Focus'],
-                    timestamp: new Date()
-                  };
-                  handleDecisionSubmit(mockDecision);
-                }}
-                className="bg-warfare-blue hover:bg-warfare-blue/80 text-white px-6 py-3 rounded-lg transition-colors"
-              >
-                Start Analysis
-              </button>
-            </div>
-          )}
-
-          {currentState === 'loading' && (
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-warfare-red mx-auto mb-4"></div>
-              <p className="text-white">Analyzing decision pathways...</p>
-            </div>
-          )}
-
-          {currentState === 'success' && decision && (
+          {state.matches("IDLE") && (
             <div>
-              <h3 className="text-lg font-semibold text-white mb-4">{decision.title}</h3>
-              <p className="text-warfare-gray mb-6">{decision.description}</p>
-              
-              <div className="grid gap-4 mb-6">
-                {decision.options.map((option, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleOptionSelect(index)}
-                    className={`p-4 rounded-lg border transition-colors text-left ${
-                      selectedOption === index
-                        ? 'border-warfare-red bg-warfare-red/10 text-white'
-                        : 'border-warfare-gray/30 hover:border-warfare-blue/50 text-warfare-gray hover:text-white'
-                    }`}
-                  >
-                    {option}
-                  </button>
-                ))}
+              <textarea
+                className="w-full text-white bg-slate-900/80 p-3 rounded-lg mb-4 resize-none border border-warfare-blue/20 focus:ring-2"
+                value={inputValue}
+                rows={4}
+                maxLength={240}
+                placeholder="Describe your scenario…"
+                onChange={e => setInputValue(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && !e.shiftKey && onSubmit()}
+              />
+              <div className="flex justify-between mb-4">
+                <span className="text-xs text-warfare-gray">{inputValue.length}/240</span>
+                <button
+                  onClick={onSubmit}
+                  className="bg-warfare-blue hover:bg-warfare-blue/80 text-white px-6 py-2 rounded-lg transition-colors"
+                  disabled={inputValue.length === 0}
+                >Analyze</button>
               </div>
-
-              {analysisData && (
-                <div className="bg-warfare-dark/50 p-4 rounded-lg mb-4">
-                  <h4 className="text-white font-medium mb-2">AI Analysis:</h4>
-                  <p className="text-warfare-gray text-sm">{analysisData.analysis || 'Analysis complete'}</p>
-                </div>
-              )}
-
-              <button
-                onClick={resetMachine}
-                className="bg-warfare-gray hover:bg-warfare-gray/80 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                Reset
-              </button>
             </div>
           )}
 
-          {currentState === 'error' && (
-            <div className="text-center">
-              <p className="text-red-400 mb-4">Analysis failed. Please try again.</p>
-              <button
-                onClick={resetMachine}
-                className="bg-warfare-red hover:bg-warfare-red/80 text-white px-6 py-3 rounded-lg transition-colors"
-              >
-                Try Again
-              </button>
+          {state.matches("SUBMITTING") && (
+            <div className="flex flex-col items-center my-8">
+              <LoaderSpinner show={true} />
+              <p className="text-white mt-4">Analyzing your decision…</p>
             </div>
+          )}
+
+          {state.matches("ERROR") && (
+            <ErrorView error={state.context.error ?? "Unknown error"} onRetry={() => send({ type: "RETRY" })} />
+          )}
+
+          {state.matches("SUCCESS") && state.context.result && (
+            <TimelineView
+              result={state.context.result}
+              onNew={() => {
+                setInputValue("");
+                send({ type: "NEW_DECISION", input: "" });
+              }}
+            />
           )}
         </div>
       </div>
