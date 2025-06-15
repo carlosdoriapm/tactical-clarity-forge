@@ -2,6 +2,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { LayoutDashboard, MessageSquare } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const features = [
   {
@@ -23,10 +24,11 @@ const features = [
 
 export default function MainDashboard() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <div className="min-h-screen bg-warfare-dark flex flex-col items-center py-10 px-2">
-      <h1 className="text-3xl md:text-4xl font-bold text-white mb-8 tracking-tight">Dashboard</h1>
+      <h1 className="text-3xl md:text-4xl font-bold text-white mb-8 tracking-tight">{t('dashboard')}</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-7 w-full max-w-3xl">
         {features.map((feat) => (
           <button

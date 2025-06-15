@@ -3,6 +3,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/AppSidebar"
 import { useNavigate } from "react-router-dom"
 import { LayoutDashboard } from "lucide-react"
+import { useTranslation } from "@/hooks/useTranslation"
 
 interface LayoutProps {
   children: React.ReactNode
@@ -10,6 +11,7 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const navigate = useNavigate()
+  const { t } = useTranslation()
 
   return (
     <SidebarProvider>
@@ -23,7 +25,7 @@ export function Layout({ children }: LayoutProps) {
               className="flex items-center gap-2 text-warfare-blue hover:text-white transition-colors px-3 py-1 rounded-lg hover:bg-warfare-accent/20"
             >
               <LayoutDashboard className="h-4 w-4" />
-              <span className="text-sm font-medium">Dashboard</span>
+              <span className="text-sm font-medium">{t('dashboard')}</span>
             </button>
           </header>
           <main className="flex-1">

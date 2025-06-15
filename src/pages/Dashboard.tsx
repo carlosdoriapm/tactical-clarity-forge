@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRituals, NewRitual } from '@/hooks/useRituals';
@@ -10,11 +11,13 @@ import { useMissions } from "@/hooks/useMissions";
 import { MissionList } from "@/components/MissionList";
 import { CheckInList } from "@/components/CheckInList";
 import { useCheckIns } from "@/hooks/useCheckIns";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const { rituals, isLoadingRituals, addRitual } = useRituals();
+  const { t } = useTranslation();
 
   // Missões
   const { missions, isLoading: isLoadingMissions } = useMissions();
@@ -48,8 +51,8 @@ const Dashboard = () => {
     <div className="p-6">
       <div className="max-w-7xl mx-auto">
         <header className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Dashboard</h1>
-          <p className="text-warfare-gray">Bem-vindo, {user?.email}</p>
+          <h1 className="text-3xl font-bold text-white mb-2">{t('dashboard')}</h1>
+          <p className="text-warfare-gray">{t('welcome')}, {user?.email}</p>
         </header>
 
         <div className="space-y-12">
@@ -58,11 +61,11 @@ const Dashboard = () => {
             <VulnerabilityDashboard />
           </div>
 
-          {/* Missões e Check-ins Section */}
+          {/* Missions and Check-ins Section */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-white">Missões</h2>
+            <h2 className="text-2xl font-semibold text-white">{t('missions')}</h2>
             {isLoadingMissions ? (
-              <p className="text-warfare-gray">Carregando missões...</p>
+              <p className="text-warfare-gray">{t('loading')}</p>
             ) : (
               <MissionList
                 missions={missions || []}
@@ -72,9 +75,9 @@ const Dashboard = () => {
             )}
             {selectedMission && (
               <>
-                <h3 className="text-xl font-bold text-warfare-blue mt-6">Check-ins desta Missão</h3>
+                <h3 className="text-xl font-bold text-warfare-blue mt-6">Check-ins for this Mission</h3>
                 {isLoadingCheckIns ? (
-                  <p className="text-warfare-gray">Carregando check-ins...</p>
+                  <p className="text-warfare-gray">{t('loading')}</p>
                 ) : (
                   <CheckInList checkIns={checkIns || []} />
                 )}
@@ -85,11 +88,11 @@ const Dashboard = () => {
           {/* Rituals Section */}
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-semibold text-white">Seus Rituais</h2>
+              <h2 className="text-2xl font-semibold text-white">{t('your_rituals')}</h2>
               {!showCreateForm && (
                 <Button onClick={() => setShowCreateForm(true)} className="bg-warfare-accent hover:bg-warfare-accent/80 text-white">
                   <PlusCircle className="w-4 h-4 mr-2" />
-                  Novo Ritual
+                  {t('new_ritual')}
                 </Button>
               )}
             </div>
@@ -102,7 +105,7 @@ const Dashboard = () => {
             ) : (
               <>
                 {isLoadingRituals ? (
-                  <p className="text-warfare-gray">Carregando rituais...</p>
+                  <p className="text-warfare-gray">{t('loading')}</p>
                 ) : (
                   <RitualList rituals={rituals || []} />
                 )}

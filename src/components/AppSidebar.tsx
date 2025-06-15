@@ -6,6 +6,7 @@ import {
   MessageSquare,
   LayoutDashboard
 } from "lucide-react"
+import { useTranslation } from "@/hooks/useTranslation";
 
 import {
   Sidebar,
@@ -20,17 +21,18 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 
-const navigationItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Chat", url: "/chat", icon: MessageSquare },
-  { title: "Perfil", url: "/profile", icon: User },
-]
-
 export function AppSidebar() {
   const { state } = useSidebar()
   const location = useLocation()
   const currentPath = location.pathname
   const collapsed = state === "collapsed"
+  const { t } = useTranslation();
+
+  const navigationItems = [
+    { title: t('dashboard'), url: "/", icon: LayoutDashboard },
+    { title: t('chat'), url: "/chat", icon: MessageSquare },
+    { title: t('profile'), url: "/profile", icon: User },
+  ]
 
   const isActive = (path: string) => currentPath === path
 

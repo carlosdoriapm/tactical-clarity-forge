@@ -4,10 +4,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import ProfileForm from '@/components/ProfileForm';
 import WarLogsDisplay from '@/components/WarLogsDisplay';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const Profile = () => {
   const { user } = useAuth();
   const { profile, setProfile, warLogs, setWarLogs, loading, loadWarLogs } = useProfile();
+  const { t } = useTranslation();
 
   if (loading) {
     return (
@@ -21,7 +23,7 @@ const Profile = () => {
     <div className="p-6">
       <div className="max-w-4xl mx-auto">
         <header className="mb-8">
-          <h1 className="text-3xl font-bold text-white">Command Profile</h1>
+          <h1 className="text-3xl font-bold text-white">{t('command_profile')}</h1>
         </header>
 
         <div className="grid gap-8 md:grid-cols-2">

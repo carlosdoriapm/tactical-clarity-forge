@@ -5,7 +5,9 @@ import LoaderSpinner from "@/components/LoaderSpinner";
 import TimelineCard from "@/components/TimelineCard";
 import SwipePagination from "@/components/SwipePagination";
 import ErrorBanner from "@/components/ErrorBanner";
+import { BackToDashboard } from "@/components/BackToDashboard";
 import useTelemetry from "@/hooks/useTelemetry";
+import { useTranslation } from "@/hooks/useTranslation";
 
 // Demo data for timeline
 const DEMO_MILESTONES = [
@@ -26,6 +28,7 @@ const TimeMachineDemo: React.FC = () => {
   const [timeline, setTimeline] = useState<TimelineData[] | null>(null);
   const [page, setPage] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   const telemetry = useTelemetry();
 
@@ -116,14 +119,9 @@ const TimeMachineDemo: React.FC = () => {
   // Main UI
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-2 py-8 relative bg-warfare-dark text-white font-sans">
-      {/* Dashboard button - always visible */}
+      {/* Back to Dashboard button - always visible */}
       <div className="absolute top-4 left-4 z-50">
-        <button
-          onClick={() => window.location.href = '/'}
-          className="bg-warfare-blue/90 text-white rounded-lg px-4 py-2 font-medium shadow-lg hover:shadow-xl hover:-translate-y-1 transition flex items-center gap-2"
-        >
-          <span>← Dashboard</span>
-        </button>
+        <BackToDashboard />
       </div>
 
       {errorMsg && (
@@ -134,7 +132,7 @@ const TimeMachineDemo: React.FC = () => {
       {/* State: idle/input */}
       {state === "idle" && (
         <div className="max-w-xl w-full">
-          <h1 className="text-2xl font-bold mb-6 text-center" style={{fontSize: 24, lineHeight: "32px"}}>Decision Time-Machine</h1>
+          <h1 className="text-2xl font-bold mb-6 text-center" style={{fontSize: 24, lineHeight: "32px"}}>{t('decision_tm')}</h1>
           <DecisionInput
             value={input}
             onChange={setInput}
