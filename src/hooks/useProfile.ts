@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -34,7 +35,15 @@ export const useProfile = () => {
         .maybeSingle();
 
       if (combatantProfile) {
-        setProfile(combatantProfile);
+        const profileData = {
+          ...combatantProfile,
+          // Coalesce null values to defaults and cast to the correct type
+          physical_condition: (combatantProfile.physical_condition ?? 'average') as CombatantProfileData['physical_condition'],
+          relationship_status: (combatantProfile.relationship_status ?? 'single') as CombatantProfileData['relationship_status'],
+          school_experience: (combatantProfile.school_experience ?? 'neutral') as CombatantProfileData['school_experience'],
+          intensity_mode: (combatantProfile.intensity_mode ?? 'TACTICAL') as CombatantProfileData['intensity_mode'],
+        };
+        setProfile(profileData);
       }
     } catch (error) {
       console.error('Error loading profile:', error);
