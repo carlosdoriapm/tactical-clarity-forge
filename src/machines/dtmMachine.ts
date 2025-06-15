@@ -41,19 +41,18 @@ export const dtmMachine = createMachine({
       },
     },
     SUBMITTING: {
-      invoke: {
-        src: "fetchDecisionTimeline",
-        onDone: {
+      on: {
+        SUCCESS: {
           target: "SUCCESS",
           actions: assign({ 
-            result: ({ event }) => event.output, 
+            result: ({ event }) => event.type === "SUCCESS" ? event.result : null, 
             error: () => null 
           }),
         },
-        onError: {
+        ERROR: {
           target: "ERROR",
           actions: assign({ 
-            error: ({ event }) => event.error || "Unknown error" 
+            error: ({ event }) => event.type === "ERROR" ? event.error : "Unknown error" 
           }),
         },
       },
