@@ -35,13 +35,25 @@ export const useProfile = () => {
         .maybeSingle();
 
       if (combatantProfile) {
-        const profileData = {
-          ...combatantProfile,
-          // Coalesce null values to defaults and cast to the correct type
+        // Manually construct the profileData object to ensure type conformity
+        // and avoid extra properties from the database query result.
+        const profileData: Partial<CombatantProfileData> = {
+          id: combatantProfile.id,
+          user_id: combatantProfile.user_id,
+          codename: combatantProfile.codename || '',
+          age: combatantProfile.age,
           physical_condition: (combatantProfile.physical_condition ?? 'average') as CombatantProfileData['physical_condition'],
+          childhood_summary: combatantProfile.childhood_summary || '',
+          parents: combatantProfile.parents,
+          siblings: combatantProfile.siblings,
           relationship_status: (combatantProfile.relationship_status ?? 'single') as CombatantProfileData['relationship_status'],
           school_experience: (combatantProfile.school_experience ?? 'neutral') as CombatantProfileData['school_experience'],
+          vice: combatantProfile.vice || '',
+          mission_90_day: combatantProfile.mission_90_day || '',
+          fear_block: combatantProfile.fear_block || '',
           intensity_mode: (combatantProfile.intensity_mode ?? 'TACTICAL') as CombatantProfileData['intensity_mode'],
+          first_recognition: combatantProfile.first_recognition,
+          profile_complete: combatantProfile.profile_complete ?? false,
         };
         setProfile(profileData);
       }
