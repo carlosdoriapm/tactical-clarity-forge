@@ -26,6 +26,7 @@ const TimeMachineDemo: React.FC = () => {
   const [page, setPage] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // Explicitly type the ref to match State
   const stateRef = React.useRef<State>(state);
   useEffect(() => {
     stateRef.current = state;
