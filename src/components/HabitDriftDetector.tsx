@@ -1,11 +1,10 @@
-
 import React from 'react';
 import { useHabitNudges } from '@/hooks/useHabitNudges';
 import { HabitNudgeCard } from './HabitNudgeCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
-import { LoaderSpinner } from './LoaderSpinner';
+import LoaderSpinner from './LoaderSpinner';
 
 interface Habit {
   id: string;

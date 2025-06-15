@@ -7,6 +7,7 @@ import { RitualForm } from '@/components/RitualForm';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { VulnerabilityDashboard } from '@/components/VulnerabilityDashboard';
+import { HabitDriftDetector } from '@/components/HabitDriftDetector';
 import { useMissions } from "@/hooks/useMissions";
 import { MissionList } from "@/components/MissionList";
 import { CheckInList } from "@/components/CheckInList";
@@ -59,6 +60,12 @@ const Dashboard = () => {
           {/* Tactical Intelligence Section */}
           <div>
             <VulnerabilityDashboard />
+          </div>
+
+          {/* Habit Drift Detector Section */}
+          <div>
+            <h2 className="text-2xl font-semibold text-white mb-6">{t('habit_drift')}</h2>
+            <HabitDriftDetector habits={rituals || []} />
           </div>
 
           {/* Missions and Check-ins Section */}
