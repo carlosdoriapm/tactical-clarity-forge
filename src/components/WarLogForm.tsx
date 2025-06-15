@@ -1,9 +1,8 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { X } from 'lucide-react';
@@ -14,7 +13,7 @@ interface WarLogFormProps {
     decision_path: string;
     commands: any;
     intensity: 'Low' | 'Medium' | 'High';
-    result: string;
+    result: 'Success' | 'Partial Success' | 'Fail';
     reflections?: string;
     date: string;
   }) => void;
@@ -27,7 +26,7 @@ export const WarLogForm: React.FC<WarLogFormProps> = ({ onSubmit, onCancel }) =>
     decision_path: '',
     commands: '',
     intensity: 'Medium' as 'Low' | 'Medium' | 'High',
-    result: '',
+    result: 'Partial Success' as 'Success' | 'Partial Success' | 'Fail',
     reflections: ''
   });
 
@@ -97,39 +96,47 @@ export const WarLogForm: React.FC<WarLogFormProps> = ({ onSubmit, onCancel }) =>
             />
           </div>
 
-          <div>
-            <Label htmlFor="intensity" className="text-warfare-accent">
-              Intensity Level
-            </Label>
-            <Select
-              value={formData.intensity}
-              onValueChange={(value: 'Low' | 'Medium' | 'High') => 
-                setFormData(prev => ({ ...prev, intensity: value }))
-              }
-            >
-              <SelectTrigger className="bg-warfare-dark border-warfare-gray/30 text-white">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-warfare-card border-warfare-gray/20">
-                <SelectItem value="Low" className="text-white">Low</SelectItem>
-                <SelectItem value="Medium" className="text-white">Medium</SelectItem>
-                <SelectItem value="High" className="text-white">High</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label htmlFor="result" className="text-warfare-accent">
-              Result/Outcome
-            </Label>
-            <Textarea
-              id="result"
-              value={formData.result}
-              onChange={(e) => setFormData(prev => ({ ...prev, result: e.target.value }))}
-              placeholder="Describe the outcome or result..."
-              className="bg-warfare-dark border-warfare-gray/30 text-white"
-              required
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="intensity" className="text-warfare-accent">
+                Intensity Level
+              </Label>
+              <Select
+                value={formData.intensity}
+                onValueChange={(value: 'Low' | 'Medium' | 'High') => 
+                  setFormData(prev => ({ ...prev, intensity: value }))
+                }
+              >
+                <SelectTrigger className="bg-warfare-dark border-warfare-gray/30 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-warfare-card border-warfare-gray/20">
+                  <SelectItem value="Low" className="text-white">Low</SelectItem>
+                  <SelectItem value="Medium" className="text-white">Medium</SelectItem>
+                  <SelectItem value="High" className="text-white">High</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="result" className="text-warfare-accent">
+                Result/Outcome
+              </Label>
+              <Select
+                value={formData.result}
+                onValueChange={(value: 'Success' | 'Partial Success' | 'Fail') =>
+                  setFormData(prev => ({ ...prev, result: value }))
+                }
+              >
+                <SelectTrigger className="bg-warfare-dark border-warfare-gray/30 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-warfare-card border-warfare-gray/20">
+                  <SelectItem value="Success" className="text-green-400">Success</SelectItem>
+                  <SelectItem value="Partial Success" className="text-yellow-400">Partial Success</SelectItem>
+                  <SelectItem value="Fail" className="text-red-400">Fail</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div>
@@ -145,12 +152,12 @@ export const WarLogForm: React.FC<WarLogFormProps> = ({ onSubmit, onCancel }) =>
             />
           </div>
 
-          <div className="flex justify-end space-x-2">
+          <div className="flex justify-end space-x-2 pt-4">
             <Button
               type="button"
               variant="outline"
               onClick={onCancel}
-              className="border-warfare-gray/30 text-warfare-gray hover:text-white"
+              className="border-warfare-gray/30 text-warfare-gray hover:bg-warfare-dark hover:text-white"
             >
               Cancel
             </Button>
@@ -158,7 +165,7 @@ export const WarLogForm: React.FC<WarLogFormProps> = ({ onSubmit, onCancel }) =>
               type="submit"
               className="bg-warfare-accent hover:bg-warfare-accent/80 text-white"
             >
-              Create Log Entry
+              Log Mission
             </Button>
           </div>
         </form>
