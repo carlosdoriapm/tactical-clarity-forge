@@ -29,7 +29,7 @@ serve(async (req) => {
       });
     }
 
-    const webhookUrl = 'https://carlosdoriapm.app.n8n.cloud/webhook-test/legionary';
+    const webhookUrl = 'https://carlosdoriapm.app.n8n.cloud/webhook/legionary';
 
     // Chama o webhook com os dados da mensagem
     const webhookResponse = await fetch(webhookUrl, {
