@@ -123,8 +123,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
       
-      const userRoles = data ? data.map((r: { role: AppRole }) => r.role) : [];
-      const validRoles = userRoles.filter(Boolean) as AppRole[];
+      const userRoles = (Array.isArray(data) ? data.map((r: { role: AppRole }) => r.role) : []) as AppRole[];
+      const validRoles = userRoles.filter(Boolean);
       setRoles(validRoles);
       console.log('AuthProvider: User roles loaded:', validRoles);
     } catch (error) {
