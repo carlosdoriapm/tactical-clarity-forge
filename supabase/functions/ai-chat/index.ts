@@ -38,12 +38,18 @@ serve(async (req) => {
       body: JSON.stringify(body),
     });
 
+    const responseText = await webhookResponse.text();
+    console.log('Response from n8n webhook:', {
+        status: webhookResponse.status,
+        headers: Object.fromEntries(webhookResponse.headers.entries()),
+        body: responseText,
+    });
+
     if (!webhookResponse.ok) {
-        const errorText = await webhookResponse.text();
-        console.error('Webhook error:', { status: webhookResponse.status, body: errorText });
+        console.error('Webhook error:', { status: webhookResponse.status, body: responseText });
         return new Response(JSON.stringify({ 
             error: `Webhook returned status ${webhookResponse.status}`,
-            response: 'O nexo estratégico falhou. O Conselheiro de Guerra não pôde ser contatado.',
+            response: `O nexo estratégico falhou. O Conselheiro de Guerra não pôde ser contatado (Status: ${webhookResponse.status}).`,
             success: false,
         }), {
             status: webhookResponse.status,
@@ -51,8 +57,15 @@ serve(async (req) => {
         });
     }
     
-    const responseData = await webhookResponse.json();
-    const aiResponse = responseData.response || responseData.text || responseData.message || (typeof responseData === 'string' ? responseData : JSON.stringify(responseData));
+    let aiResponse;
+    try {
+      // Tenta analisar como JSON
+      const responseData = JSON.parse(responseText);
+      aiResponse = responseData.response || responseData.text || responseData.message || JSON.stringify(responseData);
+    } catch (e) {
+      // Se não for JSON, usa o texto bruto como resposta
+      aiResponse = responseText;
+    }
 
     const successResponse = {
       response: aiResponse.toString().trim(),
