@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect } from "react";
 import DecisionInput from "@/components/DecisionInput";
 import LoaderSpinner from "@/components/LoaderSpinner";
@@ -89,7 +88,7 @@ const TimeMachineDemo: React.FC = () => {
 
   // Show loader spinner, auto-cancel after 3s
   useEffect(() => {
-    let tm: number;
+    let tm: number | undefined;
     if (stateRef.current === "loading") {
       tm = window.setTimeout(() => {
         if (stateRef.current === "loading") {
@@ -102,8 +101,7 @@ const TimeMachineDemo: React.FC = () => {
     return () => {
       if (tm) clearTimeout(tm);
     };
-    // eslint-disable-next-line
-  }, [state]);
+  }, [state, input, telemetry]);
 
   // Demo swipeable handler (can be improved)
   const { useSwipeable } = require("react-swipeable");
@@ -182,5 +180,5 @@ const TimeMachineDemo: React.FC = () => {
     </div>
   );
 };
-export default TimeMachineDemo;
 
+export default TimeMachineDemo;
