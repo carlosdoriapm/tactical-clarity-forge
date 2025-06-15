@@ -4,27 +4,79 @@ import { AuthForm } from '@/components/AuthForm';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import OnboardingFlow from '@/components/OnboardingFlow';
+import { supabase } from '@/integrations/supabase/client';
 
 const Auth = () => {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(false);
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Redirect authenticated users
+  // Check if user needs onboarding
   useEffect(() => {
-    if (user && !loading) {
-      const from = location.state?.from?.pathname || '/dashboard';
-      navigate(from, { replace: true });
-    }
+    const checkOnboardingStatus = async () => {
+      if (user && !loading) {
+        setIsCheckingOnboarding(true);
+        
+        try {
+          // Check if user has completed onboarding
+          const { data: userData } = await supabase
+            .from('users')
+            .select('onboarding_completed')
+            .eq('id', user.id)
+            .single();
+
+          const { data: profileData } = await supabase
+            .from('combatant_profile')
+            .select('profile_complete')
+            .eq('user_id', user.id)
+            .single();
+
+          const needsOnboarding = !userData?.onboarding_completed || !profileData?.profile_complete;
+          
+          if (needsOnboarding) {
+            setShowOnboarding(true);
+          } else {
+            const from = location.state?.from?.pathname || '/dashboard';
+            navigate(from, { replace: true });
+          }
+        } catch (error) {
+          console.error('Error checking onboarding status:', error);
+          // If error, assume needs onboarding for new users
+          setShowOnboarding(true);
+        } finally {
+          setIsCheckingOnboarding(false);
+        }
+      }
+    };
+
+    checkOnboardingStatus();
   }, [user, loading, navigate, location]);
 
-  if (loading) {
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+    const from = location.state?.from?.pathname || '/dashboard';
+    navigate(from, { replace: true });
+  };
+
+  if (loading || isCheckingOnboarding) {
     return (
       <div className="min-h-screen bg-warfare-dark flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-warfare-red"></div>
       </div>
     );
+  }
+
+  if (user && showOnboarding) {
+    return <OnboardingFlow onComplete={handleOnboardingComplete} />;
+  }
+
+  // Redirect authenticated users who don't need onboarding
+  if (user && !showOnboarding) {
+    return null; // Will be redirected by useEffect
   }
 
   return (

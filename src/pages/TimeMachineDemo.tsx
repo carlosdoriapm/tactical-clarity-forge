@@ -3,11 +3,11 @@ import React, { useState } from 'react';
 import { useMachine } from '@xstate/react';
 import { dtmMachine } from '@/machines/dtmMachine';
 import { BackToDashboard } from '@/components/BackToDashboard';
-import { DecisionInput } from '@/components/DecisionInput';
-import { TimelineCard } from '@/components/TimelineCard';
-import { MilestoneChip } from '@/components/MilestoneChip';
+import DecisionInput from '@/components/DecisionInput';
+import TimelineCard from '@/components/TimelineCard';
+import MilestoneChip from '@/components/MilestoneChip';
 import { Button } from '@/components/ui/button';
-import { LoaderSpinner } from '@/components/LoaderSpinner';
+import LoaderSpinner from '@/components/LoaderSpinner';
 
 const TimeMachineDemo = () => {
   const [state, send] = useMachine(dtmMachine);
