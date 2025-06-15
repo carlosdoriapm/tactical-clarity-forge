@@ -3,13 +3,13 @@ import React, { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface LoaderSpinnerProps {
-  show: boolean;
+  show?: boolean;
   onTimeout?: () => void;
   timeoutMs?: number;
 }
 
 const LoaderSpinner: React.FC<LoaderSpinnerProps> = ({
-  show,
+  show = true,
   onTimeout,
   timeoutMs = 3000
 }) => {
@@ -45,4 +45,5 @@ const LoaderSpinner: React.FC<LoaderSpinnerProps> = ({
     </AnimatePresence>
   );
 };
+
 export default LoaderSpinner;

@@ -4,8 +4,6 @@ import { useMachine } from '@xstate/react';
 import { dtmMachine } from '@/machines/dtmMachine';
 import { BackToDashboard } from '@/components/BackToDashboard';
 import DecisionInput from '@/components/DecisionInput';
-import TimelineCard from '@/components/TimelineCard';
-import MilestoneChip from '@/components/MilestoneChip';
 import { Button } from '@/components/ui/button';
 import LoaderSpinner from '@/components/LoaderSpinner';
 
@@ -65,7 +63,7 @@ const TimeMachineDemo = () => {
 
         {state.matches('SUBMITTING') && (
           <div className="flex flex-col items-center justify-center py-12">
-            <LoaderSpinner />
+            <LoaderSpinner show={true} />
             <p className="text-warfare-blue mt-4">Analisando cenários futuros...</p>
           </div>
         )}
@@ -94,18 +92,37 @@ const TimeMachineDemo = () => {
         {state.matches('SUCCESS') && state.context.result && (
           <div className="space-y-8">
             <div className="grid md:grid-cols-2 gap-8">
-              <TimelineCard
-                title="Cenário de Curto Prazo"
-                subtitle="Próximos 6-12 meses"
-                timeline={state.context.result.timeline_short}
-                variant="short"
-              />
-              <TimelineCard
-                title="Cenário de Longo Prazo"
-                subtitle="1-3 anos à frente"
-                timeline={state.context.result.timeline_long}
-                variant="long"
-              />
+              <div className="bg-warfare-dark/90 border border-warfare-blue/30 rounded-lg p-6">
+                <h3 className="text-xl font-bold text-white mb-2">Cenário de Curto Prazo</h3>
+                <p className="text-warfare-blue mb-4">Próximos 6-12 meses</p>
+                <div className="space-y-3">
+                  {state.context.result.timeline_short.map((item, index) => (
+                    <div key={index} className="flex items-start space-x-3">
+                      <div className="w-2 h-2 bg-warfare-red rounded-full mt-2"></div>
+                      <div>
+                        <div className="text-warfare-blue text-sm">{item.date}</div>
+                        <div className="text-white">{item.event}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="bg-warfare-dark/90 border border-warfare-blue/30 rounded-lg p-6">
+                <h3 className="text-xl font-bold text-white mb-2">Cenário de Longo Prazo</h3>
+                <p className="text-warfare-blue mb-4">1-3 anos à frente</p>
+                <div className="space-y-3">
+                  {state.context.result.timeline_long.map((item, index) => (
+                    <div key={index} className="flex items-start space-x-3">
+                      <div className="w-2 h-2 bg-warfare-red rounded-full mt-2"></div>
+                      <div>
+                        <div className="text-warfare-blue text-sm">{item.date}</div>
+                        <div className="text-white">{item.event}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
             
             <div className="text-center">
