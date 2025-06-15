@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -109,7 +108,14 @@ export default {
 				'fade-up': 'fade-up 0.6s ease-out'
 			},
 			fontFamily: {
-				'roboto': ['Roboto', 'sans-serif']
+				'sans': [
+					'SF Pro',
+					'Inter',
+					'-apple-system',
+					'system-ui',
+					'sans-serif'
+				],
+        'roboto': ['Roboto', 'sans-serif']
 			}
 		}
 	},

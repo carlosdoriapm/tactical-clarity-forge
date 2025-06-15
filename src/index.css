@@ -1,61 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+@font-face {
+  font-family: 'SF Pro';
+  src: local('SF Pro Display'), local('SFProDisplay-Regular'),
+    url('/fonts/sf-pro.woff2') format('woff2');
+  font-display: swap;
+}
 
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --background: 2 31% 11%;
-    --foreground: 0 0% 100%;
-
-    --card: 2 31% 11%;
-    --card-foreground: 0 0% 100%;
-
-    --popover: 2 31% 11%;
-    --popover-foreground: 0 0% 100%;
-
-    --primary: 5 85% 57%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 2 31% 15%;
-    --secondary-foreground: 0 0% 100%;
-
-    --muted: 2 31% 15%;
-    --muted-foreground: 194 25% 66%;
-
-    --accent: 46 96% 64%;
-    --accent-foreground: 2 31% 11%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 2 31% 15%;
-    --input: 2 31% 15%;
-    --ring: 5 85% 57%;
-
-    --radius: 0.5rem;
-
-    --sidebar-background: 2 31% 11%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 5 85% 57%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 2 31% 15%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 2 31% 15%;
-    --sidebar-ring: 5 85% 57%;
+  html {
+    font-family: 'SF Pro', 'Inter', -apple-system, system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    background: theme('colors.warfare-dark');
+    color: theme('colors.warfare-white');
   }
-}
+  h1 {
+    font-size: 1.5rem; /* 24px */
+    line-height: 2rem; /* 32px */
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+  body {
+    font-size: 1rem;
+    line-height: 1.5rem;
+    font-weight: 400;
+    font-family: 'SF Pro', 'Inter', -apple-system, system-ui, sans-serif;
+    background: theme('colors.warfare-dark');
+    color: theme('colors.warfare-white');
+  }
 
-@layer base {
   * {
     @apply border-border;
   }
 
-  body {
-    @apply bg-warfare-dark text-warfare-white font-roboto;
-  }
-  
   h1, h2 {
     @apply font-bold tracking-wide uppercase;
   }
