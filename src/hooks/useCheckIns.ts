@@ -3,12 +3,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
+import type { Json } from '@/integrations/supabase/types';
 
 export type CheckIn = {
   id: string;
   user_id: string;
   mission_id: string;
-  payload?: Record<string, any>;
+  payload?: Json | null;
   created_at: string;
 };
 
