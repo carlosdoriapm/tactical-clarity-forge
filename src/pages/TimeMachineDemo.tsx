@@ -27,12 +27,6 @@ const TimeMachineDemo: React.FC = () => {
   const [page, setPage] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Explicitly type the ref to match State
-  const stateRef = React.useRef<State>(state);
-  useEffect(() => {
-    stateRef.current = state;
-  }, [state]);
-
   const telemetry = useTelemetry();
 
   // Try to load last scenario (simulate localStorage restore)
@@ -91,7 +85,7 @@ const TimeMachineDemo: React.FC = () => {
     let tm: number | undefined;
     if (state === "loading") {
       tm = window.setTimeout(() => {
-        if (stateRef.current === "loading") {
+        if (state === "loading") {
           setState("error");
           setErrorMsg("Request timed out. Please try again.");
           telemetry("dtm_error", { input, reason: "timeout" });

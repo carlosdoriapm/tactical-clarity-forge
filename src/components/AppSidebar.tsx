@@ -23,7 +23,7 @@ import {
 const navigationItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Chat", url: "/chat", icon: MessageSquare },
-  { title: "Profile", url: "/profile", icon: User },
+  { title: "Perfil", url: "/profile", icon: User },
 ]
 
 export function AppSidebar() {

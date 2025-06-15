@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast as sonnerToast } from "sonner";
 import { useNavigate } from 'react-router-dom';
+import { LayoutDashboard } from 'lucide-react';
 
 import { Message } from '@/types/chat';
 import AuthLoading from '@/components/chat/AuthLoading';
@@ -21,7 +22,7 @@ const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: "Hey—I'm AlphaAdvisor. First, I’ll ask you a few questions so I can truly get to know you.",
+      content: "Hey—I'm AlphaAdvisor. First, I'll ask you a few questions so I can truly get to know you.",
       isBot: true,
       timestamp: new Date()
     }
@@ -233,6 +234,17 @@ const Chat = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-warfare-dark via-slate-900 to-warfare-dark flex flex-col">
+      {/* Dashboard button - always visible */}
+      <div className="absolute top-4 left-4 z-50">
+        <button
+          onClick={() => navigate('/')}
+          className="bg-warfare-blue/90 text-white rounded-lg px-4 py-2 font-medium shadow-lg hover:shadow-xl hover:-translate-y-1 transition flex items-center gap-2"
+        >
+          <LayoutDashboard className="h-4 w-4" />
+          <span>Dashboard</span>
+        </button>
+      </div>
+      
       <ChatHeader
         user={user}
         connectionStatus={connectionStatus}
