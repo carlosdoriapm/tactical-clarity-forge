@@ -21,7 +21,7 @@ const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: 'Saudações, guerreiro. Sou seu conselheiro tático, forjado no cadinho da sabedoria antiga e estratégia moderna. Fale, e eu o aconselharei com a clareza de César e a determinação de Marco Aurélio. O que pesa em sua mente hoje?',
+      content: "Hey—I'm AlphaAdvisor. First, I’ll ask you a few questions so I can truly get to know you.",
       isBot: true,
       timestamp: new Date()
     }
