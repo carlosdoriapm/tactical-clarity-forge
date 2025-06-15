@@ -10,13 +10,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const generateAnalysisPrompt = (profile: any, failedLogs: any[]) => {
-  const logSummaries = failedLogs.map(log => 
+const generateAnalysisPrompt = (profile: any, allLogs: any[]) => {
+  const logSummaries = allLogs.map(log => 
     `- Dilema: ${log.dilemma}\n  Decisão: ${log.decision_path}\n  Resultado: ${log.result}`
   ).join('\n\n');
 
   return `
-Você é um Conselheiro de Guerra estoico e analista de inteligência. Sua missão é analisar relatórios de combate (War Logs) de um guerreiro para identificar suas vulnerabilidades centrais. Seja brutalmente honesto, mas estratégico.
+Você é um Conselheiro de Guerra estoico e analista de inteligência. Sua missão é analisar relatórios de combate (War Logs) de um guerreiro para identificar seus padrões de comportamento, vulnerabilidades e pontos fortes. Seja brutalmente honesto, mas estratégico.
 
 **PERFIL DO COMBATENTE:**
 - Codinome: ${profile.codename || 'N/A'}
@@ -24,16 +24,17 @@ Você é um Conselheiro de Guerra estoico e analista de inteligência. Sua miss�
 - Vício Principal: ${profile.vice || 'N/A'}
 - Medo Central: ${profile.fear_block || 'N/A'}
 
-**RELATÓRIOS DE FALHA:**
+**RELATÓRIOS DE COMBATE (SUCESSOS E FALHAS):**
 ${logSummaries}
 
 **SUA ANÁLISE DE INTELIGÊNCIA:**
-Baseado nos relatórios de falha e no perfil do combatente, forneça uma análise tática concisa.
-1.  **Padrão de Falha Recorrente:** Identifique o padrão de comportamento ou situacional que mais se repete nas falhas.
-2.  **Vulnerabilidade Central Exposta:** Qual é a fraqueza fundamental que esses fracassos revelam? Conecte com o vício ou medo dele, se aplicável.
-3.  **Diretiva Estratégica Imediata:** Forneça UMA ação clara e imediata que o combatente deve tomar para mitigar esta vulnerabilidade.
+Baseado em todos os relatórios de combate e no perfil do combatente, forneça uma análise tática concisa.
+1.  **Padrão de Sucesso Recorrente:** Identifique o padrão de comportamento ou decisão que consistentemente leva ao sucesso. Qual é o ponto forte fundamental aqui?
+2.  **Padrão de Falha Recorrente:** Identifique o padrão de comportamento ou situacional que mais se repete nas falhas.
+3.  **Vulnerabilidade Central Exposta:** Qual é a fraqueza fundamental que os fracassos revelam? Conecte com o vício ou medo dele, se aplicável.
+4.  **Diretiva Estratégica Imediata:** Forneça UMA ação clara e imediata que o combatente deve tomar para mitigar a vulnerabilidade e reforçar o padrão de sucesso.
 
-Sua resposta DEVE ser um objeto JSON com as chaves "recurringPattern", "coreVulnerability", e "strategicDirective". Não inclua nenhum outro texto ou formatação.
+Sua resposta DEVE ser um objeto JSON com as chaves "positivePattern", "recurringFailurePattern", "coreVulnerability", e "strategicDirective". Não inclua nenhum outro texto ou formatação. Se não houver dados suficientes para uma das chaves (e.g., nenhum padrão claro de falha), retorne um valor nulo para essa chave.
   `;
 };
 
@@ -74,14 +75,14 @@ serve(async (req) => {
     console.log('[tactical-analysis] Creating Supabase service role client.');
     const supabaseClient = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-    console.log('[tactical-analysis] Fetching profile and failed logs from database.');
+    console.log('[tactical-analysis] Fetching profile and all logs from database.');
     const [profileRes, logsRes] = await Promise.all([
       supabaseClient.from('combatant_profile').select('*').eq('user_id', userId).maybeSingle(),
-      supabaseClient.from('war_logs').select('dilemma,decision_path,result').eq('user_id', userId).eq('result', 'Fail')
+      supabaseClient.from('war_logs').select('dilemma,decision_path,result').eq('user_id', userId)
     ]);
 
     const { data: profile, error: profileError } = profileRes;
-    const { data: failedLogs, error: logsError } = logsRes;
+    const { data: allLogs, error: logsError } = logsRes;
 
     if (profileError || logsError) {
       const dbError = profileError || logsError;
@@ -91,7 +92,7 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-    console.log(`[tactical-analysis] Fetched profile: ${!!profile}, Failed logs: ${failedLogs?.length || 0}`);
+    console.log(`[tactical-analysis] Fetched profile: ${!!profile}, All logs: ${allLogs?.length || 0}`);
 
     if (!profile || !profile.profile_complete) {
       console.log('[tactical-analysis] Profile not found or incomplete. Returning noProfile.');
@@ -100,14 +101,14 @@ serve(async (req) => {
       });
     }
 
-    if (!failedLogs || failedLogs.length < 2) {
-      console.log(`[tactical-analysis] Insufficient failed logs (${failedLogs?.length || 0}). Returning insufficientData.`);
+    if (!allLogs || allLogs.length < 3) {
+      console.log(`[tactical-analysis] Insufficient total logs (${allLogs?.length || 0}). Returning insufficientData.`);
       return new Response(JSON.stringify({ analysis: { insufficientData: true } }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
     
-    const prompt = generateAnalysisPrompt(profile, failedLogs);
+    const prompt = generateAnalysisPrompt(profile, allLogs);
     console.log('[tactical-analysis] Generated prompt for OpenAI.');
 
     console.log('[tactical-analysis] Calling OpenAI API.');

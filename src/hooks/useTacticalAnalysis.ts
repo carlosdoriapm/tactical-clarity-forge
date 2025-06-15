@@ -1,10 +1,10 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 export interface TacticalAnalysis {
-  recurringPattern?: string;
+  positivePattern?: string;
+  recurringFailurePattern?: string;
   coreVulnerability?: string;
   strategicDirective?: string;
   insufficientData?: boolean;
