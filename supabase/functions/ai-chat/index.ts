@@ -2,8 +2,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -16,7 +14,8 @@ serve(async (req) => {
   }
 
   try {
-    const { message } = await req.json();
+    const body = await req.json();
+    const { message } = body;
 
     if (!message) {
       return new Response(JSON.stringify({ 
@@ -29,51 +28,34 @@ serve(async (req) => {
       });
     }
 
-    if (!openAIApiKey) {
-      console.error('OPENAI_API_KEY is not set.');
-      return new Response(JSON.stringify({ 
-        error: 'Missing OPENAI_API_KEY',
-        response: 'A chave para o arsenal de inteligência não foi encontrada. Contate o suporte.',
-        success: false
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    const webhookUrl = 'https://carlosdoriapm.app.n8n.cloud/webhook-test/legionary';
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const webhookResponse = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: 'You are "Warfare Counselor", a strategic AI assistant. You provide concise, tactical, and sometimes stoic advice. Your tone is that of a seasoned military strategist. You address the user as "guerreiro" (warrior).' },
-          { role: 'user', content: message }
-        ],
-      }),
+      body: JSON.stringify(body),
     });
 
-    if (!response.ok) {
-        const errorText = await response.text();
-        console.error('OpenAI API error:', { status: response.status, body: errorText });
+    if (!webhookResponse.ok) {
+        const errorText = await webhookResponse.text();
+        console.error('Webhook error:', { status: webhookResponse.status, body: errorText });
         return new Response(JSON.stringify({ 
-            error: `OpenAI API returned status ${response.status}`,
+            error: `Webhook returned status ${webhookResponse.status}`,
             response: 'O nexo estratégico falhou. O Conselheiro de Guerra não pôde ser contatado.',
             success: false,
         }), {
-            status: response.status,
+            status: webhookResponse.status,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
     }
-
-    const data = await response.json();
-    const aiResponse = data.choices[0].message.content;
+    
+    const responseData = await webhookResponse.json();
+    const aiResponse = responseData.response || responseData.text || responseData.message || (typeof responseData === 'string' ? responseData : JSON.stringify(responseData));
 
     const successResponse = {
-      response: aiResponse.trim(),
+      response: aiResponse.toString().trim(),
       success: true,
       timestamp: new Date().toISOString()
     };
