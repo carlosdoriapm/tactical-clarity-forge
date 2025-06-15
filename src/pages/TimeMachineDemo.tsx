@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import DecisionInput from "@/components/DecisionInput";
 import LoaderSpinner from "@/components/LoaderSpinner";
@@ -87,9 +88,9 @@ const TimeMachineDemo: React.FC = () => {
 
   // Show loader spinner, auto-cancel after 3s
   useEffect(() => {
-    let tm: any;
-    if (stateRef.current === "loading") {
-      tm = setTimeout(() => {
+    let tm: number;
+    if (state === "loading") {
+      tm = window.setTimeout(() => {
         if (stateRef.current === "loading") {
           setState("error");
           setErrorMsg("Request timed out. Please try again.");
@@ -132,7 +133,7 @@ const TimeMachineDemo: React.FC = () => {
           />
           <div className="mt-8 text-white/60 text-center text-base">
             <div>Type any decision scenario and visualize the AI timeline. </div>
-            <div>(Type “fail” to simulate error state.)</div>
+            <div>(Type "fail" to simulate error state.)</div>
           </div>
         </div>
       )}
