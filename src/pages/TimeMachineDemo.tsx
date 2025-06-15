@@ -88,7 +88,7 @@ const TimeMachineDemo: React.FC = () => {
   // Show loader spinner, auto-cancel after 3s
   useEffect(() => {
     let tm: any;
-    if (state === "loading") {
+    if (stateRef.current === "loading") {
       tm = setTimeout(() => {
         if (stateRef.current === "loading") {
           setState("error");
