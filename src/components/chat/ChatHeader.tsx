@@ -29,22 +29,22 @@ const getStatusIcon = (status: ChatHeaderProps['connectionStatus'], isSending: b
 };
 
 const getStatusText = (status: ChatHeaderProps['connectionStatus'], isSending: boolean) => {
-    if (isSending) return 'Enviando...';
+    if (isSending) return 'Sending...';
     switch (status) {
-        case 'testing': return 'Testando...';
-        case 'good': return 'Conectado';
-        case 'error': return 'Erro';
-        default: return 'Desconhecido';
+        case 'testing': return 'Testing...';
+        case 'good': return 'Connected';
+        case 'error': return 'Error';
+        default: return 'Unknown';
     }
 };
 
 const getStatusTitle = (status: ChatHeaderProps['connectionStatus'], isSending: boolean) => {
-    if (isSending) return "Enviando...";
+    if (isSending) return "Sending...";
     switch (status) {
-        case 'testing': return "Testando Conexão...";
-        case 'good': return "Conectado";
-        case 'error': return "Erro de Conexão";
-        default: return "Status Desconhecido";
+        case 'testing': return "Testing Connection...";
+        case 'good': return "Connected";
+        case 'error': return "Connection Error";
+        default: return "Unknown Status";
     }
 }
 
@@ -59,10 +59,10 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white mb-2">Conselheiro de Guerra</h1>
-          <p className="text-warfare-blue/80">Seu conselheiro tático aguarda suas palavras</p>
+          <h1 className="text-2xl font-bold text-white mb-2">AlphaAdvisor</h1>
+          <p className="text-warfare-blue/80">Your tactical advisor is ready to listen</p>
           {user && (
-            <p className="text-xs text-warfare-blue/60 mt-1">Conectado como: {user.email}</p>
+            <p className="text-xs text-warfare-blue/60 mt-1">Signed in as: {user.email}</p>
           )}
         </div>
         <div className="flex items-center space-x-4">
@@ -79,7 +79,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
             variant="outline"
             className="border-warfare-red/30 text-white hover:bg-warfare-red/10"
           >
-            Testar Conexão
+            Test Connection
           </Button>
           <Button
             onClick={onNavigateToDashboard}
@@ -96,3 +96,4 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
 );
 
 export default ChatHeader;
+
