@@ -97,7 +97,9 @@ const TimeMachineDemo: React.FC = () => {
         }
       }, 3000);
     }
-    return () => clearTimeout(tm);
+    return () => {
+      if (tm) clearTimeout(tm);
+    };
     // eslint-disable-next-line
   }, [state]);
 
