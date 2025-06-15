@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRituals, NewRitual } from '@/hooks/useRituals';
@@ -7,11 +6,22 @@ import { RitualForm } from '@/components/RitualForm';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { VulnerabilityDashboard } from '@/components/VulnerabilityDashboard';
+import { useMissions } from "@/hooks/useMissions";
+import { MissionList } from "@/components/MissionList";
+import { CheckInList } from "@/components/CheckInList";
+import { useCheckIns } from "@/hooks/useCheckIns";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const { rituals, isLoadingRituals, addRitual } = useRituals();
+
+  // Missões
+  const { missions, isLoading: isLoadingMissions } = useMissions();
+  const [selectedMission, setSelectedMission] = useState<string | null>(null);
+
+  // Lista de check-ins da missão selecionada
+  const { checkIns, isLoading: isLoadingCheckIns } = useCheckIns(selectedMission || "");
 
   const handleCreateRitual = (ritualData: {
     name: string;
@@ -46,6 +56,30 @@ const Dashboard = () => {
           {/* Tactical Intelligence Section */}
           <div>
             <VulnerabilityDashboard />
+          </div>
+
+          {/* Missões e Check-ins Section */}
+          <div className="space-y-6">
+            <h2 className="text-2xl font-semibold text-white">Missões</h2>
+            {isLoadingMissions ? (
+              <p className="text-warfare-gray">Carregando missões...</p>
+            ) : (
+              <MissionList
+                missions={missions || []}
+                onSelect={(mission) => setSelectedMission(mission.id)}
+                selectedMissionId={selectedMission || undefined}
+              />
+            )}
+            {selectedMission && (
+              <>
+                <h3 className="text-xl font-bold text-warfare-blue mt-6">Check-ins desta Missão</h3>
+                {isLoadingCheckIns ? (
+                  <p className="text-warfare-gray">Carregando check-ins...</p>
+                ) : (
+                  <CheckInList checkIns={checkIns || []} />
+                )}
+              </>
+            )}
           </div>
 
           {/* Rituals Section */}

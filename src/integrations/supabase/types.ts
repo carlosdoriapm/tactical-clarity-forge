@@ -33,6 +33,45 @@ export type Database = {
         }
         Relationships: []
       }
+      check_ins: {
+        Row: {
+          created_at: string | null
+          id: string
+          mission_id: string
+          payload: Json | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          mission_id: string
+          payload?: Json | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          mission_id?: string
+          payload?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "check_ins_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "check_ins_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       combatant_profile: {
         Row: {
           age: number | null
@@ -141,6 +180,62 @@ export type Database = {
           system?: Json | null
           user_id?: string
           warning?: string | null
+        }
+        Relationships: []
+      }
+      missions: {
+        Row: {
+          description: string | null
+          end_date: string | null
+          id: string
+          start_date: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          start_date?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          start_date?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "missions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prompt_specs: {
+        Row: {
+          created_at: string | null
+          feature_name: string
+          id: string
+          specification: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          feature_name: string
+          id?: string
+          specification?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          feature_name?: string
+          id?: string
+          specification?: Json | null
         }
         Relationships: []
       }
