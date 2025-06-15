@@ -3,9 +3,7 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-const supabaseUrl = Deno.env.get('SUPABASE_URL');
-const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+console.log('[tactical-analysis] Function starting up.');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -40,30 +38,43 @@ Sua resposta DEVE ser um objeto JSON com as chaves "recurringPattern", "coreVuln
 };
 
 serve(async (req) => {
+  console.log(`[tactical-analysis] Received request: ${req.method}`);
+
   if (req.method === 'OPTIONS') {
+    console.log('[tactical-analysis] Handling OPTIONS request.');
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { userId } = await req.json();
-
-    if (!userId) {
-      return new Response(JSON.stringify({ error: 'userId is required.' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    console.log('[tactical-analysis] Getting environment variables.');
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    console.log(`[tactical-analysis] Supabase URL is set: ${!!supabaseUrl}`);
 
     if (!supabaseUrl || !supabaseServiceRoleKey || !openAIApiKey) {
-      console.error('Environment variables not set.');
+      console.error('[tactical-analysis] ERROR: Missing environment variables.');
       return new Response(JSON.stringify({ error: 'Internal server configuration error.' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
+    const { userId } = await req.json();
+    console.log(`[tactical-analysis] Processing request for userId: ${userId}`);
+
+    if (!userId) {
+      console.error('[tactical-analysis] ERROR: userId is required.');
+      return new Response(JSON.stringify({ error: 'userId is required.' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log('[tactical-analysis] Creating Supabase service role client.');
     const supabaseClient = createClient(supabaseUrl, supabaseServiceRoleKey);
 
+    console.log('[tactical-analysis] Fetching profile and failed logs from database.');
     const [profileRes, logsRes] = await Promise.all([
       supabaseClient.from('combatant_profile').select('*').eq('user_id', userId).maybeSingle(),
       supabaseClient.from('war_logs').select('dilemma,decision_path,result').eq('user_id', userId).eq('result', 'Fail')
@@ -73,27 +84,33 @@ serve(async (req) => {
     const { data: failedLogs, error: logsError } = logsRes;
 
     if (profileError || logsError) {
-      console.error('Error fetching data:', profileError || logsError);
+      const dbError = profileError || logsError;
+      console.error('[tactical-analysis] ERROR: Failed to fetch data from Supabase.', dbError);
       return new Response(JSON.stringify({ error: 'Failed to fetch combatant data.' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    console.log(`[tactical-analysis] Fetched profile: ${!!profile}, Failed logs: ${failedLogs?.length || 0}`);
 
     if (!profile || !profile.profile_complete) {
+      console.log('[tactical-analysis] Profile not found or incomplete. Returning noProfile.');
       return new Response(JSON.stringify({ analysis: { noProfile: true } }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
     if (!failedLogs || failedLogs.length < 2) {
+      console.log(`[tactical-analysis] Insufficient failed logs (${failedLogs?.length || 0}). Returning insufficientData.`);
       return new Response(JSON.stringify({ analysis: { insufficientData: true } }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
     
     const prompt = generateAnalysisPrompt(profile, failedLogs);
+    console.log('[tactical-analysis] Generated prompt for OpenAI.');
 
+    console.log('[tactical-analysis] Calling OpenAI API.');
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -107,14 +124,16 @@ serve(async (req) => {
       }),
     });
 
+    console.log(`[tactical-analysis] OpenAI response status: ${openAIResponse.status}`);
     if (!openAIResponse.ok) {
       const errorData = await openAIResponse.text();
-      console.error('Error from OpenAI API:', errorData);
+      console.error('[tactical-analysis] ERROR: OpenAI API request failed.', errorData);
       throw new Error(`OpenAI API request failed: ${openAIResponse.statusText}`);
     }
 
     const responseData = await openAIResponse.json();
     const analysis = JSON.parse(responseData.choices[0].message.content);
+    console.log('[tactical-analysis] Successfully parsed OpenAI analysis.');
 
     return new Response(JSON.stringify({ analysis }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -122,7 +141,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Error in tactical-analysis function:', error);
+    console.error('[tactical-analysis] FATAL ERROR in function handler:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
