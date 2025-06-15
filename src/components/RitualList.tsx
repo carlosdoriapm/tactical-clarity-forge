@@ -2,6 +2,7 @@
 import { Ritual } from '@/hooks/useRituals';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Flame, Repeat, Clock } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface RitualListProps {
   rituals: Ritual[];
@@ -24,7 +25,16 @@ export const RitualList: React.FC<RitualListProps> = ({ rituals }) => {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span className="truncate">{ritual.name}</span>
-              {ritual.stake_attached && <Flame className="w-5 h-5 text-orange-400" title="High Intensity Stake" />}
+              {ritual.stake_attached && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Flame className="w-5 h-5 text-orange-400" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>High Intensity Stake</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </CardTitle>
             <CardDescription className="flex items-center text-warfare-gray">
               <Clock className="w-4 h-4 mr-2" />
