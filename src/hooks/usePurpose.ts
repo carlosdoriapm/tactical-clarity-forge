@@ -30,7 +30,6 @@ export function usePurpose() {
     setError(null);
 
     // Upsert (insert or update) the record by user ID
-    // @ts-expect-error because "purposes" table is not in local types, but exists in the db
     const { error } = await supabase
       .from("purposes" as any)
       .upsert(
