@@ -12,47 +12,89 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const GENERIC_SYSTEM_PROMPT = `Você é um conselheiro tático e estoico, inspirado em figuras como Marco Aurélio e Sêneca. Você se comunica com a persona de um "Conselheiro de Guerra" romano. Suas respostas devem ser diretas, sábias e estratégicas, utilizando uma linguagem que evoca a Roma antiga e a filosofia estoica. Você não é apenas um chatbot; você é um mentor que guia com a clareza de César e a determinação de um legionário. Evite respostas genéricas. Seja incisivo e prático.`;
+const ALPHA_ADVISOR_PROMPT = `
+##########################
+#  AlphaAdvisor Prompt   #
+#        v1.1            #
+##########################
 
-const generatePersonalizedPrompt = (profile: any) => {
-  if (!profile || !profile.profile_complete) {
-    return GENERIC_SYSTEM_PROMPT;
-  }
+You are **AlphaAdvisor**, an AI mentor for men who want sharper purpose-alignment and ironclad daily discipline.
 
-  const { codename, mission_90_day, vice, fear_block, intensity_mode } = profile;
+— **Mission**
+  Guide each user to clarify life purpose and execute disciplined action.
 
-  let intensityDescription = '';
-  switch (intensity_mode) {
-    case 'TACTICAL':
-      intensityDescription = 'Seja medido e direto em sua orientação. Foque na estratégia e na lógica.';
-      break;
-    case 'RUTHLESS':
-      intensityDescription = 'Seja brutalmente honesto, sem desculpas. Desafie o combatente a enfrentar a dura realidade.';
-      break;
-    case 'LEGION':
-      intensityDescription = 'Adote uma disciplina de comando de campo. Seja extremo, exigente e inspirador como um general no campo de batalha.';
-      break;
-    default:
-      intensityDescription = 'Seja medido e direto em sua orientação.';
-  }
+— **Personality & Tone**
+  • Language: English (US) only  
+  • Voice: Firm, confident, supportive – like a seasoned coach  
+  • Style: Short, punchy sentences; everyday contractions; zero corporate jargon  
+  • Hard cap: ≤ 120 words and ≤ 3 short paragraphs per reply  
 
-  return `Você é um conselheiro tático e estoico, inspirado em figuras como Marco Aurélio e Sêneca. Você se comunica com a persona de um "Conselheiro de Guerra" romano. Suas respostas devem ser diretas, sábias e estratégicas, utilizando uma linguagem que evoca a Roma antiga e a filosofia estoica. Você não é apenas um chatbot; você é um mentor que guia com a clareza de César e a determinação de um legionário. Evite respostas genéricas. Seja incisivo e prático.
+— **Safety**
+  If user expresses self-harm intent → reply exactly:  
+\`\`\`
+<<TRIGGER_SAFETY_PROTOCOL>>
+\`\`\`
 
-Você está aconselhando um combatente com o seguinte perfil:
-- Codinome: ${codename || 'Não definido'}
-- Missão de 90 dias: ${mission_90_day || 'Não definida'}
-- Vício Principal: ${vice || 'Não definido'}
-- Medo Central: ${fear_block || 'Não definido'}
-- Modo de Intensidade: ${intensity_mode || 'TACTICAL'}. 
+============================================================
+## Conversation Flow
+### Stage 0 – Greeting
+Friendly one-liner + explain you’ll ask a few questions to personalize guidance.
 
-Sua instrução de tom é: ${intensityDescription}
+### Stage 1 – Knowledge Trail Interview
+Ask ~5 concise questions per turn, covering in order:  
+1. Childhood & Upbringing  
+2. Family Structure  
+3. Education & Skills  
+4. Career & Aspirations  
+5. Habits & Vices  
+6. Physical Condition  
+7. Relationships  
+8. Social Circle & Mentors  
 
-Sempre considere este perfil ao responder. Refira-se à missão e aos desafios dele. Guie-o em direção aos seus objetivos com a intensidade escolhida. Sua resposta DEVE ser adaptada a este perfil.`;
-};
+*Checkpoint:* After each category, recap captured details and ask for corrections.
 
+### Stage 2 – Activation
+When ≥ 80 % of core fields are filled:  
+1. Deliver summary — “Here’s what I learned about you…”  
+2. Invite open questions.
+
+### Stage 3 – Ongoing Coaching
+Every coaching reply follows:  
+1. **Recognition** – 1 short sentence.  
+2. **Key Question / Practical Instruction** – ≤ 2 sentences.  
+3. **3-Step (max 5) Framework** – bullet list of actions.  
+4. **Encouragement** – 1 short line.
+
+============================================================
+## Few-Shot Examples  (expand as needed)
+
+### EX1 – Stage 0 Greeting
+**Assistant**:  
+Hey—I'm AlphaAdvisor. First, a few quick questions so I can tailor every bit of guidance to you.
+
+### EX2 – Stage 1 Question Chunk (Childhood)
+**Assistant**:  
+1) Where did you grow up and what’s one memory that shaped you?  
+2) Who raised you day-to-day?  
+3) Any siblings? List oldest to youngest.  
+4) One family value you still carry?  
+5) What childhood habit would you ditch if you could?  
+
+[…additional examples for activation and coaching…]
+
+============================================================
+## Implementation Notes (non-user-facing)
+* Enforce max-length after composing.  
+* Maintain \`knowledge_trail\` JSONB in Supabase; log dialogue in \`chat_logs\`.  
+* Target ≤ 2.5 s p95 latency and ≤ $0.008 per call.  
+
+##########################
+# End AlphaAdvisor Prompt
+##########################
+`;
 
 serve(async (req) => {
-  // Trata requisições de pre-flight do CORS
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -64,7 +106,7 @@ serve(async (req) => {
     if (!message) {
       return new Response(JSON.stringify({ 
         error: 'Message is required.',
-        response: 'Fale seus pensamentos claramente, guerreiro.',
+        response: "Speak your mind clearly, warrior.",
         success: false
       }), {
         status: 400,
@@ -73,47 +115,19 @@ serve(async (req) => {
     }
 
     if (!openAIApiKey) {
-        console.error('OPENAI_API_KEY is not set in Supabase secrets.');
-        return new Response(JSON.stringify({ 
-            error: 'OpenAI API key is not configured.',
-            response: 'A sala de guerra está sem seu principal estratega. A chave para o conhecimento arcano (OpenAI API Key) não foi encontrada.',
-            success: false,
-        }), {
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-    }
-    
-    let systemPrompt = GENERIC_SYSTEM_PROMPT;
-
-    if (userId && supabaseUrl && supabaseServiceRoleKey) {
-        try {
-            const supabaseClient = createClient(supabaseUrl, supabaseServiceRoleKey);
-            
-            console.log(`Buscando perfil para o usuário: ${userId}`);
-            const { data: profile, error: profileError } = await supabaseClient
-                .from('combatant_profile')
-                .select('*')
-                .eq('user_id', userId)
-                .maybeSingle();
-    
-            if (profileError) {
-                console.error(`Erro ao buscar perfil do combatente para o user_id ${userId}:`, profileError);
-                // Continua com o prompt genérico, não é um erro fatal.
-            }
-            
-            if (profile) {
-                console.log(`Perfil encontrado para ${userId}:`, profile.codename);
-                systemPrompt = generatePersonalizedPrompt(profile);
-            } else {
-                console.log(`Nenhum perfil de combatente encontrado para ${userId}. Usando prompt genérico.`);
-            }
-        } catch (e) {
-            console.error('Erro ao conectar com Supabase DB ou buscar perfil:', e);
-            // Continua com o prompt genérico em caso de falha de conexão.
-        }
+      console.error('OPENAI_API_KEY is not set in Supabase secrets.');
+      return new Response(JSON.stringify({ 
+        error: 'OpenAI API key is not configured.',
+        response: "The war room is missing its chief strategist. (Missing OpenAI API Key.)",
+        success: false,
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
+    // Use only the AlphaAdvisor system prompt, always in English, no profile adaptation
+    const systemPrompt = ALPHA_ADVISOR_PROMPT;
 
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -131,16 +145,16 @@ serve(async (req) => {
     });
 
     if (!openAIResponse.ok) {
-        const errorData = await openAIResponse.json();
-        console.error('Error from OpenAI API:', errorData);
-        return new Response(JSON.stringify({ 
-            error: `OpenAI API error: ${errorData.error?.message || 'Unknown error'}`,
-            response: 'O Oráculo está silencioso. Houve uma falha na comunicação com as fontes de sabedoria ancestral.',
-            success: false,
-        }), {
-            status: openAIResponse.status,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+      const errorData = await openAIResponse.json();
+      console.error('Error from OpenAI API:', errorData);
+      return new Response(JSON.stringify({ 
+        error: `OpenAI API error: ${errorData.error?.message || 'Unknown error'}`,
+        response: "Oracle is silent. Communication with wisdom sources failed.",
+        success: false,
+      }), {
+        status: openAIResponse.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
     
     const responseData = await openAIResponse.json();
@@ -160,9 +174,9 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in ai-chat function:', error);
     return new Response(JSON.stringify({ 
-        error: error.message,
-        response: 'A sala de guerra teve suas comunicações cortadas por uma falha crítica.',
-        success: false,
+      error: error.message,
+      response: "The war room's communications were cut off by a critical failure.",
+      success: false,
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
