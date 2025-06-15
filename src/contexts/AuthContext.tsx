@@ -105,8 +105,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadUserRoles = async (userId: string) => {
     try {
+      // The 'user_roles' table is not yet in the auto-generated types from Supabase.
+      // We cast the table name to `any` as a workaround until the types can be regenerated.
       const { data, error } = await supabase
-        .from('user_roles')
+        .from('user_roles' as any)
         .select('role')
         .eq('user_id', userId);
 
@@ -121,7 +123,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
       
-      const userRoles = data ? data.map(r => r.role) : [];
+      const userRoles = data ? data.map((r: { role: AppRole }) => r.role) : [];
       const validRoles = userRoles.filter(Boolean) as AppRole[];
       setRoles(validRoles);
       console.log('AuthProvider: User roles loaded:', validRoles);
