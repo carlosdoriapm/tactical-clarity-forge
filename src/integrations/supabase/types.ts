@@ -183,6 +183,33 @@ export type Database = {
         }
         Relationships: []
       }
+      habit_nudges: {
+        Row: {
+          created_at: string
+          habit_id: string
+          id: string
+          missed_days: number
+          text: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          habit_id: string
+          id?: string
+          missed_days: number
+          text: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          habit_id?: string
+          id?: string
+          missed_days?: number
+          text?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       missions: {
         Row: {
           description: string | null
