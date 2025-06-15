@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from "react";
 import DecisionInput from "@/components/DecisionInput";
 import LoaderSpinner from "@/components/LoaderSpinner";
@@ -89,7 +90,7 @@ const TimeMachineDemo: React.FC = () => {
   // Show loader spinner, auto-cancel after 3s
   useEffect(() => {
     let tm: number;
-    if (state === "loading") {
+    if (stateRef.current === "loading") {
       tm = window.setTimeout(() => {
         if (stateRef.current === "loading") {
           setState("error");
@@ -182,3 +183,4 @@ const TimeMachineDemo: React.FC = () => {
   );
 };
 export default TimeMachineDemo;
+
