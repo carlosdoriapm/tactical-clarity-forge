@@ -80,16 +80,20 @@ const TimeMachineDemo: React.FC = () => {
     }
   };
 
-  // Show loader spinner, auto-cancel after 3s
+  // Show loader spinner, auto-cancel after 3s - Fixed timeout logic
   useEffect(() => {
     let tm: number | undefined;
     if (state === "loading") {
       tm = window.setTimeout(() => {
-        if (state === "loading") {
-          setState("error");
-          setErrorMsg("Request timed out. Please try again.");
-          telemetry("dtm_error", { input, reason: "timeout" });
-        }
+        // Use a callback to check the current state
+        setState(currentState => {
+          if (currentState === "loading") {
+            setErrorMsg("Request timed out. Please try again.");
+            telemetry("dtm_error", { input, reason: "timeout" });
+            return "error";
+          }
+          return currentState;
+        });
       }, 3000);
     }
     return () => {

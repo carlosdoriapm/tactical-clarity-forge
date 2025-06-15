@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -234,8 +233,8 @@ const Chat = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-warfare-dark via-slate-900 to-warfare-dark flex flex-col">
-      {/* Dashboard button - always visible */}
-      <div className="absolute top-4 left-4 z-50">
+      {/* Dashboard button - repositioned to avoid conflicts */}
+      <div className="fixed top-4 right-4 z-50">
         <button
           onClick={() => navigate('/')}
           className="bg-warfare-blue/90 text-white rounded-lg px-4 py-2 font-medium shadow-lg hover:shadow-xl hover:-translate-y-1 transition flex items-center gap-2"

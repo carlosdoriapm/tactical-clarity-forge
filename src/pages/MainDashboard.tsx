@@ -6,19 +6,19 @@ import { LayoutDashboard, MessageSquare } from "lucide-react";
 const features = [
   {
     label: "Decision Time-Machine",
-    description: "Visualize linhas do tempo para decisões complexas com IA.",
+    description: "Visualize timelines for complex decisions with AI.",
     icon: <LayoutDashboard className="w-7 h-7 text-cyan-400" />,
     route: "/time-machine-demo",
-    badge: "Novo"
+    badge: "New"
   },
   {
-    label: "Chat Conselheiro",
-    description: "Converse com a IA para conselhos estratégicos.",
+    label: "Chat Advisor",
+    description: "Chat with AI for strategic advice.",
     icon: <MessageSquare className="w-7 h-7 text-warfare-yellow" />,
     route: "/chat",
     badge: null
   },
-  // Adicione aqui outras features/atalhos principais se quiser expandir ;)
+  // Add other features/shortcuts here if you want to expand ;)
 ];
 
 export default function MainDashboard() {
@@ -26,7 +26,7 @@ export default function MainDashboard() {
 
   return (
     <div className="min-h-screen bg-warfare-dark flex flex-col items-center py-10 px-2">
-      <h1 className="text-3xl md:text-4xl font-bold text-white mb-8 tracking-tight">Painel de Controle</h1>
+      <h1 className="text-3xl md:text-4xl font-bold text-white mb-8 tracking-tight">Dashboard</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-7 w-full max-w-3xl">
         {features.map((feat) => (
           <button
@@ -54,8 +54,8 @@ export default function MainDashboard() {
         ))}
       </div>
       <div className="mt-12 text-center text-warfare-gray text-base opacity-70">
-        Minimalista, intuitivo e pensado para acelerar decisões estratégicas.<br />
-        Suporte a novas funcionalidades será exibido aqui!
+        Minimalist, intuitive and designed to accelerate strategic decisions.<br />
+        Support for new features will be displayed here!
       </div>
     </div>
   );
