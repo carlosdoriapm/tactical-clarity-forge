@@ -3,7 +3,8 @@ import { useState } from "react"
 import { NavLink, useLocation } from "react-router-dom"
 import { 
   User,
-  MessageSquare
+  MessageSquare,
+  LayoutDashboard
 } from "lucide-react"
 
 import {
@@ -20,6 +21,7 @@ import {
 } from "@/components/ui/sidebar"
 
 const navigationItems = [
+  { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Chat", url: "/chat", icon: MessageSquare },
   { title: "Profile", url: "/profile", icon: User },
 ]

@@ -89,7 +89,7 @@ const TimeMachineDemo: React.FC = () => {
   // Show loader spinner, auto-cancel after 3s
   useEffect(() => {
     let tm: number | undefined;
-    if (stateRef.current === "loading") {
+    if (state === "loading") {
       tm = window.setTimeout(() => {
         if (stateRef.current === "loading") {
           setState("error");
@@ -114,6 +114,16 @@ const TimeMachineDemo: React.FC = () => {
   // Main UI
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-2 py-8 relative bg-warfare-dark text-white font-sans">
+      {/* Dashboard button - always visible */}
+      <div className="absolute top-4 left-4 z-50">
+        <button
+          onClick={() => window.location.href = '/'}
+          className="bg-warfare-blue/90 text-white rounded-lg px-4 py-2 font-medium shadow-lg hover:shadow-xl hover:-translate-y-1 transition flex items-center gap-2"
+        >
+          <span>← Dashboard</span>
+        </button>
+      </div>
+
       {errorMsg && (
         <ErrorBanner message={errorMsg} onDismiss={() => setErrorMsg(null)} />
       )}
