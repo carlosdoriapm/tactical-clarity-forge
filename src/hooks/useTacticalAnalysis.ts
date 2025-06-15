@@ -7,6 +7,7 @@ export interface TacticalAnalysis {
   recurringFailurePattern?: string;
   coreVulnerability?: string;
   strategicDirective?: string;
+  predictiveAlert?: string;
   insufficientData?: boolean;
   noProfile?: boolean;
 }
