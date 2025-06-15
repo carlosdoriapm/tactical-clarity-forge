@@ -29,6 +29,11 @@ const TimeMachineDemo: React.FC = () => {
 
   const telemetry = useTelemetry();
 
+  // Debug status changes
+  useEffect(() => {
+    console.log('[TimeMachine] status:', state);
+  }, [state]);
+
   // Try to load last scenario (simulate localStorage restore)
   useEffect(() => {
     const stored = localStorage.getItem("dtm_cache");
