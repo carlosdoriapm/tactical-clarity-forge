@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import DecisionInput from "@/components/DecisionInput";
 import LoaderSpinner from "@/components/LoaderSpinner";
@@ -26,6 +25,11 @@ const TimeMachineDemo: React.FC = () => {
   const [timeline, setTimeline] = useState<TimelineData[] | null>(null);
   const [page, setPage] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const stateRef = React.useRef<State>(state);
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   const telemetry = useTelemetry();
 
@@ -85,7 +89,7 @@ const TimeMachineDemo: React.FC = () => {
     let tm: any;
     if (state === "loading") {
       tm = setTimeout(() => {
-        if (state === "loading") {
+        if (stateRef.current === "loading") {
           setState("error");
           setErrorMsg("Request timed out. Please try again.");
           telemetry("dtm_error", { input, reason: "timeout" });
