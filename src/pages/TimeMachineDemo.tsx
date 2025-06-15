@@ -85,7 +85,6 @@ const TimeMachineDemo: React.FC = () => {
     let tm: number | undefined;
     if (state === "loading") {
       tm = window.setTimeout(() => {
-        // Use a callback to check the current state
         setState(currentState => {
           if (currentState === "loading") {
             setErrorMsg("Request timed out. Please try again.");
