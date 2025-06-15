@@ -2,11 +2,13 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { AppRole } from '@/types/auth';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  roles: AppRole[];
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -25,6 +27,7 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -99,6 +102,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       subscription.unsubscribe();
     };
   }, []);
+
+  const loadUserRoles = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+
+      if (error) {
+        console.error('Error fetching user roles:', error);
+        toast({
+          title: "Erro ao carregar permissões",
+          description: error.message,
+          variant: "destructive",
+        });
+        setRoles([]);
+        return;
+      }
+      
+      const userRoles = data ? data.map(r => r.role) : [];
+      const validRoles = userRoles.filter(Boolean) as AppRole[];
+      setRoles(validRoles);
+      console.log('AuthProvider: User roles loaded:', validRoles);
+    } catch (error) {
+      console.error('Error in loadUserRoles:', error);
+      setRoles([]);
+    }
+  };
+
+  useEffect(() => {
+    if (user && !loading) {
+      loadUserRoles(user.id);
+    } else if (!user) {
+      setRoles([]);
+    }
+  }, [user, loading]);
 
   const createUserProfile = async (user: User) => {
     try {
@@ -201,6 +240,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     session,
     loading,
+    roles,
     signUp,
     signIn,
     signOut

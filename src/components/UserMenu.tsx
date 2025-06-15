@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, User, Shield } from 'lucide-react';
+import { LogOut, User, Shield, Settings } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 export const UserMenu = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, roles } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -55,6 +55,15 @@ export const UserMenu = () => {
           <User className="w-4 h-4 mr-2" />
           Profile
         </DropdownMenuItem>
+        {roles.includes('admin') && (
+          <DropdownMenuItem 
+            onClick={() => navigate('/admin')}
+            className="text-white hover:bg-warfare-accent/20"
+          >
+            <Settings className="w-4 h-4 mr-2" />
+            Admin
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator className="border-warfare-gray/20" />
         <DropdownMenuItem 
           onClick={handleSignOut}
