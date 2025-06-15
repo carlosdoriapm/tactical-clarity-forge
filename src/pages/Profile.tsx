@@ -7,7 +7,7 @@ import WarLogsDisplay from '@/components/WarLogsDisplay';
 
 const Profile = () => {
   const { user } = useAuth();
-  const { profile, setProfile, warLogs, setWarLogs, loading } = useProfile();
+  const { profile, setProfile, warLogs, setWarLogs, loading, loadWarLogs } = useProfile();
 
   if (loading) {
     return (
@@ -32,6 +32,7 @@ const Profile = () => {
           <WarLogsDisplay 
             warLogs={warLogs} 
             onWarLogsUpdate={setWarLogs} 
+            loadWarLogs={loadWarLogs}
           />
         </div>
       </div>

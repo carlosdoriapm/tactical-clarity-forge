@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { WarLogForm } from './WarLogForm';
+import { PlusCircle } from 'lucide-react';
 
 interface WarLog {
   id: string;
@@ -19,12 +21,41 @@ interface WarLog {
 interface WarLogsDisplayProps {
   warLogs: WarLog[];
   onWarLogsUpdate: (logs: WarLog[]) => void;
+  loadWarLogs: () => Promise<void>;
 }
 
-const WarLogsDisplay = ({ warLogs, onWarLogsUpdate }: WarLogsDisplayProps) => {
+const WarLogsDisplay = ({ warLogs, onWarLogsUpdate, loadWarLogs }: WarLogsDisplayProps) => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [resetting, setResetting] = useState(false);
+  const [showWarLogForm, setShowWarLogForm] = useState(false);
+
+  const handleAddWarLog = async (logData: any) => {
+    if (!user) return;
+    try {
+      const { error } = await supabase.from('war_logs').insert([{
+        ...logData,
+        user_id: user.id
+      }]);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "New mission logged.",
+      });
+      setShowWarLogForm(false);
+      await loadWarLogs();
+    } catch (err) {
+      const error = err as Error;
+      console.error("Error creating war log:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to log mission.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const resetWarLogs = async () => {
     if (!user) return;
@@ -55,23 +86,38 @@ const WarLogsDisplay = ({ warLogs, onWarLogsUpdate }: WarLogsDisplayProps) => {
     }
   };
 
+  if (showWarLogForm) {
+    return (
+      <WarLogForm 
+        onSubmit={handleAddWarLog}
+        onCancel={() => setShowWarLogForm(false)}
+      />
+    )
+  }
+
   return (
     <div className="glass-card p-6 rounded-xl">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-white">War Logs</h2>
-        <Button
-          onClick={resetWarLogs}
-          disabled={resetting || warLogs.length === 0}
-          variant="destructive"
-          size="sm"
-        >
-          {resetting ? 'Clearing...' : 'Reset War Logs'}
-        </Button>
+        <div className="flex items-center space-x-2">
+            <Button onClick={() => setShowWarLogForm(true)} size="sm">
+                <PlusCircle className="w-4 h-4 mr-2" />
+                Log Mission
+            </Button>
+            <Button
+              onClick={resetWarLogs}
+              disabled={resetting || warLogs.length === 0}
+              variant="destructive"
+              size="sm"
+            >
+              {resetting ? 'Clearing...' : 'Reset War Logs'}
+            </Button>
+        </div>
       </div>
       
       <div className="space-y-4 max-h-96 overflow-y-auto">
         {warLogs.length === 0 ? (
-          <p className="text-warfare-blue">No missions logged yet. Start chatting to build your war logs.</p>
+          <p className="text-warfare-blue">No missions logged yet. Start by logging a new mission.</p>
         ) : (
           warLogs.map((log) => (
             <div key={log.id} className="bg-warfare-dark/50 p-4 rounded-lg border border-warfare-blue/30">
@@ -84,8 +130,8 @@ const WarLogsDisplay = ({ warLogs, onWarLogsUpdate }: WarLogsDisplayProps) => {
                 )}
                 {log.result && (
                   <span className={`ml-2 px-2 py-1 rounded text-xs ${
-                    log.result === 'success' ? 'bg-green-500/20 text-green-400' :
-                    log.result === 'fail' ? 'bg-red-500/20 text-red-400' :
+                    log.result === 'Success' ? 'bg-green-500/20 text-green-400' :
+                    log.result === 'Fail' ? 'bg-red-500/20 text-red-400' :
                     'bg-yellow-500/20 text-yellow-400'
                   }`}>
                     {log.result}
@@ -105,7 +151,7 @@ const WarLogsDisplay = ({ warLogs, onWarLogsUpdate }: WarLogsDisplayProps) => {
                 </div>
               )}
               
-              {log.commands && (
+              {log.commands && Object.keys(log.commands).length > 0 && (
                 <div className="text-xs text-gray-400 mt-2">
                   <strong>Commands:</strong> {Object.keys(log.commands).join(', ')}
                 </div>
