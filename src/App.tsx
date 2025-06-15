@@ -17,6 +17,7 @@ import Success from "./pages/Success";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/AdminDashboard";
 import TimeMachineDemo from "./pages/TimeMachineDemo";
+import PerformancePage from "./pages/PerformancePage";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,13 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <Dashboard />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/performance" element={
+              <ProtectedRoute>
+                <Layout>
+                  <PerformancePage />
                 </Layout>
               </ProtectedRoute>
             } />

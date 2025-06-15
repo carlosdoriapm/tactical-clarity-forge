@@ -1,165 +1,152 @@
 
-import React, { useCallback } from 'react';
-import { useMachine } from '@xstate/react';
-import { dtmMachine } from '@/machines/dtmMachine';
-import { BackToDashboard } from '@/components/BackToDashboard';
-import { useTranslation } from '@/hooks/useTranslation';
-import LoaderSpinner from "@/components/LoaderSpinner";
-
-type Milestone = { date: string; event: string };
-type Timeline = Milestone[];
-
-interface TimelineViewProps {
-  result: { timeline_short: Timeline; timeline_long: Timeline };
-  onNew: () => void;
-}
-
-const TimelineView: React.FC<TimelineViewProps> = ({ result, onNew }) => (
-  <div>
-    <div className="mb-6">
-      <h3 className="text-lg font-bold text-white mb-2">Short-term Timeline</h3>
-      <ol className="mb-4">
-        {result.timeline_short.map((m, i) => (
-          <li key={i} className="text-white mb-1">
-            <span className="font-mono text-cyan-300">{m.date}:</span> {m.event}
-          </li>
-        ))}
-      </ol>
-      <h3 className="text-lg font-bold text-white mb-2">Long-term Timeline</h3>
-      <ol>
-        {result.timeline_long.map((m, i) => (
-          <li key={i} className="text-white mb-1">
-            <span className="font-mono text-indigo-300">{m.date}:</span> {m.event}
-          </li>
-        ))}
-      </ol>
-    </div>
-    <button
-      onClick={onNew}
-      className="bg-warfare-blue hover:bg-warfare-blue/80 text-white px-6 py-2 rounded-lg"
-    >
-      New Decision
-    </button>
-  </div>
-);
-
-const ErrorView: React.FC<{ error: string; onRetry: () => void }> = ({ error, onRetry }) => (
-  <div className="text-center my-10">
-    <div className="text-red-400 mb-4 font-bold text-lg">Error: {error}</div>
-    <button
-      onClick={onRetry}
-      className="bg-warfare-red hover:bg-warfare-red/80 text-white px-6 py-3 rounded-lg transition-colors"
-    >
-      Try Again
-    </button>
-  </div>
-);
-
-function safeJSON(str: string) {
-  try {
-    const data = JSON.parse(str);
-    if (
-      !data ||
-      typeof data !== "object" ||
-      !Array.isArray(data.timeline_short) ||
-      !Array.isArray(data.timeline_long)
-    ) {
-      return { ok: false, error: "Malformed JSON" };
-    }
-    return { ok: true, data };
-  } catch (e) {
-    return { ok: false, error: "Invalid JSON" };
-  }
-}
-
-async function fetchDecisionTimeline(decision: string) {
-  if (decision.length > 240) throw new Error("DECISION_TOO_LONG");
-  // User must be authenticated for caching
-  const res = await fetch("/rpc/dtm_generate_v1_1", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ decision }),
-  });
-  if (!res.ok) {
-    let message = "API Error";
-    try {
-      message = (await res.json()).error || message;
-    } catch {}
-    throw new Error(message);
-  }
-  const { content } = await res.json();
-  const result = safeJSON(content);
-  if (!result.ok) throw new Error("E_BAD_JSON");
-  return result.data;
-}
+import React from "react";
+import { useMachine } from "@xstate/react";
+import { dtmMachine } from "@/machines/dtmMachine";
+import { BackToDashboard } from "@/components/BackToDashboard";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { AlertCircle, Clock, TrendingUp } from "lucide-react";
 
 const TimeMachineDemo = () => {
-  const { t } = useTranslation();
-  const [state, send, service] = useMachine(dtmMachine, {
-    services: {
-      fetchDecisionTimeline: async (ctx) => fetchDecisionTimeline(ctx.input),
-    },
+  const [state, send] = useMachine(dtmMachine, {
+    actors: {
+      fetchDecisionTimeline: async ({ input }) => {
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Mock response for demo
+        return {
+          timeline_short: [
+            { date: "2025-07-01", event: "Initial decision implementation" },
+            { date: "2025-08-15", event: "First milestone achieved" },
+            { date: "2025-09-30", event: "Quarterly review and adjustment" },
+          ],
+          timeline_long: [
+            { date: "2025-12-31", event: "Year-end major milestone" },
+            { date: "2026-06-30", event: "Mid-year strategic pivot" },
+            { date: "2026-12-31", event: "Full transformation complete" },
+          ]
+        };
+      }
+    }
   });
 
-  const [inputValue, setInputValue] = React.useState("");
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const input = formData.get("decision") as string;
+    if (input.trim()) {
+      send({ type: "SUBMIT", input });
+    }
+  };
 
-  const onSubmit = useCallback(() => {
-    if (inputValue.trim().length === 0) return;
-    send({ type: "SUBMIT", input: inputValue });
-  }, [inputValue, send]);
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-warfare-dark via-slate-900 to-warfare-dark p-6">
-      <div className="max-w-2xl mx-auto">
-        <BackToDashboard />
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">{t('decision_tm')}</h1>
-          <p className="text-warfare-gray">Visualize two timelines for your decision: short and long-term</p>
-        </header>
-        <div className="glass-card p-6 rounded-xl">
-          {state.matches("IDLE") && (
-            <div>
-              <textarea
-                className="w-full text-white bg-slate-900/80 p-3 rounded-lg mb-4 resize-none border border-warfare-blue/20 focus:ring-2"
-                value={inputValue}
-                rows={4}
-                maxLength={240}
-                placeholder="Describe your scenario…"
-                onChange={e => setInputValue(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && !e.shiftKey && onSubmit()}
-              />
-              <div className="flex justify-between mb-4">
-                <span className="text-xs text-warfare-gray">{inputValue.length}/240</span>
-                <button
-                  onClick={onSubmit}
-                  className="bg-warfare-blue hover:bg-warfare-blue/80 text-white px-6 py-2 rounded-lg transition-colors"
-                  disabled={inputValue.length === 0}
-                >Analyze</button>
+  const renderTimeline = (timeline: any[], title: string, icon: React.ReactNode) => (
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          {icon}
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {timeline.map((milestone, index) => (
+            <div key={index} className="flex items-start gap-4 p-3 rounded-lg bg-muted/50">
+              <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
+              <div>
+                <p className="font-medium">{milestone.date}</p>
+                <p className="text-muted-foreground">{milestone.event}</p>
               </div>
             </div>
-          )}
-
-          {state.matches("SUBMITTING") && (
-            <div className="flex flex-col items-center my-8">
-              <LoaderSpinner show={true} />
-              <p className="text-white mt-4">Analyzing your decision…</p>
-            </div>
-          )}
-
-          {state.matches("ERROR") && (
-            <ErrorView error={state.context.error ?? "Unknown error"} onRetry={() => send({ type: "RETRY" })} />
-          )}
-
-          {state.matches("SUCCESS") && state.context.result && (
-            <TimelineView
-              result={state.context.result}
-              onNew={() => {
-                setInputValue("");
-                send({ type: "NEW_DECISION", input: "" });
-              }}
-            />
-          )}
+          ))}
         </div>
+      </CardContent>
+    </Card>
+  );
+
+  return (
+    <div className="min-h-screen bg-warfare-dark text-white p-6">
+      <div className="max-w-4xl mx-auto">
+        <BackToDashboard />
+        
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Decision Time-Machine</h1>
+          <p className="text-warfare-gray">
+            Visualize the potential timelines of your decisions with AI assistance.
+          </p>
+        </div>
+
+        {state.matches("IDLE") && (
+          <Card>
+            <CardHeader>
+              <CardTitle>What decision are you considering?</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <Input
+                  name="decision"
+                  placeholder="Describe your decision scenario..."
+                  className="w-full"
+                  maxLength={240}
+                />
+                <Button type="submit" className="w-full">
+                  Generate Timeline
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        )}
+
+        {state.matches("SUBMITTING") && (
+          <Card>
+            <CardContent className="flex items-center justify-center p-8">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p>Analyzing decision pathways...</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {state.matches("ERROR") && (
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <AlertCircle className="h-5 w-5 text-destructive" />
+                <h3 className="font-semibold">Analysis Failed</h3>
+              </div>
+              <p className="text-muted-foreground mb-4">
+                {state.context.error || "Something went wrong while analyzing your decision."}
+              </p>
+              <Button onClick={() => send({ type: "RETRY" })} variant="outline">
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {state.matches("SUCCESS") && state.context.result && (
+          <div>
+            {renderTimeline(
+              state.context.result.timeline_short,
+              "Short-term Timeline (3-6 months)",
+              <Clock className="h-5 w-5" />
+            )}
+            
+            {renderTimeline(
+              state.context.result.timeline_long,
+              "Long-term Timeline (1-2 years)",
+              <TrendingUp className="h-5 w-5" />
+            )}
+            
+            <div className="flex gap-4">
+              <Button onClick={() => send({ type: "NEW_DECISION" })}>
+                Analyze New Decision
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

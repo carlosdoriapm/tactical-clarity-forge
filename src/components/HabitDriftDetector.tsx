@@ -1,10 +1,10 @@
+
 import React from 'react';
 import { useHabitNudges } from '@/hooks/useHabitNudges';
 import { HabitNudgeCard } from './HabitNudgeCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
-import LoaderSpinner from './LoaderSpinner';
 
 interface Habit {
   id: string;
@@ -17,6 +17,12 @@ interface HabitDriftDetectorProps {
   habits?: Habit[];
   className?: string;
 }
+
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center p-6">
+    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+  </div>
+);
 
 export const HabitDriftDetector: React.FC<HabitDriftDetectorProps> = ({ 
   habits = [],
@@ -51,8 +57,8 @@ export const HabitDriftDetector: React.FC<HabitDriftDetectorProps> = ({
   if (loading) {
     return (
       <Card className={className}>
-        <CardContent className="flex items-center justify-center p-6">
-          <LoaderSpinner />
+        <CardContent>
+          <LoadingSpinner />
         </CardContent>
       </Card>
     );

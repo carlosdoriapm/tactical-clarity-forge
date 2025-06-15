@@ -19,66 +19,61 @@ export type DTMEvent =
   | { type: "RETRY" }
   | { type: "NEW_DECISION" };
 
-export const dtmMachine = createMachine<DTMContext, DTMEvent>(
-  {
-    id: "dtm",
-    initial: "IDLE",
-    context: {
-      input: "",
-      result: null,
-      error: null,
+export const dtmMachine = createMachine({
+  id: "dtm",
+  initial: "IDLE",
+  context: {
+    input: "",
+    result: null,
+    error: null,
+  } as DTMContext,
+  states: {
+    IDLE: {
+      on: {
+        SUBMIT: {
+          target: "SUBMITTING",
+          actions: assign({
+            input: ({ event }) => event.type === "SUBMIT" ? event.input : "",
+            result: () => null,
+            error: () => null,
+          }),
+        },
+      },
     },
-    states: {
-      IDLE: {
-        on: {
-          SUBMIT: {
-            target: "SUBMITTING",
-            actions: assign({
-              input: (_, event) => (event.type === "SUBMIT" ? event.input : ""),
-              result: (_) => null,
-              error: (_) => null,
-            }),
-          },
+    SUBMITTING: {
+      invoke: {
+        src: "fetchDecisionTimeline",
+        onDone: {
+          target: "SUCCESS",
+          actions: assign({ 
+            result: ({ event }) => event.output, 
+            error: () => null 
+          }),
+        },
+        onError: {
+          target: "ERROR",
+          actions: assign({ 
+            error: ({ event }) => event.error || "Unknown error" 
+          }),
         },
       },
-      SUBMITTING: {
-        invoke: {
-          src: "fetchDecisionTimeline",
-          onDone: {
-            target: "SUCCESS",
-            actions: assign({ result: (_, event) => event.data, error: (_) => null }),
-          },
-          onError: {
-            target: "ERROR",
-            actions: assign({ error: (_, event) => event.data || "Unknown error" }),
-          },
+    },
+    SUCCESS: {
+      on: {
+        NEW_DECISION: {
+          target: "IDLE",
+          actions: assign({
+            input: () => "",
+            result: () => null,
+            error: () => null,
+          }),
         },
       },
-      SUCCESS: {
-        on: {
-          NEW_DECISION: {
-            target: "SUBMITTING",
-            actions: assign({
-              input: (_, event) => (event.type === "SUBMIT" ? event.input : ""),
-              result: (_) => null,
-              error: (_) => null,
-            }),
-          },
-        },
-      },
-      ERROR: {
-        on: {
-          RETRY: "SUBMITTING",
-        },
+    },
+    ERROR: {
+      on: {
+        RETRY: "SUBMITTING",
       },
     },
   },
-  {
-    services: {
-      fetchDecisionTimeline: async (context) => {
-        // Calls API (handled in component via useInterpret)
-        return {};
-      },
-    },
-  }
-);
+});

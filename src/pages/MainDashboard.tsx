@@ -1,16 +1,23 @@
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { LayoutDashboard, MessageSquare } from "lucide-react";
+import { LayoutDashboard, MessageSquare, BarChart, Target } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 
 const features = [
+  {
+    label: "Performance Dashboard",
+    description: "Monitore suas metas com gráficos intuitivos e motivadores.",
+    icon: <BarChart className="w-7 h-7 text-green-400" />,
+    route: "/performance",
+    badge: "New"
+  },
   {
     label: "Decision Time-Machine",
     description: "Visualize timelines for complex decisions with AI.",
     icon: <LayoutDashboard className="w-7 h-7 text-cyan-400" />,
     route: "/time-machine-demo",
-    badge: "New"
+    badge: "Updated"
   },
   {
     label: "Chat Advisor",
@@ -19,7 +26,13 @@ const features = [
     route: "/chat",
     badge: null
   },
-  // Add other features/shortcuts here if you want to expand ;)
+  {
+    label: "Tactical Dashboard",
+    description: "Complete warrior dashboard with rituals and missions.",
+    icon: <Target className="w-7 h-7 text-red-400" />,
+    route: "/dashboard",
+    badge: null
+  }
 ];
 
 export default function MainDashboard() {
@@ -29,7 +42,7 @@ export default function MainDashboard() {
   return (
     <div className="min-h-screen bg-warfare-dark flex flex-col items-center py-10 px-2">
       <h1 className="text-3xl md:text-4xl font-bold text-white mb-8 tracking-tight">{t('dashboard')}</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-7 w-full max-w-3xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-7 w-full max-w-4xl">
         {features.map((feat) => (
           <button
             key={feat.label}
@@ -56,8 +69,8 @@ export default function MainDashboard() {
         ))}
       </div>
       <div className="mt-12 text-center text-warfare-gray text-base opacity-70">
-        Minimalist, intuitive and designed to accelerate strategic decisions.<br />
-        Support for new features will be displayed here!
+        Dashboards intuitivos e estratégicos para acelerar suas decisões.<br />
+        Suporte para novas funcionalidades será exibido aqui!
       </div>
     </div>
   );
