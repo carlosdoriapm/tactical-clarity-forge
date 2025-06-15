@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -96,6 +95,7 @@ const ProfileForm = ({ profile, onProfileUpdate }: ProfileFormProps) => {
           description: "Please fill in all required fields",
           variant: "destructive",
         });
+        setSaving(false);
         return;
       }
 
@@ -106,6 +106,7 @@ const ProfileForm = ({ profile, onProfileUpdate }: ProfileFormProps) => {
           description: "Age must be between 12 and 80",
           variant: "destructive",
         });
+        setSaving(false);
         return;
       }
 
@@ -115,50 +116,57 @@ const ProfileForm = ({ profile, onProfileUpdate }: ProfileFormProps) => {
         profile_complete: true
       };
 
+      let data;
       let error;
+
       if (localProfile.id) {
-        // Update existing profile
-        const { error: updateError } = await supabase
+        // Update existing profile and get the updated row back
+        const { data: updateData, error: updateError } = await supabase
           .from('combatant_profile')
           .update(profileData)
-          .eq('id', localProfile.id);
+          .eq('id', localProfile.id)
+          .select()
+          .single();
+        data = updateData;
         error = updateError;
       } else {
-        // Create new profile
-        const { data, error: insertError } = await supabase
+        // Create new profile and get the new row back
+        const { data: insertData, error: insertError } = await supabase
           .from('combatant_profile')
           .insert([profileData])
           .select()
           .single();
-        
+        data = insertData;
         error = insertError;
-        if (data) {
-          setLocalProfile({
-            ...data,
-            physical_condition: data.physical_condition as 'fit' | 'average' | 'overweight' | 'injured' | 'unknown',
-            relationship_status: data.relationship_status as 'single' | 'partnered' | 'married' | 'divorced' | 'widowed',
-            school_experience: data.school_experience as 'war_zone' | 'throne' | 'exile' | 'neutral',
-            intensity_mode: data.intensity_mode as 'TACTICAL' | 'RUTHLESS' | 'LEGION'
-          });
-        }
       }
 
       if (error) throw error;
+
+      if (data) {
+        // Update local state with the definitive data from the database
+        setLocalProfile({
+          ...data,
+          physical_condition: data.physical_condition as 'fit' | 'average' | 'overweight' | 'injured' | 'unknown',
+          relationship_status: data.relationship_status as 'single' | 'partnered' | 'married' | 'divorced' | 'widowed',
+          school_experience: data.school_experience as 'war_zone' | 'throne' | 'exile' | 'neutral',
+          intensity_mode: data.intensity_mode as 'TACTICAL' | 'RUTHLESS' | 'LEGION'
+        });
+      }
 
       // Also update the legacy users table for compatibility
       await supabase
         .from('users')
         .update({
-          intensity_mode: localProfile.intensity_mode,
-          current_mission: localProfile.mission_90_day,
+          intensity_mode: data?.intensity_mode || localProfile.intensity_mode,
+          current_mission: data?.mission_90_day || localProfile.mission_90_day,
           profile_complete: true
         })
         .eq('email', user.email);
 
       onProfileUpdate({
         ...profile,
-        intensity_mode: localProfile.intensity_mode,
-        current_mission: localProfile.mission_90_day,
+        intensity_mode: data?.intensity_mode || localProfile.intensity_mode,
+        current_mission: data?.mission_90_day || localProfile.mission_90_day,
         profile_complete: true
       });
 
@@ -166,11 +174,11 @@ const ProfileForm = ({ profile, onProfileUpdate }: ProfileFormProps) => {
         title: "Success",
         description: "Combatant profile updated successfully",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving combatant profile:', error);
       toast({
         title: "Error",
-        description: "Failed to save combatant profile",
+        description: `Failed to save combatant profile: ${error.message}`,
         variant: "destructive",
       });
     } finally {
