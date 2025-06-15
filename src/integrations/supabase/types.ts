@@ -239,6 +239,27 @@ export type Database = {
         }
         Relationships: []
       }
+      purposes: {
+        Row: {
+          purpose_statement: string
+          streak_score: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          purpose_statement: string
+          streak_score?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          purpose_statement?: string
+          streak_score?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       rituals: {
         Row: {
           duration_minutes: number | null
