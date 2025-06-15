@@ -124,8 +124,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       if (Array.isArray(data)) {
-        const userRoles = data.map((r: { role: AppRole }) => r.role);
-        const validRoles = userRoles.filter(Boolean);
+        // Since types are not auto-generated for user_roles, we treat `r` as any
+        const userRoles = data.map((r: any) => r.role);
+        const validRoles = userRoles.filter(Boolean) as AppRole[];
         setRoles(validRoles);
         console.log('AuthProvider: User roles loaded:', validRoles);
       } else {
