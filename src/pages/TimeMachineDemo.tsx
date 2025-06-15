@@ -1,192 +1,173 @@
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { BackToDashboard } from '@/components/BackToDashboard';
+import { useTranslation } from '@/hooks/useTranslation';
 
-import React, { useState, useEffect } from "react";
-import DecisionInput from "@/components/DecisionInput";
-import LoaderSpinner from "@/components/LoaderSpinner";
-import TimelineCard from "@/components/TimelineCard";
-import SwipePagination from "@/components/SwipePagination";
-import ErrorBanner from "@/components/ErrorBanner";
-import { BackToDashboard } from "@/components/BackToDashboard";
-import useTelemetry from "@/hooks/useTelemetry";
-import { useTranslation } from "@/hooks/useTranslation";
+type State = 'idle' | 'loading' | 'success' | 'error';
 
-// Demo data for timeline
-const DEMO_MILESTONES = [
-  ["Consider options", "Consult advisor", "Risk assessment", "Commit to decision", "Execute mission"],
-  ["Re-evaluate plan", "Pivot approach", "Implement feedback", "Celebrate outcome"]
-];
-
-type State = "idle" | "loading" | "result" | "error";
-
-interface TimelineData {
-  label: string;
-  milestones: string[];
+interface Decision {
+  id: string;
+  title: string;
+  description: string;
+  options: string[];
+  consequences: string[];
+  timestamp: Date;
 }
 
-const TimeMachineDemo: React.FC = () => {
-  const [input, setInput] = useState(""); // decision scenario input
-  const [state, setState] = useState<State>("idle");
-  const [timeline, setTimeline] = useState<TimelineData[] | null>(null);
-  const [page, setPage] = useState(0);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+const TimeMachineDemo = () => {
   const { t } = useTranslation();
+  const [decision, setDecision] = useState<Decision | null>(null);
+  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [currentState, setCurrentState] = useState<State>('idle');
 
-  const telemetry = useTelemetry();
-
-  // Debug status changes
-  useEffect(() => {
-    console.log('[TimeMachine] status:', state);
-  }, [state]);
-
-  // Try to load last scenario (simulate localStorage restore)
-  useEffect(() => {
-    const stored = localStorage.getItem("dtm_cache");
-    if (stored) {
-      try {
-        const val = JSON.parse(stored);
-        if (val?.timeline) {
-          setTimeline(val.timeline);
-          setState("result");
+  const { data: analysisData, status } = useQuery({
+    queryKey: ['tactical-analysis', decision?.id],
+    queryFn: async () => {
+      if (!decision) return null;
+      
+      const { data, error } = await supabase.functions.invoke('tactical-analysis', {
+        body: {
+          decision: decision.title,
+          context: decision.description,
+          options: decision.options
         }
-      } catch {
-        /* ignore */
-      }
-    }
-  }, []);
-
-  // Demo: simulate async RPC with telemetry and errors.
-  const handleVisualize = () => {
-    setState("loading");
-    setErrorMsg(null);
-    telemetry("dtm_request", { input });
-    setTimeout(() => {
-      if (input.toLowerCase().includes("fail")) {
-        setState("error");
-        setErrorMsg("AI modeling failed. Try again.");
-        telemetry("dtm_error", { input });
-      } else {
-        const timelineData = DEMO_MILESTONES.map((m, i) => ({
-          label: `Strategy ${i + 1}`,
-          milestones: m
-        }));
-        setTimeline(timelineData);
-        setState("result");
-        telemetry("dtm_success", { input, timeline: timelineData });
-        // Save to cache for resume demo
-        localStorage.setItem("dtm_cache", JSON.stringify({ timeline: timelineData }));
-      }
-    }, 1500);
-  };
-
-  // On swipe, move pagination
-  const handleSwipe = (dir: "left" | "right") => {
-    if (!timeline) return;
-    if (dir === "left" && page < timeline.length - 1) {
-      setPage(page + 1);
-    }
-    if (dir === "right" && page > 0) {
-      setPage(page - 1);
-    }
-  };
-
-  // Show loader spinner, auto-cancel after 3s - Fixed timeout logic
-  useEffect(() => {
-    let tm: number | undefined;
-    if (state === "loading") {
-      tm = window.setTimeout(() => {
-        setState(currentState => {
-          if (currentState === "loading") {
-            setErrorMsg("Request timed out. Please try again.");
-            telemetry("dtm_error", { input, reason: "timeout" });
-            return "error";
-          }
-          return currentState;
-        });
-      }, 3000);
-    }
-    return () => {
-      if (tm) clearTimeout(tm);
-    };
-  }, [state, input, telemetry]);
-
-  // Demo swipeable handler (can be improved)
-  const { useSwipeable } = require("react-swipeable");
-  const swipeHandlers = useSwipeable({
-    onSwipedLeft: () => handleSwipe("left"),
-    onSwipedRight: () => handleSwipe("right"),
-    trackMouse: true,
+      });
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!decision
   });
 
-  // Main UI
+  React.useEffect(() => {
+    console.log('[TimeMachine] status:', status);
+  }, [status]);
+
+  const handleDecisionSubmit = (newDecision: Decision) => {
+    setDecision(newDecision);
+    setCurrentState('loading');
+  };
+
+  const handleOptionSelect = (optionIndex: number) => {
+    setSelectedOption(optionIndex);
+    setCurrentState('success');
+  };
+
+  const resetMachine = () => {
+    setDecision(null);
+    setSelectedOption(null);
+    setCurrentState('idle');
+  };
+
+  const getStatusDisplay = () => {
+    if (status === 'pending') return 'Analyzing...';
+    if (status === 'error') return 'Analysis Failed';
+    if (status === 'success') return 'Analysis Complete';
+    return 'Ready';
+  };
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-2 py-8 relative bg-warfare-dark text-white font-sans">
-      {/* Back to Dashboard button - always visible */}
-      <div className="absolute top-4 left-4 z-50">
+    <div className="min-h-screen bg-gradient-to-br from-warfare-dark via-slate-900 to-warfare-dark p-6">
+      <div className="max-w-4xl mx-auto">
         <BackToDashboard />
-      </div>
+        
+        <header className="mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2">{t('decision_tm')}</h1>
+          <p className="text-warfare-gray">Analyze decisions through time and consequence</p>
+        </header>
 
-      {errorMsg && (
-        <ErrorBanner message={errorMsg} onDismiss={() => setErrorMsg(null)} />
-      )}
-      <LoaderSpinner show={state === "loading"} />
-      
-      {/* State: idle/input */}
-      {state === "idle" && (
-        <div className="max-w-xl w-full">
-          <h1 className="text-2xl font-bold mb-6 text-center" style={{fontSize: 24, lineHeight: "32px"}}>{t('decision_tm')}</h1>
-          <DecisionInput
-            value={input}
-            onChange={setInput}
-            onVisualize={handleVisualize}
-            maxLength={350}
-            disabled={state === "loading"}
-          />
-          <div className="mt-8 text-white/60 text-center text-base">
-            <div>Type any decision scenario and visualize the AI timeline. </div>
-            <div>(Type "fail" to simulate error state.)</div>
+        <div className="glass-card p-6 rounded-xl">
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold text-white mb-2">Status: {getStatusDisplay()}</h2>
+            {status === 'pending' && (
+              <div className="w-full bg-warfare-gray/20 rounded-full h-2">
+                <div className="bg-warfare-blue h-2 rounded-full animate-pulse w-1/2"></div>
+              </div>
+            )}
           </div>
-        </div>
-      )}
 
-      {/* State: result - timeline */}
-      {state === "result" && timeline && (
-        <div className="w-full max-w-4xl flex flex-col md:flex-row gap-6 animate-fade-in mt-4" {...swipeHandlers}>
-          {timeline.map((t, i) => (
-            <div
-              key={i}
-              className={`flex-1 ${page !== i ? "hidden md:block md:opacity-60" : ""}`}
-              style={{ minWidth: 0 }}
-              aria-hidden={page !== i}
-            >
-              {/* Animate only visible card */}
-              {page === i && (
-                <TimelineCard label={t.label} milestones={t.milestones} />
-              )}
+          {currentState === 'idle' && (
+            <div className="text-center">
+              <p className="text-warfare-gray mb-4">
+                Enter a decision you're facing to see potential outcomes
+              </p>
+              <button
+                onClick={() => {
+                  const mockDecision: Decision = {
+                    id: '1',
+                    title: 'Career Change',
+                    description: 'Considering switching from corporate job to freelancing',
+                    options: ['Stay in corporate', 'Go freelance', 'Hybrid approach'],
+                    consequences: ['Stability vs Growth', 'Security vs Freedom', 'Balance vs Focus'],
+                    timestamp: new Date()
+                  };
+                  handleDecisionSubmit(mockDecision);
+                }}
+                className="bg-warfare-blue hover:bg-warfare-blue/80 text-white px-6 py-3 rounded-lg transition-colors"
+              >
+                Start Analysis
+              </button>
             </div>
-          ))}
-        </div>
-      )}
+          )}
 
-      {/* Pagination for timeline pages */}
-      {state === "result" && timeline && timeline.length > 1 && (
-        <SwipePagination index={page} total={timeline.length} />
-      )}
+          {currentState === 'loading' && (
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-warfare-red mx-auto mb-4"></div>
+              <p className="text-white">Analyzing decision pathways...</p>
+            </div>
+          )}
 
-      {/* Reset or Back */}
-      {(state === "result" || state === "error") && (
-        <div className="mt-6 flex justify-center">
-          <button
-            className="bg-warfare-blue/90 text-white rounded-lg px-6 py-2 font-medium shadow-lg hover:shadow-xl hover:-translate-y-1 transition"
-            onClick={() => {
-              setState("idle");
-              setInput("");
-              setTimeline(null);
-              setPage(0);
-            }}
-          >
-            Start Over
-          </button>
+          {currentState === 'success' && decision && (
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-4">{decision.title}</h3>
+              <p className="text-warfare-gray mb-6">{decision.description}</p>
+              
+              <div className="grid gap-4 mb-6">
+                {decision.options.map((option, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleOptionSelect(index)}
+                    className={`p-4 rounded-lg border transition-colors text-left ${
+                      selectedOption === index
+                        ? 'border-warfare-red bg-warfare-red/10 text-white'
+                        : 'border-warfare-gray/30 hover:border-warfare-blue/50 text-warfare-gray hover:text-white'
+                    }`}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+
+              {analysisData && (
+                <div className="bg-warfare-dark/50 p-4 rounded-lg mb-4">
+                  <h4 className="text-white font-medium mb-2">AI Analysis:</h4>
+                  <p className="text-warfare-gray text-sm">{analysisData.analysis || 'Analysis complete'}</p>
+                </div>
+              )}
+
+              <button
+                onClick={resetMachine}
+                className="bg-warfare-gray hover:bg-warfare-gray/80 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                Reset
+              </button>
+            </div>
+          )}
+
+          {currentState === 'error' && (
+            <div className="text-center">
+              <p className="text-red-400 mb-4">Analysis failed. Please try again.</p>
+              <button
+                onClick={resetMachine}
+                className="bg-warfare-red hover:bg-warfare-red/80 text-white px-6 py-3 rounded-lg transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };
