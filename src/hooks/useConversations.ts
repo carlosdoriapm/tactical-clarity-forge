@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -12,11 +12,13 @@ export const useConversations = () => {
   const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
-  const loadConversations = async () => {
-    if (!user) return;
+  const loadConversations = useCallback(async () => {
+    if (!user || hasInitialized) return;
     
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from('conversations')
         .select('*')
@@ -27,9 +29,11 @@ export const useConversations = () => {
       setConversations(data || []);
       
       // Se há conversas, carrega a mais recente automaticamente
-      if (data && data.length > 0 && !currentConversation) {
+      if (data && data.length > 0) {
         await selectConversation(data[0]);
       }
+      
+      setHasInitialized(true);
     } catch (error: any) {
       toast({
         title: "Erro",
@@ -39,9 +43,9 @@ export const useConversations = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, hasInitialized, toast]);
 
-  const createConversation = async (title?: string) => {
+  const createConversation = useCallback(async (title?: string) => {
     if (!user) return null;
     
     try {
@@ -70,9 +74,9 @@ export const useConversations = () => {
       });
       return null;
     }
-  };
+  }, [user, toast]);
 
-  const loadMessages = async (conversationId: string) => {
+  const loadMessages = useCallback(async (conversationId: string) => {
     if (!user) return;
     
     try {
@@ -104,9 +108,9 @@ export const useConversations = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [user, toast]);
 
-  const saveMessage = async (conversationId: string, content: string, role: 'user' | 'assistant', metadata?: any) => {
+  const saveMessage = useCallback(async (conversationId: string, content: string, role: 'user' | 'assistant', metadata?: any) => {
     if (!user) return null;
     
     try {
@@ -151,18 +155,18 @@ export const useConversations = () => {
       });
       return null;
     }
-  };
+  }, [user, toast]);
 
-  const selectConversation = async (conversation: Conversation) => {
+  const selectConversation = useCallback(async (conversation: Conversation) => {
     setCurrentConversation(conversation);
     await loadMessages(conversation.id);
-  };
+  }, [loadMessages]);
 
   useEffect(() => {
-    if (user) {
+    if (user && !hasInitialized) {
       loadConversations();
     }
-  }, [user]);
+  }, [user, hasInitialized, loadConversations]);
 
   return {
     conversations,

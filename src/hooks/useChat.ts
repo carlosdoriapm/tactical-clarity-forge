@@ -5,7 +5,7 @@ import { useMessageSender } from './chat/useMessageSender';
 import { useConversations } from './useConversations';
 
 export function useChat() {
-  const { messages, messagesEndRef, addMessage, clearMessages } = useMessages();
+  const { messages: tempMessages, messagesEndRef, addMessage, clearMessages } = useMessages();
   const { connectionStatus, setConnectionStatus, testConnection } = useConnection();
   const {
     conversations,
@@ -25,7 +25,7 @@ export function useChat() {
   });
 
   // Se temos uma conversa atual, usar mensagens persistidas; senão usar mensagens temporárias
-  const currentMessages = currentConversation ? persistedMessages : messages;
+  const currentMessages = currentConversation ? persistedMessages : tempMessages;
 
   return {
     messages: currentMessages,
