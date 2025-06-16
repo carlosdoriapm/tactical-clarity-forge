@@ -38,8 +38,8 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
       setCurrentStep('disc');
     } catch (error: any) {
       toast({
-        title: "Erro",
-        description: "Falha ao salvar perfil: " + error.message,
+        title: "Error",
+        description: "Failed to save profile: " + error.message,
         variant: "destructive",
       });
     }
@@ -64,8 +64,8 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
       setCurrentStep('tour');
     } catch (error: any) {
       toast({
-        title: "Erro", 
-        description: "Falha ao salvar análise DISC: " + error.message,
+        title: "Error",
+        description: "Failed to save DISC analysis: " + error.message,
         variant: "destructive",
       });
     }
@@ -85,8 +85,8 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
       onComplete();
     } catch (error: any) {
       toast({
-        title: "Erro",
-        description: "Falha ao finalizar onboarding: " + error.message,
+        title: "Error",
+        description: "Failed to complete onboarding: " + error.message,
         variant: "destructive",
       });
     }

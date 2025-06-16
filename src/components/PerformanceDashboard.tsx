@@ -48,38 +48,38 @@ export const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({
   rituals = [],
   className = '' 
 }) => {
-  // Dados simulados para demonstração
+  // Sample data for demonstration
   const weeklyData = [
-    { day: 'Seg', completed: 8, planned: 10, streak: 5 },
-    { day: 'Ter', completed: 9, planned: 10, streak: 6 },
-    { day: 'Qua', completed: 7, planned: 10, streak: 4 },
-    { day: 'Qui', completed: 10, planned: 10, streak: 7 },
-    { day: 'Sex', completed: 8, planned: 10, streak: 5 },
-    { day: 'Sáb', completed: 6, planned: 8, streak: 3 },
-    { day: 'Dom', completed: 5, planned: 8, streak: 2 }
+    { day: 'Mon', completed: 8, planned: 10, streak: 5 },
+    { day: 'Tue', completed: 9, planned: 10, streak: 6 },
+    { day: 'Wed', completed: 7, planned: 10, streak: 4 },
+    { day: 'Thu', completed: 10, planned: 10, streak: 7 },
+    { day: 'Fri', completed: 8, planned: 10, streak: 5 },
+    { day: 'Sat', completed: 6, planned: 8, streak: 3 },
+    { day: 'Sun', completed: 5, planned: 8, streak: 2 }
   ];
 
   const monthlyProgress = [
     { month: 'Jan', performance: 75, goals: 85 },
-    { month: 'Fev', performance: 82, goals: 85 },
+    { month: 'Feb', performance: 82, goals: 85 },
     { month: 'Mar', performance: 88, goals: 85 },
-    { month: 'Abr', performance: 91, goals: 90 },
-    { month: 'Mai', performance: 85, goals: 90 },
+    { month: 'Apr', performance: 91, goals: 90 },
+    { month: 'May', performance: 85, goals: 90 },
     { month: 'Jun', performance: 94, goals: 95 }
   ];
 
   const goalCategories = [
-    { name: 'Físico', value: 85, color: '#10b981' },
+    { name: 'Physical', value: 85, color: '#10b981' },
     { name: 'Mental', value: 78, color: '#3b82f6' },
-    { name: 'Profissional', value: 92, color: '#f59e0b' },
-    { name: 'Relacionamentos', value: 67, color: '#ef4444' }
+    { name: 'Professional', value: 92, color: '#f59e0b' },
+    { name: 'Relationships', value: 67, color: '#ef4444' }
   ];
 
   const metrics: PerformanceMetric[] = [
-    { name: 'Rituais Concluídos', current: 8, target: 10, unit: '/dia', trend: 'up', color: 'bg-green-500' },
-    { name: 'Sequência Atual', current: 14, target: 30, unit: 'dias', trend: 'up', color: 'bg-blue-500' },
-    { name: 'Eficiência Semanal', current: 87, target: 90, unit: '%', trend: 'up', color: 'bg-yellow-500' },
-    { name: 'Metas Atingidas', current: 6, target: 8, unit: '/mês', trend: 'stable', color: 'bg-purple-500' }
+    { name: 'Rituals Completed', current: 8, target: 10, unit: '/day', trend: 'up', color: 'bg-green-500' },
+    { name: 'Current Streak', current: 14, target: 30, unit: 'days', trend: 'up', color: 'bg-blue-500' },
+    { name: 'Weekly Efficiency', current: 87, target: 90, unit: '%', trend: 'up', color: 'bg-yellow-500' },
+    { name: 'Goals Achieved', current: 6, target: 8, unit: '/month', trend: 'stable', color: 'bg-purple-500' }
   ];
 
   const getTrendIcon = (trend: string) => {
@@ -96,7 +96,7 @@ export const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({
 
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* Header com Métricas Principais */}
+      {/* Header with Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {metrics.map((metric, index) => (
           <Card key={index} className="bg-warfare-card border-warfare-gray/20">
@@ -122,19 +122,19 @@ export const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Gráfico de Performance Semanal */}
+        {/* Weekly Performance Chart */}
         <Card className="bg-warfare-card border-warfare-gray/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-white">
               <Calendar className="h-5 w-5 text-warfare-blue" />
-              Performance Semanal
+              Weekly Performance
             </CardTitle>
           </CardHeader>
           <CardContent>
             <ChartContainer
               config={{
-                completed: { label: "Concluído", color: "#10b981" },
-                planned: { label: "Planejado", color: "#6b7280" }
+                completed: { label: "Completed", color: "#10b981" },
+                planned: { label: "Planned", color: "#6b7280" }
               }}
               className="h-[300px]"
             >
@@ -150,19 +150,19 @@ export const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({
           </CardContent>
         </Card>
 
-        {/* Gráfico de Progresso Mensal */}
+        {/* Monthly Progress Chart */}
         <Card className="bg-warfare-card border-warfare-gray/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-white">
               <TrendingUp className="h-5 w-5 text-warfare-accent" />
-              Evolução Mensal
+              Monthly Progress
             </CardTitle>
           </CardHeader>
           <CardContent>
             <ChartContainer
               config={{
                 performance: { label: "Performance", color: "#3b82f6" },
-                goals: { label: "Meta", color: "#f59e0b" }
+                goals: { label: "Goal", color: "#f59e0b" }
               }}
               className="h-[300px]"
             >
@@ -190,18 +190,18 @@ export const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({
           </CardContent>
         </Card>
 
-        {/* Distribuição por Categoria */}
+        {/* Distribution by Category */}
         <Card className="bg-warfare-card border-warfare-gray/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-white">
               <Target className="h-5 w-5 text-green-400" />
-              Distribuição de Metas
+              Goal Distribution
             </CardTitle>
           </CardHeader>
           <CardContent>
             <ChartContainer
               config={{
-                value: { label: "Progresso", color: "#8b5cf6" }
+                value: { label: "Progress", color: "#8b5cf6" }
               }}
               className="h-[300px]"
             >
@@ -239,34 +239,34 @@ export const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({
           </CardContent>
         </Card>
 
-        {/* Resumo de Conquistas */}
+        {/* Achievement Summary */}
         <Card className="bg-warfare-card border-warfare-gray/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-white">
               <Award className="h-5 w-5 text-warfare-yellow" />
-              Conquistas Recentes
+              Recent Achievements
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
               <CheckCircle2 className="h-5 w-5 text-green-400" />
               <div>
-                <p className="text-sm font-medium text-white">Sequência de 14 dias</p>
-                <p className="text-xs text-warfare-gray">Meta de consistência atingida</p>
+                <p className="text-sm font-medium text-white">14-day streak</p>
+                <p className="text-xs text-warfare-gray">Consistency goal reached</p>
               </div>
             </div>
             <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
               <Zap className="h-5 w-5 text-blue-400" />
               <div>
-                <p className="text-sm font-medium text-white">90% de eficiência</p>
-                <p className="text-xs text-warfare-gray">Melhor semana do mês</p>
+                <p className="text-sm font-medium text-white">90% efficiency</p>
+                <p className="text-xs text-warfare-gray">Best week of the month</p>
               </div>
             </div>
             <div className="flex items-center gap-3 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
               <Target className="h-5 w-5 text-yellow-400" />
               <div>
-                <p className="text-sm font-medium text-white">6 metas concluídas</p>
-                <p className="text-xs text-warfare-gray">Este mês</p>
+                <p className="text-sm font-medium text-white">6 goals completed</p>
+                <p className="text-xs text-warfare-gray">This month</p>
               </div>
             </div>
           </CardContent>

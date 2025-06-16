@@ -29,7 +29,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             value={inputValue}
             onChange={(e) => onInputChange(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Fale sua mente, guerreiro..."
+            placeholder="Speak your mind, warrior..."
             className="min-h-[60px] max-h-32 resize-none bg-slate-800/50 border-warfare-red/30 text-white placeholder:text-warfare-blue/60 focus:border-warfare-red focus:ring-warfare-red/50 rounded-xl"
             disabled={isTyping || isSending}
           />
@@ -43,7 +43,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
         </Button>
       </div>
       <p className="text-xs text-warfare-blue/60 mt-2 text-center">
-        Pressione Enter para enviar • Shift + Enter para nova linha
+        Press Enter to send • Shift + Enter for new line
       </p>
     </div>
   </div>

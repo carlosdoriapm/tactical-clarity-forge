@@ -23,14 +23,14 @@ export function useMessageSender({ addMessage, setConnectionStatus, saveMessage,
     const trimmedInput = inputValue.trim();
     if (!trimmedInput || isTyping || isSending) {
       console.log('⚠️ Chat: handleSend - Cannot send: empty message, bot typing, or message already sending.', { trimmedInput, isTyping, isSending });
-      if (!trimmedInput) sonnerToast.warning("Mensagem vazia", { description: "Por favor, digite sua consulta." });
-      if (isTyping) sonnerToast.info("Aguarde", { description: "O conselheiro está formulando uma resposta." });
-      if (isSending) sonnerToast.info("Enviando", { description: "Sua mensagem anterior ainda está sendo processada." });
+      if (!trimmedInput) sonnerToast.warning("Empty message", { description: "Please type your query." });
+      if (isTyping) sonnerToast.info("Hold on", { description: "The advisor is crafting a response." });
+      if (isSending) sonnerToast.info("Sending", { description: "Your previous message is still being processed." });
       return;
     }
 
     console.log('🚀 Chat: handleSend - Sending message:', trimmedInput);
-    sonnerToast.info("Enviando sua mensagem...", { id: "sending-message" });
+    sonnerToast.info("Sending your message...", { id: "sending-message" });
     setIsSending(true);
 
     const userMessage: Message = {
@@ -68,12 +68,12 @@ export function useMessageSender({ addMessage, setConnectionStatus, saveMessage,
         setConnectionStatus('error');
         const botErrorMessage: Message = {
           id: (Date.now() + 1).toString(),
-          content: 'Falha ao comunicar com o conselheiro. Verifique sua conexão ou tente mais tarde.',
+          content: 'Failed to communicate with the advisor. Check your connection or try later.',
           isBot: true,
           timestamp: new Date()
         };
         addMessage(botErrorMessage);
-        sonnerToast.error("Erro de Comunicação", { description: `Não foi possível enviar sua mensagem: ${functionInvokeError.message}` });
+        sonnerToast.error("Communication Error", { description: `Could not send your message: ${functionInvokeError.message}` });
         return;
       }
 
@@ -82,21 +82,21 @@ export function useMessageSender({ addMessage, setConnectionStatus, saveMessage,
         setConnectionStatus('error');
         const botErrorMessage: Message = {
           id: (Date.now() + 1).toString(),
-          content: 'O conselheiro não retornou uma resposta. Tente novamente.',
+          content: 'The advisor did not return a response. Please try again.',
           isBot: true,
           timestamp: new Date()
         };
         addMessage(botErrorMessage);
-        sonnerToast.error("Resposta Não Recebida", { description: "A função 'ai-chat' não retornou dados." });
+        sonnerToast.error("No Response Received", { description: "The 'ai-chat' function returned no data." });
         return;
       }
 
       let responseText = '';
       if (data.success === false || data.error) {
         console.warn('⚠️ Chat: handleSend - "ai-chat" returned success:false or an error property:', data);
-        responseText = data.response || data.error || 'Ocorreu um erro ao processar sua solicitação, guerreiro.';
+        responseText = data.response || data.error || 'An error occurred while processing your request, warrior.';
         setConnectionStatus('error');
-        sonnerToast.warning("Conselheiro Indisponível", { description: responseText });
+        sonnerToast.warning("Advisor Unavailable", { description: responseText });
       } else if (data.response) {
         console.log('✅ Chat: handleSend - "ai-chat" successful response.');
         responseText = data.response;
@@ -104,9 +104,9 @@ export function useMessageSender({ addMessage, setConnectionStatus, saveMessage,
         sonnerToast.success("Conselho Recebido");
       } else {
         console.warn('⚠️ Chat: handleSend - Unexpected response structure from "ai-chat":', data);
-        responseText = 'Recebi uma resposta inesperada do conselheiro. Deixe-me tentar entender.';
+        responseText = 'I received an unexpected response from the advisor. Let me try to understand.';
         setConnectionStatus('error');
-        sonnerToast.warning("Resposta Inesperada", { description: "O formato da resposta do conselheiro não é o esperado." });
+        sonnerToast.warning("Unexpected Response", { description: "The advisor's response format was not expected." });
       }
 
       const botMessage: Message = {
@@ -127,12 +127,12 @@ export function useMessageSender({ addMessage, setConnectionStatus, saveMessage,
       setConnectionStatus('error');
       const botErrorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: 'A conexão com a sala de guerra foi cortada criticamente. Verifique sua conexão e tente novamente.',
+        content: 'The connection to the war room was critically cut. Check your connection and try again.',
         isBot: true,
         timestamp: new Date()
       };
       addMessage(botErrorMessage);
-      sonnerToast.error("Falha Crítica na Conexão", { description: criticalError instanceof Error ? criticalError.message : "Erro desconhecido ao enviar mensagem." });
+      sonnerToast.error("Critical Connection Failure", { description: criticalError instanceof Error ? criticalError.message : "Unknown error while sending message." });
     } finally {
       setIsTyping(false);
       setIsSending(false);

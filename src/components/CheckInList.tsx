@@ -10,7 +10,7 @@ interface CheckInListProps {
 
 export const CheckInList: React.FC<CheckInListProps> = ({ checkIns }) => {
   if (!checkIns || checkIns.length === 0) {
-    return <div className="text-warfare-gray">Nenhum check-in para esta missão.</div>;
+    return <div className="text-warfare-gray">No check-ins for this mission.</div>;
   }
   return (
     <div className="space-y-2">

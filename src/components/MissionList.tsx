@@ -13,7 +13,7 @@ interface MissionListProps {
 
 export const MissionList: React.FC<MissionListProps> = ({ missions, onSelect, selectedMissionId }) => {
   if (!missions || missions.length === 0) {
-    return <div className="text-warfare-gray">Nenhuma missão encontrada.</div>;
+    return <div className="text-warfare-gray">No missions found.</div>;
   }
   return (
     <div className="space-y-4">

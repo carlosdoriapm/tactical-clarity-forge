@@ -5,80 +5,80 @@ import { DISCType, DISCProfile, DISCQuestion } from '@/types/disc';
 const discQuestions: DISCQuestion[] = [
   {
     id: '1',
-    question: 'Em uma situação de conflito, você tende a:',
+    question: 'In a conflict situation, you tend to:',
     options: [
-      { text: 'Enfrentar diretamente e resolver rapidamente', type: 'D', weight: 3 },
-      { text: 'Buscar consenso e envolver todos', type: 'I', weight: 3 },
-      { text: 'Evitar o conflito e manter a harmonia', type: 'S', weight: 3 },
-      { text: 'Analisar os fatos antes de agir', type: 'C', weight: 3 }
+      { text: 'Face it head-on and resolve quickly', type: 'D', weight: 3 },
+      { text: 'Seek consensus and involve everyone', type: 'I', weight: 3 },
+      { text: 'Avoid conflict and keep the peace', type: 'S', weight: 3 },
+      { text: 'Analyze the facts before acting', type: 'C', weight: 3 }
     ]
   },
   {
     id: '2',
-    question: 'Quando você precisa tomar uma decisão importante:',
+    question: 'When you need to make an important decision:',
     options: [
-      { text: 'Decide rapidamente baseado na intuição', type: 'D', weight: 3 },
-      { text: 'Consulta amigos e familiares', type: 'I', weight: 3 },
-      { text: 'Considera cuidadosamente todas as opções', type: 'S', weight: 3 },
-      { text: 'Pesquisa exaustivamente antes de decidir', type: 'C', weight: 3 }
+      { text: 'Decide quickly based on intuition', type: 'D', weight: 3 },
+      { text: 'Consult friends and family', type: 'I', weight: 3 },
+      { text: 'Carefully consider all options', type: 'S', weight: 3 },
+      { text: 'Research thoroughly before deciding', type: 'C', weight: 3 }
     ]
   },
   {
     id: '3',
-    question: 'Em um ambiente de trabalho, você prefere:',
+    question: 'In a work environment, you prefer:',
     options: [
-      { text: 'Liderar projetos e definir direções', type: 'D', weight: 3 },
-      { text: 'Trabalhar em equipe e colaborar', type: 'I', weight: 3 },
-      { text: 'Ter rotinas estáveis e previsíveis', type: 'S', weight: 3 },
-      { text: 'Trabalhar com precisão e qualidade', type: 'C', weight: 3 }
+      { text: 'Lead projects and set direction', type: 'D', weight: 3 },
+      { text: 'Work in a team and collaborate', type: 'I', weight: 3 },
+      { text: 'Have stable, predictable routines', type: 'S', weight: 3 },
+      { text: 'Work with precision and quality', type: 'C', weight: 3 }
     ]
   },
   {
     id: '4',
-    question: 'Sua maior motivação é:',
+    question: 'Your biggest motivation is:',
     options: [
-      { text: 'Alcançar resultados e vencer desafios', type: 'D', weight: 3 },
-      { text: 'Ser reconhecido e influenciar outros', type: 'I', weight: 3 },
-      { text: 'Contribuir para o bem-estar da equipe', type: 'S', weight: 3 },
-      { text: 'Fazer um trabalho correto e preciso', type: 'C', weight: 3 }
+      { text: 'Achieving results and overcoming challenges', type: 'D', weight: 3 },
+      { text: 'Being recognized and influencing others', type: 'I', weight: 3 },
+      { text: 'Contributing to the team’s well-being', type: 'S', weight: 3 },
+      { text: 'Doing precise, correct work', type: 'C', weight: 3 }
     ]
   },
   {
     id: '5',
-    question: 'Quando sob pressão, você:',
+    question: 'When under pressure, you:',
     options: [
-      { text: 'Torna-se mais assertivo e direto', type: 'D', weight: 3 },
-      { text: 'Busca apoio e motivação externa', type: 'I', weight: 3 },
-      { text: 'Tende a se retrair e procurar estabilidade', type: 'S', weight: 3 },
-      { text: 'Foca nos detalhes e na perfeição', type: 'C', weight: 3 }
+      { text: 'Become more assertive and direct', type: 'D', weight: 3 },
+      { text: 'Look for external support and motivation', type: 'I', weight: 3 },
+      { text: 'Withdraw and seek stability', type: 'S', weight: 3 },
+      { text: 'Focus on details and perfection', type: 'C', weight: 3 }
     ]
   }
 ];
 
 const discProfiles: Record<DISCType, Omit<DISCProfile, 'primaryType' | 'secondaryType' | 'scores'>> = {
   D: {
-    description: 'Dominante - Orientado a resultados, direto, decisivo e competitivo.',
-    communicationStyle: 'Direto, objetivo, focado em resultados. Prefere comunicação rápida e eficiente.',
-    motivators: ['Desafios', 'Controle', 'Resultados', 'Competição', 'Autoridade'],
-    stressors: ['Indecisão', 'Ineficiência', 'Rotina', 'Detalhes desnecessários']
+    description: 'Dominant - results-oriented, direct, decisive and competitive.',
+    communicationStyle: 'Direct and objective, focused on results. Prefers quick and efficient communication.',
+    motivators: ['Challenges', 'Control', 'Results', 'Competition', 'Authority'],
+    stressors: ['Indecision', 'Inefficiency', 'Routine', 'Unnecessary details']
   },
   I: {
-    description: 'Influente - Sociável, otimista, entusiástico e persuasivo.',
-    communicationStyle: 'Expressivo, entusiástico, focado em pessoas. Gosta de contar histórias e inspirar.',
-    motivators: ['Reconhecimento', 'Interação social', 'Variedade', 'Inspiração', 'Popularidade'],
-    stressors: ['Isolamento', 'Críticas', 'Detalhes técnicos', 'Rotina repetitiva']
+    description: 'Influential - sociable, optimistic, enthusiastic and persuasive.',
+    communicationStyle: 'Expressive and people-focused. Enjoys telling stories and inspiring.',
+    motivators: ['Recognition', 'Social interaction', 'Variety', 'Inspiration', 'Popularity'],
+    stressors: ['Isolation', 'Criticism', 'Technical details', 'Repetitive routine']
   },
   S: {
-    description: 'Estável - Paciente, leal, consistente e cooperativo.',
-    communicationStyle: 'Calmo, paciente, focado em harmonia. Prefere ouvir e construir consenso.',
-    motivators: ['Estabilidade', 'Harmonia', 'Apoio à equipe', 'Segurança', 'Tradição'],
-    stressors: ['Mudanças súbitas', 'Conflitos', 'Pressão de tempo', 'Incerteza']
+    description: 'Steady - patient, loyal, consistent and cooperative.',
+    communicationStyle: 'Calm and harmony seeking. Prefers listening and building consensus.',
+    motivators: ['Stability', 'Harmony', 'Team support', 'Security', 'Tradition'],
+    stressors: ['Sudden changes', 'Conflict', 'Time pressure', 'Uncertainty']
   },
   C: {
-    description: 'Consciencioso - Analítico, preciso, sistemático e cauteloso.',
-    communicationStyle: 'Preciso, baseado em fatos, focado em qualidade. Prefere dados e evidências.',
-    motivators: ['Precisão', 'Qualidade', 'Conhecimento', 'Sistemas', 'Especialização'],
-    stressors: ['Pressão de tempo', 'Ambiguidade', 'Críticas pessoais', 'Improvisação']
+    description: 'Conscientious - analytical, precise, systematic and cautious.',
+    communicationStyle: 'Accurate, fact-based and focused on quality. Prefers data and evidence.',
+    motivators: ['Accuracy', 'Quality', 'Knowledge', 'Systems', 'Expertise'],
+    stressors: ['Time pressure', 'Ambiguity', 'Personal criticism', 'Improvisation']
   }
 };
 

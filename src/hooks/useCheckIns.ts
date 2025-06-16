@@ -52,13 +52,13 @@ export const useCheckIns = (missionId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['check_ins', user?.id, missionId] });
       toast({
-        title: "Check-in feito",
-        description: "Seu progresso desta missão foi registrado.",
+        title: "Check-in recorded",
+        description: "Your progress for this mission has been logged.",
       });
     },
     onError: (err) => {
       toast({
-        title: "Erro ao registrar check-in",
+        title: "Error recording check-in",
         description: err.message,
         variant: "destructive"
       });

@@ -52,13 +52,13 @@ export const useMissions = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['missions', user?.id] });
       toast({
-        title: "Missão Criada",
-        description: "Uma nova missão foi adicionada.",
+        title: "Mission Created",
+        description: "A new mission was added.",
       });
     },
     onError: (err) => {
       toast({
-        title: "Erro ao criar missão",
+        title: "Error creating mission",
         description: err.message,
         variant: "destructive"
       });

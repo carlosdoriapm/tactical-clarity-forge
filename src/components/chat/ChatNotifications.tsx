@@ -19,9 +19,9 @@ const ChatNotifications: React.FC<ChatNotificationsProps> = ({
       authLoading 
     });
     if (!authLoading && user) {
-      sonnerToast.success("Autenticação verificada.", { description: `Usuário ${user.email} conectado.`});
+      sonnerToast.success("Authentication verified.", { description: `User ${user.email} connected.`});
     } else if (!authLoading && !user) {
-      sonnerToast.error("Usuário não autenticado.", { description: "Redirecionando para login."});
+      sonnerToast.error("User not authenticated.", { description: "Redirecting to login."});
     }
   }, [user, authLoading]);
 

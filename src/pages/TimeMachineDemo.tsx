@@ -21,14 +21,14 @@ const TimeMachineDemo = () => {
     setTimeout(async () => {
       const mockResult = {
         timeline_short: [
-          { date: '2025-07-01', event: 'Primeira semana de implementação' },
-          { date: '2025-08-15', event: 'Primeiros resultados visíveis' },
-          { date: '2025-10-01', event: 'Avaliação trimestral' }
+          { date: '2025-07-01', event: 'First week of implementation' },
+          { date: '2025-08-15', event: 'First visible results' },
+          { date: '2025-10-01', event: 'Quarterly review' }
         ],
         timeline_long: [
-          { date: '2026-01-01', event: 'Consolidação da nova rotina' },
-          { date: '2026-06-01', event: 'Resultados significativos alcançados' },
-          { date: '2027-01-01', event: 'Transformação completa estabelecida' }
+          { date: '2026-01-01', event: 'Routine fully established' },
+          { date: '2026-06-01', event: 'Significant results achieved' },
+          { date: '2027-01-01', event: 'Full transformation in place' }
         ]
       };
       
@@ -63,7 +63,7 @@ const TimeMachineDemo = () => {
         <header className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-4">Decision Time-Machine</h1>
           <p className="text-warfare-blue text-lg">
-            Visualize os possíveis futuros das suas decisões estratégicas
+            Visualize the possible futures of your strategic decisions
           </p>
         </header>
 
@@ -76,25 +76,25 @@ const TimeMachineDemo = () => {
         {state.matches('SUBMITTING') && (
           <div className="flex flex-col items-center justify-center py-12">
             <LoaderSpinner />
-            <p className="text-warfare-blue mt-4">Analisando cenários futuros...</p>
+            <p className="text-warfare-blue mt-4">Analyzing future scenarios...</p>
           </div>
         )}
 
         {state.matches('ERROR') && (
           <div className="max-w-2xl mx-auto text-center">
             <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-6">
-              <h3 className="text-red-400 font-bold mb-2">Erro na Análise</h3>
+              <h3 className="text-red-400 font-bold mb-2">Analysis Error</h3>
               <p className="text-white mb-4">{state.context.error}</p>
               <div className="flex gap-4 justify-center">
                 <Button onClick={handleRetry} className="bg-warfare-red hover:bg-red-600">
-                  Tentar Novamente
+                  Try Again
                 </Button>
                 <Button 
                   onClick={handleNewDecision} 
                   variant="outline" 
                   className="border-warfare-blue text-warfare-blue"
                 >
-                  Nova Decisão
+                  New Decision
                 </Button>
               </div>
             </div>
@@ -105,8 +105,8 @@ const TimeMachineDemo = () => {
           <div className="space-y-8">
             <div className="grid md:grid-cols-2 gap-8">
               <div className="bg-warfare-dark/90 border border-warfare-blue/30 rounded-lg p-6">
-                <h3 className="text-xl font-bold text-white mb-2">Cenário de Curto Prazo</h3>
-                <p className="text-warfare-blue mb-4">Próximos 6-12 meses</p>
+                <h3 className="text-xl font-bold text-white mb-2">Short-Term Scenario</h3>
+                <p className="text-warfare-blue mb-4">Next 6-12 months</p>
                 <div className="space-y-3">
                   {state.context.result.timeline_short.map((item, index) => (
                     <div key={index} className="flex items-start space-x-3">
@@ -121,8 +121,8 @@ const TimeMachineDemo = () => {
               </div>
               
               <div className="bg-warfare-dark/90 border border-warfare-blue/30 rounded-lg p-6">
-                <h3 className="text-xl font-bold text-white mb-2">Cenário de Longo Prazo</h3>
-                <p className="text-warfare-blue mb-4">1-3 anos à frente</p>
+                <h3 className="text-xl font-bold text-white mb-2">Long-Term Scenario</h3>
+                <p className="text-warfare-blue mb-4">1-3 years ahead</p>
                 <div className="space-y-3">
                   {state.context.result.timeline_long.map((item, index) => (
                     <div key={index} className="flex items-start space-x-3">
@@ -142,7 +142,7 @@ const TimeMachineDemo = () => {
                 onClick={handleNewDecision}
                 className="bg-warfare-blue hover:bg-blue-600 text-white"
               >
-                Analisar Nova Decisão
+                Analyze New Decision
               </Button>
             </div>
           </div>
