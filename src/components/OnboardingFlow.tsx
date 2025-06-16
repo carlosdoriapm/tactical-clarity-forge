@@ -48,12 +48,13 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
   const handleDiscComplete = async (discData: any) => {
     setDiscProfile(discData);
     
-    // Update profile with DISC data
+    // Update profile with DISC data - using a separate update instead of upsert
     try {
       const { error } = await supabase
         .from('combatant_profile')
         .update({
-          disc_profile: discData,
+          // Store DISC data in a metadata field or create a separate column
+          metadata: { disc_profile: discData },
           onboarding_completed: true
         })
         .eq('user_id', user?.id);

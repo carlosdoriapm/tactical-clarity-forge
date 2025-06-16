@@ -31,21 +31,23 @@ const GuidedChatIntro = ({ onStart }: GuidedChatIntroProps) => {
     loadUserProfile();
   }, [user]);
 
+  const discProfile = userProfile?.metadata?.disc_profile;
+
   const introSteps = [
     {
       title: 'Bem-vindo ao Chat Advisor',
       description: 'Seu conselheiro estratégico personalizado baseado no seu perfil psicológico.',
       icon: MessageSquare,
-      content: userProfile?.disc_profile ? 
-        `Detectei seu perfil DISC como ${userProfile.disc_profile.primaryType}. Vou adaptar minha comunicação ao seu estilo preferido.` :
+      content: discProfile ? 
+        `Detectei seu perfil DISC como ${discProfile.primaryType}. Vou adaptar minha comunicação ao seu estilo preferido.` :
         'Recomendo completar sua análise DISC para uma experiência mais personalizada.'
     },
     {
       title: 'Análise Personalizada',
       description: 'Baseado no seu perfil, posso oferecer conselhos mais assertivos.',
       icon: Brain,
-      content: userProfile?.disc_profile ?
-        `Como perfil ${userProfile.disc_profile.primaryType}, você responde melhor a: ${userProfile.disc_profile.communicationStyle}` :
+      content: discProfile ?
+        `Como perfil ${discProfile.primaryType}, você responde melhor a: ${discProfile.communicationStyle}` :
         'Complete seu perfil para receber análises mais profundas.'
     },
     {
@@ -63,7 +65,7 @@ const GuidedChatIntro = ({ onStart }: GuidedChatIntroProps) => {
       setCurrentStep(currentStep + 1);
     } else {
       onStart({
-        discProfile: userProfile?.disc_profile,
+        discProfile: discProfile,
         mission: userProfile?.mission_90_day,
         intensityMode: userProfile?.intensity_mode
       });
