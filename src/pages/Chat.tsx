@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChat } from '@/hooks/useChat';
 import ChatContainer from '@/components/chat/ChatContainer';
@@ -8,7 +8,8 @@ import ChatNotifications from '@/components/chat/ChatNotifications';
 import ChatInterface from '@/components/chat/ChatInterface';
 
 const Chat = () => {
-  console.log('🎯 Chat component rendering/re-rendering...');
+  console.log('🎯 Chat component rendering...');
+  const hasCreatedFirstConversation = useRef(false);
   
   const { user, loading: authLoading } = useAuth();
   
@@ -29,10 +30,16 @@ const Chat = () => {
     loading
   } = useChat();
 
-  // Criar primeira conversa automaticamente se não existir nenhuma
+  // Criar primeira conversa automaticamente se necessário
   useEffect(() => {
-    if (user && !loading && conversations.length === 0 && !currentConversation) {
+    if (user && 
+        !loading && 
+        conversations.length === 0 && 
+        !currentConversation && 
+        !hasCreatedFirstConversation.current) {
+      
       console.log('🆕 Criando primeira conversa automaticamente...');
+      hasCreatedFirstConversation.current = true;
       createConversation('Primeira Conversa');
     }
   }, [user, loading, conversations.length, currentConversation, createConversation]);

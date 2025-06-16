@@ -24,8 +24,15 @@ export function useChat() {
     currentConversation
   });
 
-  // Se temos uma conversa atual, usar mensagens persistidas; senão usar mensagens temporárias
+  // Usar mensagens persistidas se há conversa atual, senão usar temporárias
   const currentMessages = currentConversation ? persistedMessages : tempMessages;
+
+  console.log('💬 useChat state:', {
+    hasConversation: !!currentConversation,
+    messagesCount: currentMessages.length,
+    conversationsCount: conversations.length,
+    loading
+  });
 
   return {
     messages: currentMessages,

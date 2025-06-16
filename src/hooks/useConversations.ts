@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -12,10 +12,56 @@ export const useConversations = () => {
   const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
-  const [hasInitialized, setHasInitialized] = useState(false);
+  const hasInitializedRef = useRef(false);
+
+  const loadMessages = useCallback(async (conversationId: string) => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('conversation_id', conversationId)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      
+      const convertedMessages: Message[] = (data || []).map(msg => ({
+        id: msg.id,
+        conversation_id: msg.conversation_id,
+        user_id: msg.user_id,
+        content: msg.content,
+        role: msg.role as 'user' | 'assistant',
+        created_at: msg.created_at,
+        metadata: msg.metadata
+      }));
+      
+      setMessages(convertedMessages);
+    } catch (error: any) {
+      console.error('Erro ao carregar mensagens:', error);
+      toast({
+        title: "Erro",
+        description: "Falha ao carregar mensagens: " + error.message,
+        variant: "destructive",
+      });
+    }
+  }, [user, toast]);
+
+  const selectConversation = useCallback(async (conversation: Conversation) => {
+    console.log('🔄 Selecionando conversa:', conversation.id);
+    setCurrentConversation(conversation);
+    await loadMessages(conversation.id);
+  }, [loadMessages]);
 
   const loadConversations = useCallback(async () => {
-    if (!user || hasInitialized) return;
+    if (!user || hasInitializedRef.current) {
+      console.log('⏭️ Pulando loadConversations - usuário ou já inicializado');
+      return;
+    }
+    
+    console.log('📂 Carregando conversas...');
+    hasInitializedRef.current = true;
     
     try {
       setLoading(true);
@@ -26,15 +72,17 @@ export const useConversations = () => {
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
+      
+      console.log('📋 Conversas carregadas:', data?.length || 0);
       setConversations(data || []);
       
-      // Se há conversas, carrega a mais recente automaticamente
+      // Carrega a conversa mais recente se existir
       if (data && data.length > 0) {
+        console.log('🎯 Carregando conversa mais recente automaticamente');
         await selectConversation(data[0]);
       }
-      
-      setHasInitialized(true);
     } catch (error: any) {
+      console.error('Erro ao carregar conversas:', error);
       toast({
         title: "Erro",
         description: "Falha ao carregar conversas: " + error.message,
@@ -43,11 +91,12 @@ export const useConversations = () => {
     } finally {
       setLoading(false);
     }
-  }, [user, hasInitialized, toast]);
+  }, [user, toast, selectConversation]);
 
   const createConversation = useCallback(async (title?: string) => {
     if (!user) return null;
     
+    console.log('🆕 Criando nova conversa...');
     try {
       const { data, error } = await supabase
         .from('conversations')
@@ -64,49 +113,17 @@ export const useConversations = () => {
       const newConversation = data as Conversation;
       setConversations(prev => [newConversation, ...prev]);
       setCurrentConversation(newConversation);
-      setMessages([]); // Limpar mensagens para nova conversa
+      setMessages([]);
+      console.log('✅ Nova conversa criada:', newConversation.id);
       return newConversation;
     } catch (error: any) {
+      console.error('Erro ao criar conversa:', error);
       toast({
         title: "Erro",
         description: "Falha ao criar conversa: " + error.message,
         variant: "destructive",
       });
       return null;
-    }
-  }, [user, toast]);
-
-  const loadMessages = useCallback(async (conversationId: string) => {
-    if (!user) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('conversation_id', conversationId)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: true });
-
-      if (error) throw error;
-      
-      // Converter os dados do banco para o tipo Message correto
-      const convertedMessages: Message[] = (data || []).map(msg => ({
-        id: msg.id,
-        conversation_id: msg.conversation_id,
-        user_id: msg.user_id,
-        content: msg.content,
-        role: msg.role as 'user' | 'assistant',
-        created_at: msg.created_at,
-        metadata: msg.metadata
-      }));
-      
-      setMessages(convertedMessages);
-    } catch (error: any) {
-      toast({
-        title: "Erro",
-        description: "Falha ao carregar mensagens: " + error.message,
-        variant: "destructive",
-      });
     }
   }, [user, toast]);
 
@@ -140,7 +157,7 @@ export const useConversations = () => {
       
       setMessages(prev => [...prev, newMessage]);
       
-      // Update conversation's updated_at
+      // Atualiza o timestamp da conversa
       await supabase
         .from('conversations')
         .update({ updated_at: new Date().toISOString() })
@@ -148,6 +165,7 @@ export const useConversations = () => {
       
       return newMessage;
     } catch (error: any) {
+      console.error('Erro ao salvar mensagem:', error);
       toast({
         title: "Erro",
         description: "Falha ao salvar mensagem: " + error.message,
@@ -157,16 +175,13 @@ export const useConversations = () => {
     }
   }, [user, toast]);
 
-  const selectConversation = useCallback(async (conversation: Conversation) => {
-    setCurrentConversation(conversation);
-    await loadMessages(conversation.id);
-  }, [loadMessages]);
-
+  // Effect simplificado que só roda uma vez
   useEffect(() => {
-    if (user && !hasInitialized) {
+    if (user && !hasInitializedRef.current) {
+      console.log('🚀 Inicializando conversas...');
       loadConversations();
     }
-  }, [user, hasInitialized, loadConversations]);
+  }, [user, loadConversations]);
 
   return {
     conversations,
