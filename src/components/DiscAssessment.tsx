@@ -35,8 +35,8 @@ const DiscAssessment = ({ onComplete, onSkip }: DiscAssessmentProps) => {
     return (
       <div className="max-w-2xl mx-auto p-6 bg-warfare-dark/90 rounded-xl border border-warfare-blue/30">
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-white mb-2">Análise DISC Completa</h2>
-          <p className="text-warfare-blue">Seu perfil psicológico foi mapeado</p>
+          <h2 className="text-2xl font-bold text-white mb-2">Complete DISC Analysis</h2>
+          <p className="text-warfare-blue">Your psychological profile has been mapped</p>
         </div>
 
         <Card className="bg-warfare-dark/50 border-warfare-blue/30 p-6 mb-6">
@@ -58,11 +58,11 @@ const DiscAssessment = ({ onComplete, onSkip }: DiscAssessmentProps) => {
 
             <div className="text-left space-y-3">
               <div>
-                <h4 className="font-bold text-warfare-blue">Estilo de Comunicação:</h4>
+                <h4 className="font-bold text-warfare-blue">Communication Style:</h4>
                 <p className="text-white text-sm">{profile.communicationStyle}</p>
               </div>
               <div>
-                <h4 className="font-bold text-warfare-blue">Motivadores:</h4>
+                <h4 className="font-bold text-warfare-blue">Motivators:</h4>
                 <p className="text-white text-sm">{profile.motivators.join(', ')}</p>
               </div>
             </div>
@@ -71,10 +71,10 @@ const DiscAssessment = ({ onComplete, onSkip }: DiscAssessmentProps) => {
 
         <div className="flex gap-4 justify-center">
           <Button onClick={onSkip} variant="outline" className="text-warfare-blue border-warfare-blue/30">
-            Pular por Agora
+            Skip for Now
           </Button>
           <Button onClick={handleComplete} className="bg-warfare-red hover:bg-warfare-red/80">
-            Salvar Perfil
+            Save Profile
           </Button>
         </div>
       </div>
@@ -85,9 +85,9 @@ const DiscAssessment = ({ onComplete, onSkip }: DiscAssessmentProps) => {
     <div className="max-w-2xl mx-auto p-6 bg-warfare-dark/90 rounded-xl border border-warfare-blue/30">
       <div className="mb-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-white">Análise DISC</h2>
+          <h2 className="text-xl font-bold text-white">DISC Analysis</h2>
           <span className="text-warfare-blue text-sm">
-            {questionNumber} de {totalQuestions}
+            {questionNumber} of {totalQuestions}
           </span>
         </div>
         <Progress value={progress} className="w-full h-2" />
@@ -112,7 +112,7 @@ const DiscAssessment = ({ onComplete, onSkip }: DiscAssessmentProps) => {
 
         <div className="flex justify-between pt-4">
           <Button onClick={onSkip} variant="outline" className="text-warfare-blue border-warfare-blue/30">
-            Pular Análise
+            Skip Assessment
           </Button>
         </div>
       </div>
