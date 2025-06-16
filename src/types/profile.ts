@@ -16,6 +16,6 @@ export interface CombatantProfileData {
   intensity_mode: 'TACTICAL' | 'RUTHLESS' | 'LEGION';
   first_recognition: string | null;
   profile_complete: boolean;
-  disc_profile?: any; // Adicionado para suportar dados DISC
-  onboarding_completed?: boolean; // Adicionado para controle de onboarding
+  disc_profile?: any;
+  onboarding_completed?: boolean;
 }

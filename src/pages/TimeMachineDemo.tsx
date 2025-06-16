@@ -6,17 +6,19 @@ import { BackToDashboard } from '@/components/BackToDashboard';
 import DecisionInput from '@/components/DecisionInput';
 import { Button } from '@/components/ui/button';
 import LoaderSpinner from '@/components/LoaderSpinner';
+import { useDecisions } from '@/hooks/useDecisions';
 
 const TimeMachineDemo = () => {
   const [state, send] = useMachine(dtmMachine);
   const [inputValue, setInputValue] = useState('');
+  const { createDecision } = useDecisions();
 
-  const handleSubmit = (decision: string) => {
+  const handleSubmit = async (decision: string) => {
     setInputValue(decision);
     send({ type: 'SUBMIT', input: decision });
     
     // Simulate API call
-    setTimeout(() => {
+    setTimeout(async () => {
       const mockResult = {
         timeline_short: [
           { date: '2025-07-01', event: 'Primeira semana de implementação' },
@@ -29,6 +31,16 @@ const TimeMachineDemo = () => {
           { date: '2027-01-01', event: 'Transformação completa estabelecida' }
         ]
       };
+      
+      // Save decision to database
+      if (createDecision) {
+        await createDecision({
+          decision_text: decision,
+          analysis_result: mockResult,
+          status: 'pending'
+        });
+      }
+      
       send({ type: 'SUCCESS', result: mockResult });
     }, 2000);
   };
@@ -63,7 +75,7 @@ const TimeMachineDemo = () => {
 
         {state.matches('SUBMITTING') && (
           <div className="flex flex-col items-center justify-center py-12">
-            <LoaderSpinner show={true} />
+            <LoaderSpinner />
             <p className="text-warfare-blue mt-4">Analisando cenários futuros...</p>
           </div>
         )}

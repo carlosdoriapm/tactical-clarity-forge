@@ -2,17 +2,29 @@
 import { useMessages } from './chat/useMessages';
 import { useConnection } from './chat/useConnection';
 import { useMessageSender } from './chat/useMessageSender';
+import { useConversations } from './useConversations';
 
 export function useChat() {
   const { messages, messagesEndRef, addMessage } = useMessages();
   const { connectionStatus, setConnectionStatus, testConnection } = useConnection();
+  const {
+    conversations,
+    currentConversation,
+    messages: persistedMessages,
+    createConversation,
+    selectConversation,
+    saveMessage
+  } = useConversations();
+  
   const { inputValue, setInputValue, isTyping, isSending, handleSend } = useMessageSender({
     addMessage,
-    setConnectionStatus
+    setConnectionStatus,
+    saveMessage,
+    currentConversation
   });
 
   return {
-    messages,
+    messages: currentConversation ? persistedMessages : messages,
     inputValue,
     setInputValue,
     isTyping,
@@ -20,6 +32,10 @@ export function useChat() {
     connectionStatus,
     messagesEndRef,
     testConnection,
-    handleSend
+    handleSend,
+    conversations,
+    currentConversation,
+    createConversation,
+    selectConversation
   };
 }

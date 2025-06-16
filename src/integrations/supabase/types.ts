@@ -183,6 +183,122 @@ export type Database = {
         }
         Relationships: []
       }
+      conversations: {
+        Row: {
+          context: Json | null
+          created_at: string | null
+          id: string
+          title: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string | null
+          id?: string
+          title?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string | null
+          id?: string
+          title?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      decisions: {
+        Row: {
+          analysis_result: Json | null
+          conversation_id: string | null
+          created_at: string | null
+          decision_text: string
+          id: string
+          implementation_date: string | null
+          review_date: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          analysis_result?: Json | null
+          conversation_id?: string | null
+          created_at?: string | null
+          decision_text: string
+          id?: string
+          implementation_date?: string | null
+          review_date?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          analysis_result?: Json | null
+          conversation_id?: string | null
+          created_at?: string | null
+          decision_text?: string
+          id?: string
+          implementation_date?: string | null
+          review_date?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decisions_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      goals: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          metadata: Json | null
+          priority: string | null
+          progress: number | null
+          status: string
+          target_date: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          priority?: string | null
+          progress?: number | null
+          status?: string
+          target_date?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          priority?: string | null
+          progress?: number | null
+          status?: string
+          target_date?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       habit_nudges: {
         Row: {
           created_at: string
@@ -209,6 +325,44 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          role: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       missions: {
         Row: {

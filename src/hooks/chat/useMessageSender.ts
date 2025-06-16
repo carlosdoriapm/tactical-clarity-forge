@@ -4,13 +4,16 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast as sonnerToast } from "sonner";
 import { Message } from '@/types/chat';
+import { Conversation } from '@/types/conversation';
 
 interface UseMessageSenderProps {
   addMessage: (message: Message) => void;
   setConnectionStatus: (status: 'unknown' | 'testing' | 'good' | 'error') => void;
+  saveMessage?: (conversationId: string, content: string, role: 'user' | 'assistant', metadata?: any) => Promise<any>;
+  currentConversation?: Conversation | null;
 }
 
-export function useMessageSender({ addMessage, setConnectionStatus }: UseMessageSenderProps) {
+export function useMessageSender({ addMessage, setConnectionStatus, saveMessage, currentConversation }: UseMessageSenderProps) {
   const { user } = useAuth();
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -41,13 +44,19 @@ export function useMessageSender({ addMessage, setConnectionStatus }: UseMessage
     setInputValue('');
     setIsTyping(true);
 
+    // Save user message if we have persistence
+    if (saveMessage && currentConversation) {
+      await saveMessage(currentConversation.id, trimmedInput, 'user');
+    }
+
     try {
       console.log('📡 Chat: handleSend - Calling edge function "ai-chat" with:', { message: trimmedInput, userId: user?.id });
       
       const { data, error: functionInvokeError } = await supabase.functions.invoke('ai-chat', {
         body: { 
           message: trimmedInput,
-          userId: user?.id || 'anonymous-chat-user'
+          userId: user?.id || 'anonymous-chat-user',
+          conversationId: currentConversation?.id
         }
       });
       sonnerToast.dismiss("sending-message");
@@ -107,6 +116,11 @@ export function useMessageSender({ addMessage, setConnectionStatus }: UseMessage
         timestamp: new Date()
       };
       addMessage(botMessage);
+
+      // Save bot message if we have persistence
+      if (saveMessage && currentConversation) {
+        await saveMessage(currentConversation.id, responseText, 'assistant', data);
+      }
 
     } catch (criticalError) {
       console.error('💥 Chat: handleSend - Critical error during send process:', criticalError);
