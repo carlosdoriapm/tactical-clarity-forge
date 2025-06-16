@@ -5,7 +5,7 @@ import { useMessageSender } from './chat/useMessageSender';
 import { useConversations } from './useConversations';
 
 export function useChat() {
-  const { messages, messagesEndRef, addMessage } = useMessages();
+  const { messages, messagesEndRef, addMessage, clearMessages } = useMessages();
   const { connectionStatus, setConnectionStatus, testConnection } = useConnection();
   const {
     conversations,
@@ -13,7 +13,8 @@ export function useChat() {
     messages: persistedMessages,
     createConversation,
     selectConversation,
-    saveMessage
+    saveMessage,
+    loading
   } = useConversations();
   
   const { inputValue, setInputValue, isTyping, isSending, handleSend } = useMessageSender({
@@ -23,8 +24,11 @@ export function useChat() {
     currentConversation
   });
 
+  // Se temos uma conversa atual, usar mensagens persistidas; senão usar mensagens temporárias
+  const currentMessages = currentConversation ? persistedMessages : messages;
+
   return {
-    messages: currentConversation ? persistedMessages : messages,
+    messages: currentMessages,
     inputValue,
     setInputValue,
     isTyping,
@@ -36,6 +40,8 @@ export function useChat() {
     conversations,
     currentConversation,
     createConversation,
-    selectConversation
+    selectConversation,
+    loading,
+    clearMessages
   };
 }

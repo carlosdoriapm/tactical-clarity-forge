@@ -3,15 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Message } from '@/types/chat';
 
 export function useMessages() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      content: "Hey—I'm AlphaAdvisor. First, I'll ask you a few questions so I can truly get to know you.",
-      isBot: true,
-      timestamp: new Date()
-    }
-  ]);
-  
+  const [messages, setMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -26,9 +18,14 @@ export function useMessages() {
     setMessages(prev => [...prev, message]);
   };
 
+  const clearMessages = () => {
+    setMessages([]);
+  };
+
   return {
     messages,
     messagesEndRef,
-    addMessage
+    addMessage,
+    clearMessages
   };
 }

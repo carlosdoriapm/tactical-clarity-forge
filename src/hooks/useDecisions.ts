@@ -22,7 +22,22 @@ export const useDecisions = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setDecisions(data || []);
+      
+      // Converter os dados do banco para o tipo Decision correto
+      const convertedDecisions: Decision[] = (data || []).map(decision => ({
+        id: decision.id,
+        user_id: decision.user_id,
+        conversation_id: decision.conversation_id,
+        decision_text: decision.decision_text,
+        analysis_result: decision.analysis_result,
+        status: decision.status as 'pending' | 'implemented' | 'cancelled' | 'reviewing',
+        created_at: decision.created_at,
+        updated_at: decision.updated_at,
+        implementation_date: decision.implementation_date,
+        review_date: decision.review_date
+      }));
+      
+      setDecisions(convertedDecisions);
     } catch (error: any) {
       toast({
         title: "Erro",
@@ -49,7 +64,19 @@ export const useDecisions = () => {
 
       if (error) throw error;
       
-      const newDecision = data as Decision;
+      const newDecision: Decision = {
+        id: data.id,
+        user_id: data.user_id,
+        conversation_id: data.conversation_id,
+        decision_text: data.decision_text,
+        analysis_result: data.analysis_result,
+        status: data.status as 'pending' | 'implemented' | 'cancelled' | 'reviewing',
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+        implementation_date: data.implementation_date,
+        review_date: data.review_date
+      };
+      
       setDecisions(prev => [newDecision, ...prev]);
       
       return newDecision;
@@ -77,7 +104,19 @@ export const useDecisions = () => {
 
       if (error) throw error;
       
-      const updatedDecision = data as Decision;
+      const updatedDecision: Decision = {
+        id: data.id,
+        user_id: data.user_id,
+        conversation_id: data.conversation_id,
+        decision_text: data.decision_text,
+        analysis_result: data.analysis_result,
+        status: data.status as 'pending' | 'implemented' | 'cancelled' | 'reviewing',
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+        implementation_date: data.implementation_date,
+        review_date: data.review_date
+      };
+      
       setDecisions(prev => prev.map(decision => decision.id === decisionId ? updatedDecision : decision));
       
       return updatedDecision;

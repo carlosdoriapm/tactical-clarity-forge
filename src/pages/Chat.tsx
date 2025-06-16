@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChat } from '@/hooks/useChat';
 import ChatContainer from '@/components/chat/ChatContainer';
@@ -21,8 +21,21 @@ const Chat = () => {
     connectionStatus,
     messagesEndRef,
     testConnection,
-    handleSend
+    handleSend,
+    conversations,
+    currentConversation,
+    createConversation,
+    selectConversation,
+    loading
   } = useChat();
+
+  // Criar primeira conversa automaticamente se não existir nenhuma
+  useEffect(() => {
+    if (user && !loading && conversations.length === 0 && !currentConversation) {
+      console.log('🆕 Criando primeira conversa automaticamente...');
+      createConversation('Primeira Conversa');
+    }
+  }, [user, loading, conversations.length, currentConversation, createConversation]);
 
   return (
     <ChatContainer>

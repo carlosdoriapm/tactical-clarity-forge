@@ -22,7 +22,23 @@ export const useGoals = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setGoals(data || []);
+      
+      // Converter os dados do banco para o tipo Goal correto
+      const convertedGoals: Goal[] = (data || []).map(goal => ({
+        id: goal.id,
+        user_id: goal.user_id,
+        title: goal.title,
+        description: goal.description,
+        status: goal.status as 'active' | 'completed' | 'paused' | 'cancelled',
+        priority: goal.priority as 'low' | 'medium' | 'high' | 'critical',
+        target_date: goal.target_date,
+        created_at: goal.created_at,
+        updated_at: goal.updated_at,
+        progress: goal.progress,
+        metadata: goal.metadata
+      }));
+      
+      setGoals(convertedGoals);
     } catch (error: any) {
       toast({
         title: "Erro",
@@ -49,7 +65,20 @@ export const useGoals = () => {
 
       if (error) throw error;
       
-      const newGoal = data as Goal;
+      const newGoal: Goal = {
+        id: data.id,
+        user_id: data.user_id,
+        title: data.title,
+        description: data.description,
+        status: data.status as 'active' | 'completed' | 'paused' | 'cancelled',
+        priority: data.priority as 'low' | 'medium' | 'high' | 'critical',
+        target_date: data.target_date,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+        progress: data.progress,
+        metadata: data.metadata
+      };
+      
       setGoals(prev => [newGoal, ...prev]);
       
       toast({
@@ -82,7 +111,20 @@ export const useGoals = () => {
 
       if (error) throw error;
       
-      const updatedGoal = data as Goal;
+      const updatedGoal: Goal = {
+        id: data.id,
+        user_id: data.user_id,
+        title: data.title,
+        description: data.description,
+        status: data.status as 'active' | 'completed' | 'paused' | 'cancelled',
+        priority: data.priority as 'low' | 'medium' | 'high' | 'critical',
+        target_date: data.target_date,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+        progress: data.progress,
+        metadata: data.metadata
+      };
+      
       setGoals(prev => prev.map(goal => goal.id === goalId ? updatedGoal : goal));
       
       toast({

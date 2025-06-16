@@ -25,6 +25,11 @@ export const useConversations = () => {
 
       if (error) throw error;
       setConversations(data || []);
+      
+      // Se há conversas, carrega a mais recente automaticamente
+      if (data && data.length > 0 && !currentConversation) {
+        await selectConversation(data[0]);
+      }
     } catch (error: any) {
       toast({
         title: "Erro",
@@ -55,6 +60,7 @@ export const useConversations = () => {
       const newConversation = data as Conversation;
       setConversations(prev => [newConversation, ...prev]);
       setCurrentConversation(newConversation);
+      setMessages([]); // Limpar mensagens para nova conversa
       return newConversation;
     } catch (error: any) {
       toast({
@@ -78,7 +84,19 @@ export const useConversations = () => {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setMessages(data || []);
+      
+      // Converter os dados do banco para o tipo Message correto
+      const convertedMessages: Message[] = (data || []).map(msg => ({
+        id: msg.id,
+        conversation_id: msg.conversation_id,
+        user_id: msg.user_id,
+        content: msg.content,
+        role: msg.role as 'user' | 'assistant',
+        created_at: msg.created_at,
+        metadata: msg.metadata
+      }));
+      
+      setMessages(convertedMessages);
     } catch (error: any) {
       toast({
         title: "Erro",
@@ -106,7 +124,16 @@ export const useConversations = () => {
 
       if (error) throw error;
       
-      const newMessage = data as Message;
+      const newMessage: Message = {
+        id: data.id,
+        conversation_id: data.conversation_id,
+        user_id: data.user_id,
+        content: data.content,
+        role: data.role as 'user' | 'assistant',
+        created_at: data.created_at,
+        metadata: data.metadata
+      };
+      
       setMessages(prev => [...prev, newMessage]);
       
       // Update conversation's updated_at
