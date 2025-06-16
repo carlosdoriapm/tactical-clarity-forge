@@ -35,28 +35,28 @@ const GuidedChatIntro = ({ onStart }: GuidedChatIntroProps) => {
 
   const introSteps = [
     {
-      title: 'Bem-vindo ao Chat Advisor',
-      description: 'Seu conselheiro estratégico personalizado baseado no seu perfil psicológico.',
+      title: 'Welcome to Chat Advisor',
+      description: 'Your strategic advisor tailored to your psychological profile.',
       icon: MessageSquare,
-      content: discProfile ? 
-        `Detectei seu perfil DISC como ${discProfile.primaryType}. Vou adaptar minha comunicação ao seu estilo preferido.` :
-        'Recomendo completar sua análise DISC para uma experiência mais personalizada.'
+      content: discProfile ?
+        `I detected your DISC profile as ${discProfile.primaryType}. I will adapt my communication to your preferred style.` :
+        'I recommend completing your DISC assessment for a more personalized experience.'
     },
     {
-      title: 'Análise Personalizada',
-      description: 'Baseado no seu perfil, posso oferecer conselhos mais assertivos.',
+      title: 'Personalized Analysis',
+      description: 'Based on your profile, I can offer more assertive advice.',
       icon: Brain,
       content: discProfile ?
-        `Como perfil ${discProfile.primaryType}, você responde melhor a: ${discProfile.communicationStyle}` :
-        'Complete seu perfil para receber análises mais profundas.'
+        `As a ${discProfile.primaryType} type, you respond best to: ${discProfile.communicationStyle}` :
+        'Complete your profile to receive deeper analysis.'
     },
     {
-      title: 'Pronto para Começar',
-      description: 'Vamos trabalhar juntos nos seus objetivos estratégicos.',
+      title: 'Ready to Start',
+      description: 'Let\'s work together on your strategic goals.',
       icon: Target,
       content: userProfile?.mission_90_day ?
-        `Sua missão atual: ${userProfile.mission_90_day}. Vamos focar nisso!` :
-        'Defina sua missão principal para direcionarmos nossa conversa.'
+        `Your current mission: ${userProfile.mission_90_day}. Let\'s focus on that!` :
+        'Set your main mission so we can guide our conversation.'
     }
   ];
 
@@ -99,7 +99,7 @@ const GuidedChatIntro = ({ onStart }: GuidedChatIntroProps) => {
           onClick={handleNext}
           className="w-full bg-warfare-red hover:bg-warfare-red/80"
         >
-          {currentStep === introSteps.length - 1 ? 'Começar Conversa' : 'Próximo'}
+          {currentStep === introSteps.length - 1 ? 'Start Chat' : 'Next'}
         </Button>
       </Card>
     </div>

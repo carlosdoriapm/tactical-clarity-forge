@@ -31,7 +31,7 @@ const DecisionInput: React.FC<DecisionInputProps> = ({
         value={value}
         onChange={(e) => setValue(e.target.value)}
         maxLength={maxLength}
-        placeholder="Descreva sua decisão estratégica..."
+        placeholder="Describe your strategic decision..."
         aria-label="Describe your decision scenario"
         disabled={disabled}
       />
@@ -51,7 +51,7 @@ const DecisionInput: React.FC<DecisionInputProps> = ({
         }}
         aria-label="Visualize Timeline"
       >
-        Analisar
+        Analyze
       </Button>
     </div>
   );

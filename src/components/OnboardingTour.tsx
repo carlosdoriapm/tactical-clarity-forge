@@ -11,28 +11,28 @@ interface OnboardingTourProps {
 
 const tourSteps = [
   {
-    title: 'Dashboard de Performance',
-    description: 'Monitore suas metas com gráficos intuitivos e motivadores. Veja seu progresso em tempo real.',
+    title: 'Performance Dashboard',
+    description: 'Track your goals with intuitive and motivating charts. See your progress in real time.',
     icon: BarChart,
-    features: ['Gráficos de progresso', 'Métricas de performance', 'Conquistas desbloqueadas']
+    features: ['Progress charts', 'Performance metrics', 'Unlocked achievements']
   },
   {
     title: 'Decision Time-Machine',
-    description: 'Visualize timelines para decisões complexas com IA. Antecipe consequências futuras.',
+    description: 'Visualize timelines for complex decisions with AI and anticipate future consequences.',
     icon: LayoutDashboard,
-    features: ['Análise de cenários', 'Timeline de decisões', 'Previsões estratégicas']
+    features: ['Scenario analysis', 'Decision timeline', 'Strategic forecasts']
   },
   {
     title: 'Chat Advisor',
-    description: 'Converse com IA para conselhos estratégicos personalizados baseados no seu perfil DISC.',
+    description: 'Chat with AI for strategic advice tailored to your DISC profile.',
     icon: MessageSquare,
-    features: ['Conselhos personalizados', 'Análise DISC aplicada', 'Suporte 24/7']
+    features: ['Personalized advice', 'DISC analysis applied', '24/7 support']
   },
   {
     title: 'Tactical Dashboard',
-    description: 'Dashboard completo de guerreiro com rituais e missões para transformação pessoal.',
+    description: 'Complete warrior dashboard with rituals and missions for personal transformation.',
     icon: Target,
-    features: ['Rituais diários', 'Missões estratégicas', 'Controle de hábitos']
+    features: ['Daily rituals', 'Strategic missions', 'Habit tracking']
   }
 ];
 
@@ -58,8 +58,8 @@ const OnboardingTour = ({ onComplete, onSkip }: OnboardingTourProps) => {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Bem-vindo ao Warfare Counselor™</h1>
-        <p className="text-warfare-blue">Vamos fazer um tour rápido pelas funcionalidades principais</p>
+        <h1 className="text-3xl font-bold text-white mb-2">Welcome to Warfare Counselor™</h1>
+        <p className="text-warfare-blue">Let's take a quick tour of the main features</p>
       </div>
 
       <div className="mb-6">
@@ -98,7 +98,7 @@ const OnboardingTour = ({ onComplete, onSkip }: OnboardingTourProps) => {
           variant="outline"
           className="text-warfare-blue border-warfare-blue/30"
         >
-          Pular Tour
+          Skip Tour
         </Button>
 
         <div className="flex space-x-4">
@@ -108,14 +108,14 @@ const OnboardingTour = ({ onComplete, onSkip }: OnboardingTourProps) => {
               variant="outline"
               className="text-warfare-blue border-warfare-blue/30"
             >
-              Anterior
+              Previous
             </Button>
           )}
           <Button
             onClick={handleNext}
             className="bg-warfare-red hover:bg-warfare-red/80 flex items-center space-x-2"
           >
-            <span>{currentStep === tourSteps.length - 1 ? 'Começar Jornada' : 'Próximo'}</span>
+            <span>{currentStep === tourSteps.length - 1 ? 'Start Journey' : 'Next'}</span>
             <ArrowRight className="w-4 h-4" />
           </Button>
         </div>
@@ -123,7 +123,7 @@ const OnboardingTour = ({ onComplete, onSkip }: OnboardingTourProps) => {
 
       <div className="text-center mt-6">
         <p className="text-warfare-gray text-sm">
-          Etapa {currentStep + 1} de {tourSteps.length}
+          Step {currentStep + 1} of {tourSteps.length}
         </p>
       </div>
     </div>

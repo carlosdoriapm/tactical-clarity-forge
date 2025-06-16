@@ -15,9 +15,9 @@ const PerformancePage = () => {
         <BackToDashboard />
         
         <header className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Dashboard de Performance</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">Performance Dashboard</h1>
           <p className="text-warfare-gray">
-            Monitore seu progresso e conquiste suas metas com insights visuais motivadores
+            Monitor your progress and conquer your goals with motivating visual insights
           </p>
         </header>
 

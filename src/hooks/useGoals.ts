@@ -41,8 +41,8 @@ export const useGoals = () => {
       setGoals(convertedGoals);
     } catch (error: any) {
       toast({
-        title: "Erro",
-        description: "Falha ao carregar metas: " + error.message,
+        title: "Error",
+        description: "Failed to load goals: " + error.message,
         variant: "destructive",
       });
     } finally {
@@ -82,15 +82,15 @@ export const useGoals = () => {
       setGoals(prev => [newGoal, ...prev]);
       
       toast({
-        title: "Meta criada",
-        description: "Sua meta foi criada com sucesso!",
+        title: "Goal Created",
+        description: "Your goal was successfully created!",
       });
       
       return newGoal;
     } catch (error: any) {
       toast({
-        title: "Erro",
-        description: "Falha ao criar meta: " + error.message,
+        title: "Error",
+        description: "Failed to create goal: " + error.message,
         variant: "destructive",
       });
       return null;
@@ -128,15 +128,15 @@ export const useGoals = () => {
       setGoals(prev => prev.map(goal => goal.id === goalId ? updatedGoal : goal));
       
       toast({
-        title: "Meta atualizada",
-        description: "Sua meta foi atualizada com sucesso!",
+        title: "Goal Updated",
+        description: "Your goal was successfully updated!",
       });
       
       return updatedGoal;
     } catch (error: any) {
       toast({
-        title: "Erro",
-        description: "Falha ao atualizar meta: " + error.message,
+        title: "Error",
+        description: "Failed to update goal: " + error.message,
         variant: "destructive",
       });
       return null;
@@ -158,15 +158,15 @@ export const useGoals = () => {
       setGoals(prev => prev.filter(goal => goal.id !== goalId));
       
       toast({
-        title: "Meta removida",
-        description: "Meta removida com sucesso!",
+        title: "Goal removed",
+        description: "Goal removed successfully!",
       });
       
       return true;
     } catch (error: any) {
       toast({
-        title: "Erro",
-        description: "Falha ao remover meta: " + error.message,
+        title: "Error",
+        description: "Failed to remove goal: " + error.message,
         variant: "destructive",
       });
       return false;

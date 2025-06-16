@@ -20,7 +20,7 @@ export function useUserRoles(user: User | null, loading: boolean) {
       if (error) {
         console.error('Error fetching user roles:', error);
         toast({
-          title: "Erro ao carregar permissões",
+          title: "Error loading permissions",
           description: error.message,
           variant: "destructive",
         });

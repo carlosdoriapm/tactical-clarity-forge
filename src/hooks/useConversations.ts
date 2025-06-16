@@ -39,28 +39,28 @@ export const useConversations = () => {
       
       setMessages(convertedMessages);
     } catch (error: any) {
-      console.error('Erro ao carregar mensagens:', error);
+      console.error('Error loading messages:', error);
       toast({
-        title: "Erro",
-        description: "Falha ao carregar mensagens: " + error.message,
+        title: "Error",
+        description: "Failed to load messages: " + error.message,
         variant: "destructive",
       });
     }
   }, [user, toast]);
 
   const selectConversation = useCallback(async (conversation: Conversation) => {
-    console.log('🔄 Selecionando conversa:', conversation.id);
+    console.log('🔄 Selecting conversation:', conversation.id);
     setCurrentConversation(conversation);
     await loadMessages(conversation.id);
   }, [loadMessages]);
 
   const loadConversations = useCallback(async () => {
     if (!user || hasInitializedRef.current) {
-      console.log('⏭️ Pulando loadConversations - usuário ou já inicializado');
+      console.log('⏭️ Skipping loadConversations - no user or already initialized');
       return;
     }
     
-    console.log('📂 Carregando conversas...');
+    console.log('📂 Loading conversations...');
     hasInitializedRef.current = true;
     
     try {
@@ -73,19 +73,19 @@ export const useConversations = () => {
 
       if (error) throw error;
       
-      console.log('📋 Conversas carregadas:', data?.length || 0);
+      console.log('📋 Conversations loaded:', data?.length || 0);
       setConversations(data || []);
       
-      // Carrega a conversa mais recente se existir
+      // Load the most recent conversation if it exists
       if (data && data.length > 0) {
-        console.log('🎯 Carregando conversa mais recente automaticamente');
+        console.log('🎯 Loading most recent conversation automatically');
         await selectConversation(data[0]);
       }
     } catch (error: any) {
-      console.error('Erro ao carregar conversas:', error);
+      console.error('Error loading conversations:', error);
       toast({
-        title: "Erro",
-        description: "Falha ao carregar conversas: " + error.message,
+        title: "Error",
+        description: "Failed to load conversations: " + error.message,
         variant: "destructive",
       });
     } finally {
@@ -96,13 +96,13 @@ export const useConversations = () => {
   const createConversation = useCallback(async (title?: string) => {
     if (!user) return null;
     
-    console.log('🆕 Criando nova conversa...');
+    console.log('🆕 Creating new conversation...');
     try {
       const { data, error } = await supabase
         .from('conversations')
         .insert({
           user_id: user.id,
-          title: title || 'Nova Conversa',
+          title: title || 'New Conversation',
           context: {}
         })
         .select()
@@ -114,13 +114,13 @@ export const useConversations = () => {
       setConversations(prev => [newConversation, ...prev]);
       setCurrentConversation(newConversation);
       setMessages([]);
-      console.log('✅ Nova conversa criada:', newConversation.id);
+      console.log('✅ New conversation created:', newConversation.id);
       return newConversation;
     } catch (error: any) {
-      console.error('Erro ao criar conversa:', error);
+      console.error('Error creating conversation:', error);
       toast({
-        title: "Erro",
-        description: "Falha ao criar conversa: " + error.message,
+        title: "Error",
+        description: "Failed to create conversation: " + error.message,
         variant: "destructive",
       });
       return null;
@@ -157,7 +157,7 @@ export const useConversations = () => {
       
       setMessages(prev => [...prev, newMessage]);
       
-      // Atualiza o timestamp da conversa
+      // Update conversation timestamp
       await supabase
         .from('conversations')
         .update({ updated_at: new Date().toISOString() })
@@ -165,10 +165,10 @@ export const useConversations = () => {
       
       return newMessage;
     } catch (error: any) {
-      console.error('Erro ao salvar mensagem:', error);
+      console.error('Error saving message:', error);
       toast({
-        title: "Erro",
-        description: "Falha ao salvar mensagem: " + error.message,
+        title: "Error",
+        description: "Failed to save message: " + error.message,
         variant: "destructive",
       });
       return null;

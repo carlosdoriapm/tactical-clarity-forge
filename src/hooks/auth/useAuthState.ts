@@ -26,8 +26,8 @@ export function useAuthState() {
         if (error) {
           console.error('AuthProvider: Error getting initial session:', error);
           toast({
-            title: "Erro de autenticação",
-            description: error.message || "Falha ao carregar sessão inicial...",
+            title: "Authentication Error",
+            description: error.message || "Failed to load initial session...",
             variant: "destructive",
           });
         }
@@ -44,8 +44,8 @@ export function useAuthState() {
       } catch (error) {
         console.error('AuthProvider: Error getting initial session:', error);
         toast({
-          title: "Erro de autenticação",
-          description: error instanceof Error ? error.message : "Erro desconhecido ao carregar sessão inicial.",
+          title: "Authentication Error",
+          description: error instanceof Error ? error.message : "Unknown error loading initial session.",
           variant: "destructive",
         });
         setSession(null);

@@ -7,7 +7,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 const features = [
   {
     label: "Performance Dashboard",
-    description: "Monitore suas metas com gráficos intuitivos e motivadores.",
+    description: "Track your goals with intuitive and motivating charts.",
     icon: <BarChart className="w-7 h-7 text-green-400" />,
     route: "/performance",
     badge: "New"
@@ -69,8 +69,8 @@ export default function MainDashboard() {
         ))}
       </div>
       <div className="mt-12 text-center text-warfare-gray text-base opacity-70">
-        Dashboards intuitivos e estratégicos para acelerar suas decisões.<br />
-        Suporte para novas funcionalidades será exibido aqui!
+        Intuitive, strategic dashboards to speed up your decisions.<br />
+        Support for new features will appear here!
       </div>
     </div>
   );

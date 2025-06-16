@@ -12,8 +12,8 @@ export const RitualList: React.FC<RitualListProps> = ({ rituals }) => {
   if (rituals.length === 0) {
     return (
       <div className="text-center text-warfare-gray py-8 glass-card rounded-xl">
-        <p className="text-white font-semibold">Nenhum ritual encontrado.</p>
-        <p className="text-sm mt-2">Crie seu primeiro ritual para começar a construir disciplina.</p>
+        <p className="text-white font-semibold">No rituals found.</p>
+        <p className="text-sm mt-2">Create your first ritual to start building discipline.</p>
       </div>
     );
   }
@@ -38,7 +38,7 @@ export const RitualList: React.FC<RitualListProps> = ({ rituals }) => {
             </CardTitle>
             <CardDescription className="flex items-center text-warfare-gray">
               <Clock className="w-4 h-4 mr-2" />
-              {ritual.duration_minutes} minutos
+              {ritual.duration_minutes} minutes
             </CardDescription>
           </CardHeader>
           <CardContent>

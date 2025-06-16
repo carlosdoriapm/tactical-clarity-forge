@@ -29,7 +29,7 @@ const createRitual = async (newRitual: NewRitual) => {
   if (error) {
     // Check if RLS is being violated
     if (error.code === '42501') {
-      throw new Error("Erro de permissão. Verifique as políticas de segurança (RLS) da tabela 'rituals'.");
+      throw new Error("Permission error. Check the security policies (RLS) of the 'rituals' table.");
     }
     throw new Error(error.message);
   }
@@ -51,13 +51,13 @@ export const useRituals = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rituals', user?.id] });
       toast({
-        title: "Ritual Criado",
-        description: "Seu novo ritual foi adicionado com sucesso.",
+        title: "Ritual Created",
+        description: "Your new ritual was added successfully.",
       });
     },
     onError: (error) => {
       toast({
-        title: "Erro ao criar ritual",
+        title: "Error creating ritual",
         description: error.message,
         variant: 'destructive'
       });

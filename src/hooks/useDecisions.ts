@@ -40,8 +40,8 @@ export const useDecisions = () => {
       setDecisions(convertedDecisions);
     } catch (error: any) {
       toast({
-        title: "Erro",
-        description: "Falha ao carregar decisões: " + error.message,
+        title: "Error",
+        description: "Failed to load decisions: " + error.message,
         variant: "destructive",
       });
     } finally {
@@ -82,8 +82,8 @@ export const useDecisions = () => {
       return newDecision;
     } catch (error: any) {
       toast({
-        title: "Erro",
-        description: "Falha ao salvar decisão: " + error.message,
+        title: "Error",
+        description: "Failed to save decision: " + error.message,
         variant: "destructive",
       });
       return null;
@@ -122,8 +122,8 @@ export const useDecisions = () => {
       return updatedDecision;
     } catch (error: any) {
       toast({
-        title: "Erro",
-        description: "Falha ao atualizar decisão: " + error.message,
+        title: "Error",
+        description: "Failed to update decision: " + error.message,
         variant: "destructive",
       });
       return null;
