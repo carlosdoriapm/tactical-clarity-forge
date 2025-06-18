@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import ProfileSetup from '@/components/ProfileSetup';
@@ -48,12 +47,12 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
   const handleDiscComplete = async (discData: any) => {
     setDiscProfile(discData);
     
-    // Update profile with DISC data - store directly in disc_profile column
+    // Update profile with DISC data - store in metadata field
     try {
       const { error } = await supabase
         .from('combatant_profile')
         .update({
-          disc_profile: discData,
+          metadata: { disc_profile: discData },
           onboarding_completed: true
         })
         .eq('user_id', user?.id);
