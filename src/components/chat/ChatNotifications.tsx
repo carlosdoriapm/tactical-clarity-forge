@@ -14,14 +14,12 @@ const ChatNotifications: React.FC<ChatNotificationsProps> = ({
   connectionStatus 
 }) => {
   useEffect(() => {
-    console.log('🔍 Chat Auth State Updated:', { 
+    console.log('🔍 Chat Test Mode:', { 
       user: user ? user.email : 'No user', 
       authLoading 
     });
     if (!authLoading && user) {
-      sonnerToast.success("Autenticação verificada.", { description: `Usuário ${user.email} conectado.`});
-    } else if (!authLoading && !user) {
-      sonnerToast.error("Usuário não autenticado.", { description: "Redirecionando para login."});
+      sonnerToast.success("Modo de teste ativo.", { description: `Chat liberado para testes - ${user.email}`});
     }
   }, [user, authLoading]);
 

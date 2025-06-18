@@ -1,6 +1,5 @@
 
 import React, { useEffect, useRef } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { useChat } from '@/hooks/useChat';
 import ChatContainer from '@/components/chat/ChatContainer';
 import ChatAuth from '@/components/chat/ChatAuth';
@@ -8,10 +7,12 @@ import ChatNotifications from '@/components/chat/ChatNotifications';
 import ChatInterface from '@/components/chat/ChatInterface';
 
 const Chat = () => {
-  console.log('🎯 Chat component rendering...');
+  console.log('🎯 Chat component rendering in test mode...');
   const hasCreatedFirstConversation = useRef(false);
   
-  const { user, loading: authLoading } = useAuth();
+  // Para modo de teste, não precisamos de autenticação real
+  const mockUser = { id: 'test-user-id', email: 'test@example.com' };
+  const authLoading = false;
   
   const {
     messages,
@@ -30,24 +31,22 @@ const Chat = () => {
     loading
   } = useChat();
 
-  // Criar primeira conversa automaticamente se necessário
+  // Criar primeira conversa automaticamente para modo de teste
   useEffect(() => {
-    if (user && 
-        !loading && 
-        conversations.length === 0 && 
+    if (conversations.length === 0 && 
         !currentConversation && 
         !hasCreatedFirstConversation.current) {
       
-      console.log('🆕 Criando primeira conversa automaticamente...');
+      console.log('🆕 Criando primeira conversa automaticamente para teste...');
       hasCreatedFirstConversation.current = true;
-      createConversation('Primeira Conversa');
+      createConversation('Conversa de Teste');
     }
-  }, [user, loading, conversations.length, currentConversation, createConversation]);
+  }, [conversations.length, currentConversation, createConversation]);
 
   return (
     <ChatContainer>
       <ChatNotifications 
-        user={user} 
+        user={mockUser} 
         authLoading={authLoading} 
         connectionStatus={connectionStatus} 
       />

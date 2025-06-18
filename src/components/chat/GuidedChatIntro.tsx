@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { MessageSquare, Brain, Target } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface GuidedChatIntroProps {
   onStart: (introData: any) => void;
@@ -13,25 +12,22 @@ interface GuidedChatIntroProps {
 const GuidedChatIntro = ({ onStart }: GuidedChatIntroProps) => {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [currentStep, setCurrentStep] = useState(0);
-  const { user } = useAuth();
 
   useEffect(() => {
-    const loadUserProfile = async () => {
-      if (user) {
-        const { data } = await supabase
-          .from('combatant_profile')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-        
-        setUserProfile(data);
-      }
+    // Para modo de teste, usar dados mock
+    const mockProfile = {
+      disc_profile: {
+        primaryType: 'Dominante',
+        communicationStyle: 'Comunicação direta e objetiva'
+      },
+      mission_90_day: 'Estabelecer rotinas produtivas',
+      intensity_mode: 'TACTICAL'
     };
+    
+    setUserProfile(mockProfile);
+  }, []);
 
-    loadUserProfile();
-  }, [user]);
-
-  const discProfile = userProfile?.metadata?.disc_profile;
+  const discProfile = userProfile?.disc_profile;
 
   const introSteps = [
     {
@@ -40,7 +36,7 @@ const GuidedChatIntro = ({ onStart }: GuidedChatIntroProps) => {
       icon: MessageSquare,
       content: discProfile ? 
         `Detectei seu perfil DISC como ${discProfile.primaryType}. Vou adaptar minha comunicação ao seu estilo preferido.` :
-        'Recomendo completar sua análise DISC para uma experiência mais personalizada.'
+        'Modo de teste ativo - experimente as funcionalidades livremente.'
     },
     {
       title: 'Análise Personalizada',
@@ -48,7 +44,7 @@ const GuidedChatIntro = ({ onStart }: GuidedChatIntroProps) => {
       icon: Brain,
       content: discProfile ?
         `Como perfil ${discProfile.primaryType}, você responde melhor a: ${discProfile.communicationStyle}` :
-        'Complete seu perfil para receber análises mais profundas.'
+        'No modo de teste, você pode explorar todas as funcionalidades.'
     },
     {
       title: 'Pronto para Começar',
@@ -56,7 +52,7 @@ const GuidedChatIntro = ({ onStart }: GuidedChatIntroProps) => {
       icon: Target,
       content: userProfile?.mission_90_day ?
         `Sua missão atual: ${userProfile.mission_90_day}. Vamos focar nisso!` :
-        'Defina sua missão principal para direcionarmos nossa conversa.'
+        'Teste todas as funcionalidades do chat advisor livremente.'
     }
   ];
 
