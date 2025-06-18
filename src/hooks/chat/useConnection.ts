@@ -1,11 +1,9 @@
 
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast as sonnerToast } from "sonner";
 
 export function useConnection() {
-  const { user } = useAuth();
   const [connectionStatus, setConnectionStatus] = useState<'unknown' | 'testing' | 'good' | 'error'>('unknown');
 
   const testConnection = async () => {
@@ -23,7 +21,7 @@ export function useConnection() {
       const { data, error } = await supabase.functions.invoke('ai-chat', {
         body: { 
           message: 'teste de conexão',
-          userId: user?.id || 'test-user-connection-test',
+          userId: 'test-user-connection-test',
           isTest: true
         }
       });

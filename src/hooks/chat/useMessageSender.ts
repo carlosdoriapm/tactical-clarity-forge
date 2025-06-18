@@ -1,6 +1,5 @@
 
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast as sonnerToast } from "sonner";
 import { Message } from '@/types/chat';
@@ -14,7 +13,6 @@ interface UseMessageSenderProps {
 }
 
 export function useMessageSender({ addMessage, setConnectionStatus, saveMessage, currentConversation }: UseMessageSenderProps) {
-  const { user } = useAuth();
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -50,12 +48,12 @@ export function useMessageSender({ addMessage, setConnectionStatus, saveMessage,
     }
 
     try {
-      console.log('📡 Chat: handleSend - Calling edge function "ai-chat" with:', { message: trimmedInput, userId: user?.id });
+      console.log('📡 Chat: handleSend - Calling edge function "ai-chat" with:', { message: trimmedInput, userId: 'test-user-id' });
       
       const { data, error: functionInvokeError } = await supabase.functions.invoke('ai-chat', {
         body: { 
           message: trimmedInput,
-          userId: user?.id || 'anonymous-chat-user',
+          userId: 'test-user-id',
           conversationId: currentConversation?.id
         }
       });

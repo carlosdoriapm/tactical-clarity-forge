@@ -1,9 +1,6 @@
 
 import React, { createContext, useContext } from 'react';
 import { AuthContextType } from '@/types/auth-context';
-import { useAuthState } from '@/hooks/auth/useAuthState';
-import { useUserRoles } from '@/hooks/auth/useUserRoles';
-import { useAuthOperations } from '@/hooks/auth/useAuthOperations';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -16,19 +13,41 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, session, loading } = useAuthState();
-  const roles = useUserRoles(user, loading);
-  const { signUp, signIn, signOut } = useAuthOperations();
+  // Modo de teste - dados mock
+  const mockUser = {
+    id: 'test-user-id',
+    email: 'test@example.com',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    app_metadata: {},
+    user_metadata: {},
+    aud: 'authenticated',
+    confirmation_sent_at: new Date().toISOString(),
+    email_confirmed_at: new Date().toISOString(),
+    last_sign_in_at: new Date().toISOString(),
+    role: 'authenticated'
+  };
+
+  const mockSession = {
+    access_token: 'mock-access-token',
+    refresh_token: 'mock-refresh-token',
+    expires_in: 3600,
+    expires_at: Date.now() + 3600000,
+    token_type: 'bearer',
+    user: mockUser
+  };
 
   const value = {
-    user,
-    session,
-    loading,
-    roles,
-    signUp,
-    signIn,
-    signOut
+    user: mockUser,
+    session: mockSession,
+    loading: false,
+    roles: ['admin', 'user'] as any,
+    signUp: async () => ({ error: null }),
+    signIn: async () => ({ error: null }),
+    signOut: async () => {}
   };
+
+  console.log('🔧 Modo de teste: AuthContext com dados mock ativo');
 
   return (
     <AuthContext.Provider value={value}>

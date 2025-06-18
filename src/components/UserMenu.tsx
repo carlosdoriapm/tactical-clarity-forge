@@ -1,9 +1,8 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, User, Shield, Settings } from 'lucide-react';
+import { User, Shield, Settings } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,31 +12,17 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 export const UserMenu = () => {
-  const { user, signOut, roles } = useAuth();
   const navigate = useNavigate();
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
-  };
-
-  if (!user) {
-    return (
-      <Button 
-        onClick={() => navigate('/auth')}
-        className="bg-warfare-red hover:bg-warfare-red/80 text-white"
-      >
-        Login
-      </Button>
-    );
-  }
+  // Modo de teste - sempre mostrar menu como usuário logado
+  const mockUser = { email: 'test@example.com' };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" className="text-warfare-blue border-warfare-blue hover:bg-warfare-blue hover:text-white">
           <User className="w-4 h-4 mr-2" />
-          {user.email?.split('@')[0]}
+          {mockUser.email.split('@')[0]} (teste)
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="bg-warfare-card border-warfare-gray/20">
@@ -55,22 +40,19 @@ export const UserMenu = () => {
           <User className="w-4 h-4 mr-2" />
           Profile
         </DropdownMenuItem>
-        {roles.includes('admin') && (
-          <DropdownMenuItem 
-            onClick={() => navigate('/admin')}
-            className="text-white hover:bg-warfare-accent/20"
-          >
-            <Settings className="w-4 h-4 mr-2" />
-            Admin
-          </DropdownMenuItem>
-        )}
+        <DropdownMenuItem 
+          onClick={() => navigate('/admin')}
+          className="text-white hover:bg-warfare-accent/20"
+        >
+          <Settings className="w-4 h-4 mr-2" />
+          Admin (teste)
+        </DropdownMenuItem>
         <DropdownMenuSeparator className="border-warfare-gray/20" />
         <DropdownMenuItem 
-          onClick={handleSignOut}
+          onClick={() => navigate('/')}
           className="text-warfare-red hover:bg-warfare-red/20"
         >
-          <LogOut className="w-4 h-4 mr-2" />
-          Sign Out
+          Voltar ao Início
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
