@@ -1,20 +1,22 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Wifi, WifiOff, Loader2 } from 'lucide-react';
+import { Wifi, WifiOff, Loader2, HelpCircle } from 'lucide-react';
 
 interface ChatHeaderProps {
   connectionStatus: 'unknown' | 'testing' | 'good' | 'error';
   isSending: boolean;
   onTestConnection: () => void;
   currentConversation?: any;
+  onShowGuide: () => void;
 }
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({
   connectionStatus,
   isSending,
   onTestConnection,
-  currentConversation
+  currentConversation,
+  onShowGuide
 }) => {
   const getConnectionIcon = () => {
     switch (connectionStatus) {
@@ -37,11 +39,21 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
             {currentConversation?.title || 'Strategic Session'}
           </h2>
           <p className="text-warfare-gray text-sm">
-            Strategic counsel and decision guidance
+            AI-powered strategic counseling and decision guidance
           </p>
         </div>
         
         <div className="flex items-center space-x-3">
+          <Button
+            onClick={onShowGuide}
+            variant="outline"
+            size="sm"
+            className="text-warfare-blue border-warfare-blue/30 hover:bg-warfare-blue/10"
+          >
+            <HelpCircle className="w-4 h-4 mr-1" />
+            Guide
+          </Button>
+          
           {connectionStatus !== 'good' && (
             <Button
               onClick={onTestConnection}

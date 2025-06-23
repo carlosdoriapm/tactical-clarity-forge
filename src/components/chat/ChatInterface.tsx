@@ -1,9 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import ChatHeader from './ChatHeader';
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
 import ConversationSidebar from './ConversationSidebar';
+import UserGuide from './UserGuide';
+import QuickStartTips from './QuickStartTips';
 
 interface ChatInterfaceProps {
   messages: any[];
@@ -36,12 +38,17 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   selectConversation,
   createConversation
 }) => {
+  const [showGuide, setShowGuide] = useState(false);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
   };
+
+  // Show tips when there are no messages in current conversation
+  const showTips = currentConversation && messages.length === 0;
 
   return (
     <div className="flex h-screen bg-warfare-dark">
@@ -50,6 +57,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         currentConversation={currentConversation}
         onSelectConversation={selectConversation}
         onCreateConversation={createConversation}
+        onShowGuide={() => setShowGuide(true)}
       />
       
       <div className="flex-1 flex flex-col">
@@ -58,12 +66,21 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           isSending={isSending}
           onTestConnection={testConnection}
           currentConversation={currentConversation}
+          onShowGuide={() => setShowGuide(true)}
         />
-        <MessageList
-          messages={messages}
-          isTyping={isTyping}
-          messagesEndRef={messagesEndRef}
-        />
+        
+        {showTips ? (
+          <div className="flex-1 overflow-y-auto">
+            <QuickStartTips />
+          </div>
+        ) : (
+          <MessageList
+            messages={messages}
+            isTyping={isTyping}
+            messagesEndRef={messagesEndRef}
+          />
+        )}
+        
         <ChatInput
           inputValue={inputValue}
           onInputChange={setInputValue}
@@ -73,6 +90,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           isSending={isSending}
         />
       </div>
+
+      <UserGuide
+        isOpen={showGuide}
+        onClose={() => setShowGuide(false)}
+      />
     </div>
   );
 };
