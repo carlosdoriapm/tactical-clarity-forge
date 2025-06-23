@@ -1,10 +1,9 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import ChatHeader from './ChatHeader';
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
-import DashboardButton from './DashboardButton';
+import ConversationSidebar from './ConversationSidebar';
 
 interface ChatInterfaceProps {
   user: any;
@@ -17,6 +16,10 @@ interface ChatInterfaceProps {
   messagesEndRef: React.RefObject<HTMLDivElement>;
   testConnection: () => void;
   handleSend: () => void;
+  conversations: any[];
+  currentConversation: any;
+  selectConversation: (conversation: any) => void;
+  createConversation: (title?: string) => void;
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
@@ -29,10 +32,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   connectionStatus,
   messagesEndRef,
   testConnection,
-  handleSend
+  handleSend,
+  conversations,
+  currentConversation,
+  selectConversation,
+  createConversation
 }) => {
-  const navigate = useNavigate();
-
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -41,30 +46,37 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   return (
-    <>
-      <DashboardButton onClick={() => navigate('/')} />
+    <div className="flex h-screen bg-warfare-dark">
+      <ConversationSidebar
+        conversations={conversations}
+        currentConversation={currentConversation}
+        onSelectConversation={selectConversation}
+        onCreateConversation={createConversation}
+      />
       
-      <ChatHeader
-        user={user}
-        connectionStatus={connectionStatus}
-        isSending={isSending}
-        onTestConnection={testConnection}
-        onNavigateToDashboard={() => navigate('/dashboard')}
-      />
-      <MessageList
-        messages={messages}
-        isTyping={isTyping}
-        messagesEndRef={messagesEndRef}
-      />
-      <ChatInput
-        inputValue={inputValue}
-        onInputChange={setInputValue}
-        onSendMessage={handleSend}
-        onKeyDown={handleKeyDown}
-        isTyping={isTyping}
-        isSending={isSending}
-      />
-    </>
+      <div className="flex-1 flex flex-col">
+        <ChatHeader
+          user={user}
+          connectionStatus={connectionStatus}
+          isSending={isSending}
+          onTestConnection={testConnection}
+          currentConversation={currentConversation}
+        />
+        <MessageList
+          messages={messages}
+          isTyping={isTyping}
+          messagesEndRef={messagesEndRef}
+        />
+        <ChatInput
+          inputValue={inputValue}
+          onInputChange={setInputValue}
+          onSendMessage={handleSend}
+          onKeyDown={handleKeyDown}
+          isTyping={isTyping}
+          isSending={isSending}
+        />
+      </div>
+    </div>
   );
 };
 

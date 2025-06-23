@@ -12,12 +12,10 @@ interface MessageListProps {
 const MessageList: React.FC<MessageListProps> = ({ messages, isTyping, messagesEndRef }) => {
   
   const convertMessage = (message: ChatMessage | ConversationMessage): ChatMessage => {
-    // Se já é uma mensagem de chat, retorna como está
     if ('isBot' in message) {
       return message as ChatMessage;
     }
     
-    // Se é uma mensagem de conversa, converte para formato de chat
     const conversationMessage = message as ConversationMessage;
     return {
       id: conversationMessage.id,
@@ -34,7 +32,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isTyping, messagesE
           <div className="flex justify-start">
             <div className="max-w-2xl rounded-2xl px-6 py-4 bg-gradient-to-r from-warfare-red/10 to-warfare-yellow/10 backdrop-blur-sm border border-warfare-red/20 text-white shadow-lg">
               <p className="text-base leading-relaxed">
-                Hey—I'm AlphaAdvisor. First, I'll ask you a few questions so I can truly get to know you.
+                Welcome, warrior. I'm AlphaAdvisor—your strategic counsel for sharper purpose and ironclad discipline. What decision or challenge brings you to the war room today?
               </p>
               <div className="mt-2 text-xs text-warfare-blue/60">
                 {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -74,7 +72,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isTyping, messagesE
                 <div className="w-2 h-2 bg-warfare-yellow rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
                 <div className="w-2 h-2 bg-warfare-blue rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
               </div>
-              <p className="text-xs text-warfare-blue/60 mt-2">Seu conselheiro está formulando um conselho...</p>
+              <p className="text-xs text-warfare-blue/60 mt-2">Your advisor is formulating strategic counsel...</p>
             </div>
           </div>
         )}

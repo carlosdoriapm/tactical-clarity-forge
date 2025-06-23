@@ -1,98 +1,135 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Conversation, Message } from '@/types/conversation';
+
+const STORAGE_KEY_CONVERSATIONS = 'alphaadvisor_conversations';
+const STORAGE_KEY_MESSAGES = 'alphaadvisor_messages';
 
 export const useConversations = () => {
   const { toast } = useToast();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(false); // Sem loading para modo de teste
+  const [loading, setLoading] = useState(false);
   const hasInitializedRef = useRef(false);
 
-  // Para modo de teste, usamos um usuário mock
-  const mockUser = { id: 'test-user-id', email: 'test@example.com' };
+  const mockUser = { id: 'default-user', email: 'user@example.com' };
 
-  const loadMessages = useCallback(async (conversationId: string) => {
-    // No modo de teste, retornamos mensagens vazias ou mock
-    console.log('📝 Modo de teste: carregando mensagens mock para conversa', conversationId);
-    setMessages([]);
+  // Load conversations from localStorage
+  const loadConversations = useCallback(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY_CONVERSATIONS);
+      if (stored) {
+        const parsedConversations = JSON.parse(stored);
+        setConversations(parsedConversations);
+        
+        // Select the most recent conversation
+        if (parsedConversations.length > 0) {
+          const mostRecent = parsedConversations[0];
+          setCurrentConversation(mostRecent);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading conversations:', error);
+    }
   }, []);
 
+  // Load messages for a conversation
+  const loadMessages = useCallback(async (conversationId: string) => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY_MESSAGES);
+      if (stored) {
+        const allMessages = JSON.parse(stored);
+        const conversationMessages = allMessages[conversationId] || [];
+        setMessages(conversationMessages);
+      } else {
+        setMessages([]);
+      }
+    } catch (error) {
+      console.error('Error loading messages:', error);
+      setMessages([]);
+    }
+  }, []);
+
+  // Select a conversation
   const selectConversation = useCallback(async (conversation: Conversation) => {
-    console.log('🔄 Selecionando conversa:', conversation.id);
+    console.log('🔄 Selecting conversation:', conversation.id);
     setCurrentConversation(conversation);
     await loadMessages(conversation.id);
   }, [loadMessages]);
 
-  const loadConversations = useCallback(async () => {
-    console.log('📂 Modo de teste: criando conversa mock...');
-    
-    if (hasInitializedRef.current) return;
-    hasInitializedRef.current = true;
-    
-    // Criar uma conversa mock para testes
-    const mockConversation: Conversation = {
-      id: 'test-conversation-id',
-      user_id: 'test-user-id',
-      title: 'Conversa de Teste',
-      context: {},
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    setConversations([mockConversation]);
-    setCurrentConversation(mockConversation);
-    setMessages([]);
-    setLoading(false);
-  }, []);
-
+  // Create new conversation
   const createConversation = useCallback(async (title?: string) => {
-    console.log('🆕 Criando nova conversa mock...');
+    console.log('🆕 Creating new conversation...');
     
     const newConversation: Conversation = {
-      id: `test-conversation-${Date.now()}`,
-      user_id: 'test-user-id',
-      title: title || 'Nova Conversa de Teste',
+      id: `conv-${Date.now()}`,
+      user_id: mockUser.id,
+      title: title || `Strategy Session ${new Date().toLocaleDateString()}`,
       context: {},
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
     
-    setConversations(prev => [newConversation, ...prev]);
+    const updatedConversations = [newConversation, ...conversations];
+    setConversations(updatedConversations);
     setCurrentConversation(newConversation);
     setMessages([]);
-    console.log('✅ Nova conversa mock criada:', newConversation.id);
+    
+    // Save to localStorage
+    localStorage.setItem(STORAGE_KEY_CONVERSATIONS, JSON.stringify(updatedConversations));
+    
+    console.log('✅ New conversation created:', newConversation.id);
     return newConversation;
-  }, []);
+  }, [conversations, mockUser.id]);
 
+  // Save message
   const saveMessage = useCallback(async (conversationId: string, content: string, role: 'user' | 'assistant', metadata?: any) => {
-    console.log('💾 Salvando mensagem mock...');
+    console.log('💾 Saving message...');
     
     const newMessage: Message = {
-      id: `test-message-${Date.now()}`,
+      id: `msg-${Date.now()}`,
       conversation_id: conversationId,
-      user_id: 'test-user-id',
+      user_id: mockUser.id,
       content,
       role,
       created_at: new Date().toISOString(),
       metadata
     };
     
-    setMessages(prev => [...prev, newMessage]);
-    console.log('✅ Mensagem mock salva');
+    const updatedMessages = [...messages, newMessage];
+    setMessages(updatedMessages);
+    
+    // Save to localStorage
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY_MESSAGES);
+      const allMessages = stored ? JSON.parse(stored) : {};
+      allMessages[conversationId] = updatedMessages;
+      localStorage.setItem(STORAGE_KEY_MESSAGES, JSON.stringify(allMessages));
+    } catch (error) {
+      console.error('Error saving message:', error);
+    }
+    
+    console.log('✅ Message saved');
     return newMessage;
-  }, []);
+  }, [messages, mockUser.id]);
 
-  // Inicializar automaticamente para modo de teste
+  // Initialize
   useEffect(() => {
     if (!hasInitializedRef.current) {
-      console.log('🚀 Inicializando modo de teste...');
+      console.log('🚀 Initializing conversations...');
+      hasInitializedRef.current = true;
       loadConversations();
     }
   }, [loadConversations]);
+
+  // Load messages when conversation changes
+  useEffect(() => {
+    if (currentConversation) {
+      loadMessages(currentConversation.id);
+    }
+  }, [currentConversation, loadMessages]);
 
   return {
     conversations,

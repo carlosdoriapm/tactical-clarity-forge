@@ -2,17 +2,14 @@
 import React, { useEffect, useRef } from 'react';
 import { useChat } from '@/hooks/useChat';
 import ChatContainer from '@/components/chat/ChatContainer';
-import ChatAuth from '@/components/chat/ChatAuth';
-import ChatNotifications from '@/components/chat/ChatNotifications';
 import ChatInterface from '@/components/chat/ChatInterface';
 
 const Chat = () => {
-  console.log('🎯 Chat component rendering in test mode...');
+  console.log('🎯 Chat component rendering...');
   const hasCreatedFirstConversation = useRef(false);
   
-  // Para modo de teste, não precisamos de autenticação real
-  const mockUser = { id: 'test-user-id', email: 'test@example.com' };
-  const authLoading = false;
+  // Simple mock user for persistence
+  const mockUser = { id: 'default-user', email: 'user@example.com' };
   
   const {
     messages,
@@ -31,42 +28,36 @@ const Chat = () => {
     loading
   } = useChat();
 
-  // Criar primeira conversa automaticamente para modo de teste
+  // Create first conversation automatically
   useEffect(() => {
     if (conversations.length === 0 && 
         !currentConversation && 
         !hasCreatedFirstConversation.current) {
       
-      console.log('🆕 Criando primeira conversa automaticamente para teste...');
+      console.log('🆕 Creating first conversation...');
       hasCreatedFirstConversation.current = true;
-      createConversation('Conversa de Teste');
+      createConversation('Strategy Session');
     }
   }, [conversations.length, currentConversation, createConversation]);
 
   return (
     <ChatContainer>
-      <ChatNotifications 
-        user={mockUser} 
-        authLoading={authLoading} 
-        connectionStatus={connectionStatus} 
+      <ChatInterface
+        user={mockUser}
+        messages={messages}
+        inputValue={inputValue}
+        setInputValue={setInputValue}
+        isTyping={isTyping}
+        isSending={isSending}
+        connectionStatus={connectionStatus}
+        messagesEndRef={messagesEndRef}
+        testConnection={testConnection}
+        handleSend={handleSend}
+        conversations={conversations}
+        currentConversation={currentConversation}
+        selectConversation={selectConversation}
+        createConversation={createConversation}
       />
-      
-      <ChatAuth>
-        {(authenticatedUser) => (
-          <ChatInterface
-            user={authenticatedUser}
-            messages={messages}
-            inputValue={inputValue}
-            setInputValue={setInputValue}
-            isTyping={isTyping}
-            isSending={isSending}
-            connectionStatus={connectionStatus}
-            messagesEndRef={messagesEndRef}
-            testConnection={testConnection}
-            handleSend={handleSend}
-          />
-        )}
-      </ChatAuth>
     </ChatContainer>
   );
 };
