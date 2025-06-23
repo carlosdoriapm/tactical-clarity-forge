@@ -25,7 +25,7 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
           className="w-full bg-warfare-red hover:bg-warfare-red/80 text-white"
         >
           <PlusCircle className="w-4 h-4 mr-2" />
-          New Strategy Session
+          New Strategic Session
         </Button>
       </div>
       
@@ -44,7 +44,7 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
               <MessageSquare className="w-4 h-4 text-warfare-blue" />
               <div className="flex-1 min-w-0">
                 <div className="text-white text-sm font-medium truncate">
-                  {conversation.title || 'Strategy Session'}
+                  {conversation.title || 'Strategic Session'}
                 </div>
                 <div className="text-warfare-gray text-xs">
                   {new Date(conversation.created_at).toLocaleDateString()}

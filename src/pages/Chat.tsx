@@ -7,10 +7,7 @@ import ChatInterface from '@/components/chat/ChatInterface';
 const Chat = () => {
   console.log('🎯 Chat component rendering...');
   const hasCreatedFirstConversation = useRef(false);
-  
-  // Simple mock user for persistence
-  const mockUser = { id: 'default-user', email: 'user@example.com' };
-  
+
   const {
     messages,
     inputValue,
@@ -36,14 +33,13 @@ const Chat = () => {
       
       console.log('🆕 Creating first conversation...');
       hasCreatedFirstConversation.current = true;
-      createConversation('Strategy Session');
+      createConversation('Strategic Session');
     }
   }, [conversations.length, currentConversation, createConversation]);
 
   return (
     <ChatContainer>
       <ChatInterface
-        user={mockUser}
         messages={messages}
         inputValue={inputValue}
         setInputValue={setInputValue}

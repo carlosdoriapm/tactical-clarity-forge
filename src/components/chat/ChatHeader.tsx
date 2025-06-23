@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Wifi, WifiOff, Loader2 } from 'lucide-react';
 
 interface ChatHeaderProps {
-  user: any;
   connectionStatus: 'unknown' | 'testing' | 'good' | 'error';
   isSending: boolean;
   onTestConnection: () => void;
@@ -12,7 +11,6 @@ interface ChatHeaderProps {
 }
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({
-  user,
   connectionStatus,
   isSending,
   onTestConnection,
@@ -36,7 +34,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold text-white">
-            {currentConversation?.title || 'Strategy Session'}
+            {currentConversation?.title || 'Strategic Session'}
           </h2>
           <p className="text-warfare-gray text-sm">
             Strategic counsel and decision guidance

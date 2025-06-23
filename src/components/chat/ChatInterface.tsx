@@ -6,7 +6,6 @@ import ChatInput from './ChatInput';
 import ConversationSidebar from './ConversationSidebar';
 
 interface ChatInterfaceProps {
-  user: any;
   messages: any[];
   inputValue: string;
   setInputValue: (value: string) => void;
@@ -23,7 +22,6 @@ interface ChatInterfaceProps {
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
-  user,
   messages,
   inputValue,
   setInputValue,
@@ -56,7 +54,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       
       <div className="flex-1 flex flex-col">
         <ChatHeader
-          user={user}
           connectionStatus={connectionStatus}
           isSending={isSending}
           onTestConnection={testConnection}
