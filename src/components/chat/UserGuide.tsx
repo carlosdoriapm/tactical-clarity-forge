@@ -143,7 +143,7 @@ const UserGuide: React.FC<UserGuideProps> = ({ isOpen, onClose }) => {
                 <p className="text-warfare-blue text-sm">{currentGuideStep.tip}</p>
               </div>
             )}
-          </div>
+          </Card>
         </div>
 
         <div className="flex justify-between items-center pt-4">
