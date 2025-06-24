@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MessageSquare, HelpCircle } from 'lucide-react';
+import { PlusCircle, MessageSquare, HelpCircle, Brain } from 'lucide-react';
 
 interface ConversationSidebarProps {
   conversations: any[];
@@ -9,6 +9,7 @@ interface ConversationSidebarProps {
   onSelectConversation: (conversation: any) => void;
   onCreateConversation: (title?: string) => void;
   onShowGuide: () => void;
+  onStartDecisionFramework?: () => void;
 }
 
 const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
@@ -16,7 +17,8 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
   currentConversation,
   onSelectConversation,
   onCreateConversation,
-  onShowGuide
+  onShowGuide,
+  onStartDecisionFramework
 }) => {
   return (
     <div className="w-80 bg-warfare-card border-r border-warfare-gray/20 flex flex-col">
@@ -30,6 +32,15 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
             <PlusCircle className="w-4 h-4 mr-2" />
             New Strategic Session
           </Button>
+          {onStartDecisionFramework && (
+            <Button
+              onClick={onStartDecisionFramework}
+              className="w-full bg-warfare-blue hover:bg-warfare-blue/80 text-white"
+            >
+              <Brain className="w-4 h-4 mr-2" />
+              Decision Framework
+            </Button>
+          )}
           <Button
             onClick={onShowGuide}
             variant="outline"

@@ -6,6 +6,7 @@ import ChatInput from './ChatInput';
 import ConversationSidebar from './ConversationSidebar';
 import UserGuide from './UserGuide';
 import QuickStartTips from './QuickStartTips';
+import EnhancedDecisionInterface from '../decision/EnhancedDecisionInterface';
 
 interface ChatInterfaceProps {
   messages: any[];
@@ -39,6 +40,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   createConversation
 }) => {
   const [showGuide, setShowGuide] = useState(false);
+  const [showDecisionFramework, setShowDecisionFramework] = useState(false);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -47,8 +49,23 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   };
 
-  // Show tips when there are no messages in current conversation
-  const showTips = currentConversation && messages.length === 0;
+  const handleContinueToChat = (context?: any) => {
+    setShowDecisionFramework(false);
+    
+    if (context) {
+      // Add context message to chat
+      const contextMessage = `I've completed a structured analysis using the ${context.template.name} framework. Here's my situation: ${context.structured_input}`;
+      setInputValue(contextMessage);
+    }
+  };
+
+  const handleStartDecisionFramework = () => {
+    setShowDecisionFramework(true);
+  };
+
+  // Show decision framework when there are no messages in current conversation
+  const showInitialDecisionFramework = currentConversation && messages.length === 0 && !showDecisionFramework;
+  const showTips = currentConversation && messages.length === 0 && !showDecisionFramework;
 
   return (
     <div className="flex h-screen bg-warfare-dark">
@@ -58,6 +75,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         onSelectConversation={selectConversation}
         onCreateConversation={createConversation}
         onShowGuide={() => setShowGuide(true)}
+        onStartDecisionFramework={handleStartDecisionFramework}
       />
       
       <div className="flex-1 flex flex-col">
@@ -69,7 +87,19 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           onShowGuide={() => setShowGuide(true)}
         />
         
-        {showTips ? (
+        {showDecisionFramework ? (
+          <div className="flex-1 overflow-y-auto">
+            <EnhancedDecisionInterface
+              onContinueToChat={handleContinueToChat}
+            />
+          </div>
+        ) : showInitialDecisionFramework ? (
+          <div className="flex-1 overflow-y-auto">
+            <EnhancedDecisionInterface
+              onContinueToChat={handleContinueToChat}
+            />
+          </div>
+        ) : showTips ? (
           <div className="flex-1 overflow-y-auto">
             <QuickStartTips />
           </div>
